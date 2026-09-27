@@ -37,7 +37,7 @@ export const projects = [
     tools: "React · Cloudflare",
     note: "Built from scratch to replace Google Sites and a third-party registration site.",
     outcome: "The Louisiana Chess Association's full platform, built from scratch: tournaments, registration and payments, clubs, membership and news in one place.",
-    role: "Designer & developer",
+    role: "Web manager, then designer & developer",
     timeline: "June 2025 – present",
     links: [
       { label: "louisianachess.org", href: "https://www.louisianachess.org" },
@@ -52,11 +52,11 @@ export const projects = [
     },
     pipeline: ["React + TypeScript UI", "Pages Functions API", "D1 database", "Supabase · Stripe · Resend", "Cloudflare deploy"],
     sections: {
-      problem: "The association's web presence was a Google Sites page, with tournament registration handled on a separate third-party site. [What that made hard for members, club leaders and tournament directors.]",
+      problem: "I took over the association's website in June 2025. It was a Google Sites page, with tournament registration handled on a separate third-party site. [What that made hard for members, club leaders and tournament directors.]",
       data: "Designed for about 600 member profiles, 50 people online at once, and tournaments every couple of months with up to 100 players. The database holds members, clubs, tournaments, registrations, payments and games, built up across more than 20 migrations.",
       approach: "React 19, TypeScript, Vite, Tailwind and shadcn/ui on the front end; Cloudflare Pages Functions and a D1 (SQLite) database behind it; Supabase for sign-in, Stripe for memberships and entry fees, and Resend for email. Features include tournament registration and management with a FIDE Dutch pairing engine, a club directory with a map, a news feed from the association's Facebook page, admin tools for group email and site announcements, and club logo uploads stored in R2.",
       validation: "Before launch I audited the codebase and fixed what turned up, including a Stripe webhook without signature verification and an endpoint that exposed contact-form messages. The backend now has 50 integration and 62 unit tests that run in CI on every pull request touching it.",
-      result: "Live at louisianachess.org, replacing the old Google Sites page. [Members, registrations or tournaments run through it so far.]",
+      result: "Launched at louisianachess.org in July 2026, replacing the old Google Sites page. [Members, registrations or tournaments run through it so far.]",
       reflection: "[What you would build next.]"
     }
   },
