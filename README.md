@@ -25,7 +25,7 @@ To view locally: `npx serve dist` or `python -m http.server --directory dist`, t
 ## Deploy on Cloudflare
 
 1. Push this folder to a GitHub repo.
-2. In Cloudflare, create a Workers project from the repo (static assets).
+2. In Cloudflare, create a Workers project from the repo. `wrangler.jsonc` points it at `dist`.
    - Build command: `node build.mjs`
    - Output / assets directory: `dist`
 3. Put your résumé at `src/resume.pdf`; the build copies it into the site.
