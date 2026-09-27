@@ -16,7 +16,7 @@ const SITE = {
   name: 'Kobi Lipari',
   url: 'https://kobilipari.com',
   description: 'Kobi Lipari — data analyst and web developer. I build the engine and design what people see.',
-  email: '[email]',
+  email: 'KobiLipari@gmail.com',
   links: [
     { label: 'LinkedIn', href: '#' },
     { label: 'GitHub', href: '#' },
@@ -67,7 +67,7 @@ const footer = () => `
 <footer class="footer" id="contact">
   <div>
     <p class="footer__cta">Let's build <i>something.</i></p>
-    <p style="margin:16px 0 0"><a href="#">${txt(SITE.email)}</a></p>
+    <p style="margin:16px 0 0"><a href="mailto:${SITE.email}">${esc(SITE.email)}</a></p>
   </div>
   <div class="footer__links">
     ${SITE.links.map((l) => `<a href="${l.href}">${esc(l.label)}</a>`).join('\n    ')}

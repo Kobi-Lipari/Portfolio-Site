@@ -38,7 +38,7 @@ export const projects = [
     note: "Built from scratch to replace Google Sites and a third-party registration site.",
     outcome: "The Louisiana Chess Association's full platform, built from scratch: tournaments, registration and payments, clubs, membership and news in one place.",
     role: "Designer & developer",
-    timeline: "May 2026 – present",
+    timeline: "June 2025 – present",
     links: [
       { label: "louisianachess.org", href: "https://www.louisianachess.org" },
       { label: "Code", href: "https://github.com/Kobi-Lipari/lca-website" }
@@ -56,7 +56,7 @@ export const projects = [
       data: "Designed for about 600 member profiles, 50 people online at once, and tournaments every couple of months with up to 100 players. The database holds members, clubs, tournaments, registrations, payments and games, built up across more than 20 migrations.",
       approach: "React 19, TypeScript, Vite, Tailwind and shadcn/ui on the front end; Cloudflare Pages Functions and a D1 (SQLite) database behind it; Supabase for sign-in, Stripe for memberships and entry fees, and Resend for email. Features include tournament registration and management with a FIDE Dutch pairing engine, a club directory with a map, a news feed from the association's Facebook page, admin tools for group email and site announcements, and club logo uploads stored in R2.",
       validation: "Before launch I audited the codebase and fixed what turned up, including a Stripe webhook without signature verification and an endpoint that exposed contact-form messages. The backend now has 50 integration and 62 unit tests that run in CI on every pull request touching it.",
-      result: "Live at louisianachess.org since July 2026. [Members, registrations or tournaments run through it so far.]",
+      result: "Live at louisianachess.org, replacing the old Google Sites page. [Members, registrations or tournaments run through it so far.]",
       reflection: "[What you would build next.]"
     }
   },
@@ -90,7 +90,7 @@ export const projects = [
     note: "Designed and built from scratch for a direct-pay telehealth practice.",
     outcome: "A public site that explains an unfamiliar care model, shows pricing up front, and moves visitors into booking and the patient portal.",
     role: "Web developer & IT manager",
-    timeline: "[month year] – present",
+    timeline: "December 2025 – present",
     links: [{ label: "healingly.net", href: "https://healingly.net" }],
     gallery: {
       desktop: [
