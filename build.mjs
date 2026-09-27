@@ -211,7 +211,7 @@ ${nav(2)}
     <div><dt>Role</dt><dd>${txt(p.role)}</dd></div>
     <div><dt>Timeline</dt><dd>${txt(p.timeline)}</dd></div>
     <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
-    ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => `<a href="${l.href}">${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
+    ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
   <div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>
   <section class="pipeline" aria-label="How it's built">
