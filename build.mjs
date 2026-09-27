@@ -1,6 +1,6 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
-import { mkdir, writeFile, copyFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile, rm, cp } from 'node:fs/promises';
 import { projects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
@@ -197,6 +197,43 @@ const SECTION_ORDER = [
   ['validation', 'Validation'], ['result', 'Result'], ['reflection', 'Next time'],
 ];
 
+// Responsive <img> for a screenshot saved as NAME.webp (full) and NAME-sm.webp (half size).
+const shot = (depth, img, { eager = false, cls = '', sizes = '(max-width: 1160px) 100vw, 1040px' } = {}) =>
+  `<img class="${cls}" src="${u(depth, `img/${img.src}.webp`)}" srcset="${u(depth, `img/${img.src}-sm.webp`)} ${img.w / 2}w, ${u(depth, `img/${img.src}.webp`)} ${img.w}w" sizes="${sizes}" width="${img.w}" height="${img.h}" alt="${esc(img.alt)}"${eager ? '' : ' loading="lazy"'} decoding="async">`;
+
+// Browser + phone frames with thumbnails to switch the desktop view.
+const showcase = (p, depth) => {
+  const g = p.gallery;
+  const site = p.links.find((l) => l.href.startsWith('http'));
+  const host = site ? site.href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : '';
+  const first = g.desktop[0];
+  return `
+  <section class="showcase" aria-label="Screenshots of ${esc(p.title)}" data-gallery>
+    <div class="showcase__stage">
+      <figure class="browser">
+        <div class="browser__bar">
+          <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="browser__url">${esc(host)}</span>
+          ${site ? `<a class="browser__visit" href="${site.href}" target="_blank" rel="noopener">Visit site ↗</a>` : ''}
+        </div>
+        <div class="browser__view" style="aspect-ratio:${first.w} / ${first.h}">
+          ${shot(depth, first, { eager: true, cls: 'browser__img' })}
+        </div>
+      </figure>
+      ${g.mobile ? `<figure class="phone-frame">${shot(depth, g.mobile, { sizes: '(max-width: 700px) 45vw, 220px' })}</figure>` : ''}
+    </div>
+    <p class="showcase__caption" data-caption>${esc(first.caption)}</p>
+    ${g.desktop.length > 1 ? `<div class="thumbs" role="group" aria-label="Choose a view">
+      ${g.desktop.map((img, k) => `<button type="button" class="thumb" aria-pressed="${k === 0}"
+        data-src="${u(depth, `img/${img.src}.webp`)}" data-srcset="${u(depth, `img/${img.src}-sm.webp`)} ${img.w / 2}w, ${u(depth, `img/${img.src}.webp`)} ${img.w}w"
+        data-w="${img.w}" data-h="${img.h}" data-alt="${esc(img.alt)}" data-caption="${esc(img.caption)}">
+        <img src="${u(depth, `img/${img.src}-sm.webp`)}" alt="" width="${img.w / 2}" height="${img.h / 2}" loading="lazy" decoding="async">
+        <span>${esc(img.label)}</span>
+      </button>`).join('\n      ')}
+    </div>` : ''}
+  </section>`;
+};
+
 const projectPage = (p, i) => {
   const prev = projects[(i - 1 + projects.length) % projects.length];
   const next = projects[(i + 1) % projects.length];
@@ -213,7 +250,7 @@ ${nav(2)}
     <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
     ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
-  <div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>
+  ${p.gallery ? showcase(p, 2) : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
   <section class="pipeline" aria-label="How it's built">
     <h2>HOW IT'S BUILT</h2>
     <ol>${p.pipeline.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>
@@ -226,6 +263,7 @@ ${nav(2)}
     <a href="${u(2, `work/${next.slug}/`)}">${esc(next.title)} →</a>
   </nav>
 </main>
+${p.gallery ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
 ${footer()}`;
 };
 
@@ -238,6 +276,8 @@ for (const [i, p] of projects.entries()) {
 }
 await copyFile('src/styles.css', 'dist/styles.css');
 await copyFile('src/seam.js', 'dist/seam.js');
+await copyFile('src/gallery.js', 'dist/gallery.js');
+await cp('src/img', 'dist/img', { recursive: true });
 await copyFile('src/resume.pdf', 'dist/resume.pdf').catch(() => console.warn('No src/resume.pdf yet — the Résumé link will 404 until you add one.'));
 await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: SITE.description, path: '/404' })}
 ${nav()}

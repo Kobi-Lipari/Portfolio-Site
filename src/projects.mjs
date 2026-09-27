@@ -43,6 +43,13 @@ export const projects = [
       { label: "louisianachess.org", href: "https://www.louisianachess.org" },
       { label: "Code", href: "https://github.com/Kobi-Lipari/lca-website" }
     ],
+    gallery: {
+      desktop: [
+        { src: "lca-home", w: 2400, h: 1500, label: "Homepage", caption: "Homepage: photo slideshow hero over live columns of tournaments, Facebook posts and clubs.", alt: "Louisiana Chess Association homepage with the headline Play. Compete. Connect. over a tournament photo, and columns for tournaments, Facebook and clubs" },
+        { src: "lca-clubs", w: 2400, h: 1100, label: "Club directory", caption: "Club directory: region filters, search, and each club's own logo and color.", alt: "Clubs page titled Find your chess community with region filters, a search box, and club cards with logos" }
+      ],
+      mobile: { src: "lca-mobile", w: 780, h: 1688, alt: "Louisiana Chess Association homepage on a phone" }
+    },
     pipeline: ["React + TypeScript UI", "Pages Functions API", "D1 database", "Supabase · Stripe · Resend", "Cloudflare deploy"],
     sections: {
       problem: "The association's web presence was a Google Sites page, with tournament registration handled on a separate third-party site. [What that made hard for members, club leaders and tournament directors.]",
@@ -85,6 +92,14 @@ export const projects = [
     role: "Web developer & IT manager",
     timeline: "[month year] – present",
     links: [{ label: "healingly.net", href: "https://healingly.net" }],
+    gallery: {
+      desktop: [
+        { src: "healingly-home", w: 2400, h: 1500, label: "Homepage", caption: "Homepage: the hand-drawn flower and roots carry the \"root-cause care\" message.", alt: "Healingly homepage with the headline Heal from the root up, booking buttons, and an illustrated flower with roots" },
+        { src: "healingly-symptoms", w: 2400, h: 1500, label: "Symptom selector", caption: "Symptom selector: visitors tap what they're feeling and see the matching service.", alt: "Dark green section titled Sound familiar? with symptom buttons and a card describing hormone balance care" },
+        { src: "healingly-pricing", w: 2400, h: 1500, label: "Pricing", caption: "Pricing: every cost shown up front, split into a first visit and two ways to continue.", alt: "Pricing section with three cards: initial consultation, membership care, and pay per visit" }
+      ],
+      mobile: { src: "healingly-mobile", w: 750, h: 1624, alt: "Healingly homepage on a phone" }
+    },
     pipeline: ["Brand & layout", "WordPress + Kadence", "Custom HTML blocks", "Booking & patient portal"],
     sections: {
       problem: "A direct-pay practice has to explain itself fast: what it treats, how visits work, and what they cost, without insurance doing the explaining. [What the practice needed when you started.]",
