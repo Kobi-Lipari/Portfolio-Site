@@ -10,32 +10,32 @@ export const projects = [
     lane: "build",
     title: "Chess Scoresheet Scanner",
     kind: "Tool · Louisiana Chess Association",
-    tools: "Python · JS",
-    note: "Handwriting read, then checked against legal moves.",
-    outcome: "Players photograph a handwritten USCF scoresheet and get a playable game plus a Lichess analysis link.",
-    role: "Solo: design, build, data",
-    timeline: "[month year]",
+    tools: "TypeScript · React · Cloudflare",
+    note: "Handwriting read verbatim, then corrected by the rules of chess.",
+    outcome: "Players photograph a handwritten scoresheet and get a playable game, with unsure moves flagged for a one-tap fix and a Lichess analysis link.",
+    role: "Solo: design, build, testing",
+    timeline: "August 2026 – present",
     links: [
-      { label: "Live demo", href: "#" },
-      { label: "Code", href: "#" }
+      { label: "Live tool", href: "https://www.louisianachess.org/scanner" },
+      { label: "Decoder code", href: "https://github.com/Kobi-Lipari/lca-website/tree/main/src/lib/scanner" }
     ],
     gallery: {
       host: "louisianachess.org/scanner",
       desktop: [
-        { label: "Demo video", hint: "Photo → parsed moves → Lichess board", caption: "Demo: a scoresheet photo becomes a playable game." },
-        { label: "Move review", hint: "Screenshot of the review step, with low-confidence moves flagged", caption: "Review: the player confirms any move the reader wasn't sure about." },
-        { label: "Result", hint: "Screenshot of the finished PGN and Lichess link", caption: "Result: a clean PGN and a one-click Lichess analysis link." }
+        { label: "Demo video", hint: "Photo → reading → checked moves → Lichess board", caption: "Demo: a scoresheet photo becomes a playable game." },
+        { label: "Move review", hint: "Screenshot of the move list with amber moves and the fix-a-move picker open", caption: "Review: flagged moves show what was written; fixing one re-checks every move after it." },
+        { label: "Result", hint: "Screenshot of the finished game with the Analyze and Keep buttons", caption: "Result: open in Lichess or chess.com, or save, share and email the PGN." }
       ],
-      mobile: { label: "Phone capture", hint: "Camera screen framing a scoresheet" }
+      mobile: { label: "Phone capture", hint: "Camera screen framing a scoresheet, with Add next page" }
     },
-    pipeline: ["Photo upload", "Find move boxes", "Read handwriting", "Legal-move check", "PGN + Lichess link"],
+    pipeline: ["Photo, shrunk in browser", "Verbatim transcription", "Legal-move search", "Review & fix", "PGN + Lichess link"],
     sections: {
-      problem: "Tournament games live on handwritten carbon scoresheets. Typing them into software is slow, so most games never get analyzed. [Who asked for this and why it mattered to LCA players.]",
-      data: "[How many sample scoresheets you used, and what made them messy: handwriting styles, crossed-out moves, notation variants.]",
-      approach: "Read each move box, then check every candidate against the legal moves in that position, so the rules of chess correct the handwriting reader. [Key decisions and trade-offs.]",
-      validation: "[Accuracy on a held-out set of sheets, and how you measured it.]",
-      result: "[What players can do now, and where it lives on the LCA site.]",
-      reflection: "[What you would improve next.]"
+      problem: "Tournament games live on handwritten scoresheets. Typing one into analysis software is slow and error-prone, so most club games are never looked at again. [Who asked for this, and why it mattered to LCA players.]",
+      data: "Sixty games, three classics and fifty-seven generated to cover castling, promotion, en passant and ambiguous moves, turned into simulated transcriptions at three noise levels: clean, typical, and time-pressure scrawl. The errors model what a reader gets wrong: look-alike characters (b/6, N/H), missing capture and check marks, 0-0 vs O-O, blanks, crossed-out moves, and rows shifted by half a move. [Real-sheet set: how many of your own scoresheets, and what made them messy.]",
+      approach: "Two stages with a hard line between them. A vision model copies the handwriting exactly, mistakes included, and is told twice never to fix a move; a beam search then decides what was actually played, scoring every legal move in each position against what was written, with look-alike characters costing less. It can treat a cell as noise, or insert a move a player forgot to write, but only if the next moves line up again. Keeping the stages apart is what makes the result measurable: raw reading accuracy and corrected accuracy are separate numbers. Fixing a move re-runs the search with that move locked in, so one correction usually repairs the moves after it. Profiling against the real chess engine cut decode time 8–16x (about 0.7s a game on a desktop) with output checked identical on 60 sheets, and it runs in a Web Worker so the page never freezes.",
+      validation: "On the simulated sheets: every clean game decoded exactly; 87% of moves right under typical noise and 52% under time-pressure noise, with the first wrong move flagged for review 95% of the time under typical noise. The honest gap: simulated errors are guesses about handwriting, spread evenly, where real ones cluster late in the game. [Accuracy on a held-out set of real scoresheets: raw reading vs. after correction.]",
+      result: "Live on louisianachess.org since September 2026 for anyone with an LCA account. Members photograph one sheet or several (front, back, continuation), fix any flagged move in a tap, then open the game in Lichess or chess.com, or save, share and email the PGN. Photos are read once and never stored, and a daily limit keeps the per-scan cost in check.",
+      reflection: "Measure on real scoresheets and rebuild the look-alike character table from real misreads instead of guesses. Teach the search to recover when a player skips a whole move pair, which it currently flags but cannot realign. Cut the review list: too many correct moves are flagged, so real data should tighten that. Then try a smaller, cheaper vision model and keep it only if the numbers hold."
     }
   },
   {
