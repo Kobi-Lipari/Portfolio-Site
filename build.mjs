@@ -33,7 +33,7 @@ const esc = (s = '') => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const txt = (s) => esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`);
 
-const head = ({ title, description, path, depth = 0 }) => `<!doctype html>
+const head = ({ title, description, path, depth = 0, fonts = '' }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -46,10 +46,11 @@ const head = ({ title, description, path, depth = 0 }) => `<!doctype html>
 <meta property="og:type" content="website">
 <meta property="og:url" content="${SITE.url}${path}">
 <meta name="theme-color" content="#F3EEE6">
+<script>(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light'})()</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%230E2438'/%3E%3Crect x='16' width='16' height='32' fill='%23F3EEE6'/%3E%3Crect x='15' width='2' height='32' fill='%23C8553A'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1${fonts}&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${u(depth, 'styles.css')}">
 </head>
 <body>
@@ -62,11 +63,47 @@ const nav = (depth = 0) => `
     <a class="hide-sm" href="${u(depth, '#built')}">Build</a>
     <a class="hide-sm" href="${u(depth, '#designed')}">Design</a>
     <a class="hide-sm" href="${u(depth, '#about')}">About</a>
+    <span class="nav__tools">
+      <button type="button" class="icon-btn icon-btn--wide hide-sm" data-palette-open aria-label="Jump to a page or action" title="Jump to (Ctrl/⌘ K)">
+        ${ICON.search}<kbd><span data-shortcut-mod>⌘</span>K</kbd>
+      </button>
+      <button type="button" class="icon-btn" data-bp-toggle aria-pressed="false" aria-label="Blueprint mode" title="Blueprint mode (B)">${ICON.ruler}</button>
+      <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme" title="Theme">${ICON.moon}${ICON.sun}</button>
+    </span>
     <a class="pill" href="${u(depth, SITE.resume)}">Résumé</a>
   </nav>
 </header>`;
 
-const footer = () => `
+// What the command palette can jump to, per page (links depend on depth
+// in preview builds). Read by src/site.js.
+const siteIndex = (depth) => {
+  const items = [
+    ...projects.map((p) => ({ group: 'Projects', title: p.title, hint: p.lane === 'build' ? 'Built' : 'Designed', keywords: `${p.tools} ${p.kind}`, href: u(depth, `work/${p.slug}/`) })),
+    { group: 'On this site', title: 'Built work', keywords: 'engineering analysis', href: u(depth, '#built') },
+    { group: 'On this site', title: 'Designed work', keywords: 'presentation ux', href: u(depth, '#designed') },
+    { group: 'On this site', title: 'About Kobi', keywords: 'bio experience', href: u(depth, '#about') },
+    { group: 'On this site', title: 'Résumé', keywords: 'cv pdf', href: u(depth, SITE.resume) },
+    ...projects.flatMap((p) => p.links.filter((l) => l.href.startsWith('http')).map((l) => ({
+      group: 'Live work', title: `${p.title}: ${l.label}`, hint: '↗', keywords: 'live site open', href: l.href, external: true,
+    }))),
+    { group: 'Actions', title: 'Copy email address', hint: SITE.email, keywords: 'contact hire mail', action: 'copy-email' },
+    { group: 'Actions', title: 'Email Kobi', keywords: 'contact hire', href: `mailto:${SITE.email}` },
+    { group: 'Actions', title: 'Show the blueprint of this page', hint: 'B', keywords: 'inspect design spec', action: 'blueprint' },
+    { group: 'Actions', title: 'Switch theme', keywords: 'dark light mode', action: 'theme' },
+  ];
+  return `<script type="application/json" id="site-index">${JSON.stringify({ email: SITE.email, items }).replace(/</g, '\\u003c')}</script>`;
+};
+
+// Inline icons (stroke = currentColor), so they follow the theme.
+const svg = (d, extra = '') => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
+const ICON = {
+  search: svg('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'),
+  ruler: svg('<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>'),
+  moon: svg('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', 'class="i-moon"'),
+  sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 'class="i-sun"'),
+};
+
+const footer = (depth = 0) => `
 <footer class="footer" id="contact">
   <div>
     <p class="footer__cta">Let's build <i>something.</i></p>
@@ -77,6 +114,8 @@ const footer = () => `
     <span style="font-family:var(--mono);font-size:13px;color:var(--ink-3)">Kenner, Louisiana</span>
   </div>
 </footer>
+${siteIndex(depth)}
+<script src="${u(depth, 'site.js')}" defer></script>
 </body>
 </html>`;
 
@@ -212,6 +251,15 @@ ${nav()}
 <script src="${u(0, 'seam.js')}" defer></script>
 ${footer()}`;
 
+// Interactive pieces a project page can embed. Each is a container that its
+// script fills in; the text inside is what shows without JavaScript.
+const siteRoot = (depth) => (PREVIEW ? '../'.repeat(depth) : '/');
+const DEMOS = {
+  scanner: () => `<section class="demo" data-demo="scanner" aria-label="Live decoder demo"><p class="demo__noscript">The live decoder demo needs JavaScript.</p></section>`,
+  sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
+};
+const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js' };
+
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
   ['validation', 'Validation'], ['result', 'Result'], ['reflection', 'Next time'],
@@ -259,7 +307,7 @@ const showcase = (p, depth) => {
 const projectPage = (p, i) => {
   const prev = projects[(i - 1 + projects.length) % projects.length];
   const next = projects[(i + 1) % projects.length];
-  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2 })}
+  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2, fonts: p.demo === 'scanner' ? '&family=Caveat:wght@500;600' : '' })}
 ${nav(2)}
 <main id="main" class="proj">
   <a class="back" href="${u(2, p.lane === 'build' ? '#built' : '#designed')}">← All work</a>
@@ -272,6 +320,7 @@ ${nav(2)}
     <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
     ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
+  ${p.demo ? DEMOS[p.demo](2) : ''}
   ${p.gallery ? showcase(p, 2) : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
   <section class="pipeline" aria-label="How it's built">
     <h2>HOW IT'S BUILT</h2>
@@ -286,7 +335,8 @@ ${nav(2)}
   </nav>
 </main>
 ${p.gallery ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
-${footer()}`;
+${p.demo ? `<script type="module" src="${u(2, DEMO_SCRIPTS[p.demo])}"></script>` : ''}
+${footer(2)}`;
 };
 
 await rm('dist', { recursive: true, force: true });
@@ -299,6 +349,11 @@ for (const [i, p] of projects.entries()) {
 await copyFile('src/styles.css', 'dist/styles.css');
 await copyFile('src/seam.js', 'dist/seam.js');
 await copyFile('src/gallery.js', 'dist/gallery.js');
+await copyFile('src/site.js', 'dist/site.js');
+await copyFile('src/demo-scanner.js', 'dist/demo-scanner.js');
+await copyFile('src/demo-worker.js', 'dist/demo-worker.js');
+await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
+await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
 if (SITE.resume === 'resume.pdf') {
   await copyFile('src/resume.pdf', 'dist/resume.pdf');
@@ -312,7 +367,7 @@ ${nav(1)}
   <h1>Résumé PDF coming soon.</h1>
   <p class="proj__outcome">In the meantime, email <a href="mailto:${SITE.email}">${esc(SITE.email)}</a> and I'll send a copy.</p>
 </main>
-${footer()}`);
+${footer(1)}`);
 }
 await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: SITE.description, path: '/404' })}
 ${nav()}

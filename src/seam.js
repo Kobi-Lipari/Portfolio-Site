@@ -54,6 +54,19 @@
 
   snaps.forEach((b) => b.addEventListener('click', () => setSplit(Number(b.dataset.snap), { animate: true })));
 
+  // Blueprint mode shows the whole page as its build drawing, so the hero
+  // slides all the way to the blueprint side, and back to where it was.
+  let beforeBlueprint = null;
+  document.addEventListener('blueprint:change', (e) => {
+    if (e.detail.on) {
+      beforeBlueprint = split;
+      setSplit(100, { animate: true });
+    } else if (beforeBlueprint !== null) {
+      setSplit(beforeBlueprint, { animate: true });
+      beforeBlueprint = null;
+    }
+  });
+
   // A one-time sweep so visitors notice the seam can move.
   setSplit(88);
   const io = new IntersectionObserver((entries) => {

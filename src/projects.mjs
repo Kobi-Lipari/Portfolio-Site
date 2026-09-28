@@ -7,6 +7,7 @@
 export const projects = [
   {
     slug: "scoresheet-scanner",
+    demo: "scanner",
     lane: "build",
     title: "Chess Scoresheet Scanner",
     kind: "Tool · Louisiana Chess Association",
@@ -71,6 +72,7 @@ export const projects = [
   },
   {
     slug: "retention-analysis",
+    demo: "sql",
     lane: "build",
     title: "Retention & Graduation Analysis",
     kind: "Analysis · synthetic data",
