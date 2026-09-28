@@ -1,11 +1,30 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
-import { mkdir, writeFile, copyFile, rm, cp } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile, rm, cp, readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { projects } from './src/projects.mjs';
+import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
 const PREVIEW = process.env.PREVIEW === '1';
+
+// A project whose data files are stand-ins (made to design the page before the
+// real analysis ran) is built in preview only, never published.
+const isStandin = async (dataset) => {
+  const dir = `src/data/${dataset}`;
+  if (!existsSync(dir)) return true;
+  for (const f of (await readdir(dir)).filter((n) => n.endsWith('.json'))) {
+    if (JSON.parse(await readFile(`${dir}/${f}`, 'utf8')).standin) return true;
+  }
+  return false;
+};
+const projects = [];
+for (const p of allProjects) {
+  if (p.data && !PREVIEW && (await isStandin(p.data))) {
+    console.warn(`Skipping "${p.title}": its data in src/data/${p.data} is still stand-in. It shows in PREVIEW=1 builds only.`);
+    continue;
+  }
+  projects.push(p);
+}
 const u = (depth, target = '') => {
   if (!PREVIEW) return '/' + target;
   const [path, hash] = target.split('#');
@@ -257,8 +276,16 @@ const siteRoot = (depth) => (PREVIEW ? '../'.repeat(depth) : '/');
 const DEMOS = {
   scanner: () => `<section class="demo" data-demo="scanner" aria-label="Live decoder demo"><p class="demo__noscript">The live decoder demo needs JavaScript.</p></section>`,
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
+  // Five pieces for the withdrawal project, each filled from its own JSON file in data/ewarn/.
+  ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/">
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="replay" id="replay" aria-label="Replay a term"><p class="demo__noscript">The term replay needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
+  </div>`,
 };
-const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js' };
+const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js', ewarn: 'demo-ewarn.js' };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -321,7 +348,7 @@ ${nav(2)}
     ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
   ${p.demo ? DEMOS[p.demo](2) : ''}
-  ${p.gallery ? showcase(p, 2) : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
+  ${p.gallery ? showcase(p, 2) : p.demo ? '' : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
   <section class="pipeline" aria-label="How it's built">
     <h2>HOW IT'S BUILT</h2>
     <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
@@ -353,6 +380,10 @@ await copyFile('src/site.js', 'dist/site.js');
 await copyFile('src/demo-scanner.js', 'dist/demo-scanner.js');
 await copyFile('src/demo-worker.js', 'dist/demo-worker.js');
 await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
+await copyFile('src/demo-ewarn.js', 'dist/demo-ewarn.js');
+for (const dataset of new Set(projects.map((p) => p.data).filter(Boolean))) {
+  await cp(`src/data/${dataset}`, `dist/data/${dataset}`, { recursive: true });
+}
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
 if (SITE.resume === 'resume.pdf') {

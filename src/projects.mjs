@@ -6,6 +6,32 @@
 
 export const projects = [
   {
+    slug: "withdrawal-early-warning",
+    demo: "ewarn",
+    data: "ewarn",
+    lane: "build",
+    title: "Who's About to Withdraw?",
+    kind: "Analysis · public data",
+    tools: "Python · pandas · scikit-learn · statsmodels",
+    note: "A week-4 early warning, with the bar set before seeing the data.",
+    outcome: "An early-warning model for course withdrawal, built on 32,600 real registrations and judged against a plan written before any results were seen: tested on a term it never saw, and audited for fairness.",
+    role: "Solo: analysis, modelling, write-up",
+    timeline: "September 2026 – present",
+    links: [
+      { label: "Code & notebooks", href: "#" },
+      { label: "Analysis plan", href: "#" }
+    ],
+    pipeline: ["Plan committed first", "Nine data checks", "Week-4 features", "Train on 2013, test on 2014", "Fairness audit & model card"],
+    sections: {
+      problem: "Colleges want to reach students who are about to withdraw while there's still time to help, and the usual tool is a risk score. A risk score is only worth using if it works on a term it has never seen, if its percentages mean what they say, and if it doesn't miss some groups of students far more than others. This project builds one in the open and checks all three.",
+      data: "The Open University Learning Analytics Dataset: about 32,600 course registrations across seven modules and four terms in 2013 and 2014, with demographics, daily clicks in the online classroom, assessment submissions and final results. Public, anonymised, and licensed CC BY 4.0 (Kuzilek, Hlosta and Zdrahal, 2017). Nine data checks ran before any modelling; the case files above show what they found.",
+      approach: "The plan was committed before any outcome data was opened. The model sees only what a college would know at the end of week 4: registration details, online activity and whether early work was handed in. Assessment scores are left out because the data doesn't say when they were returned. Gender, age, disability and area deprivation are never inputs; they're used only to audit the model. A logistic regression is compared with gradient-boosted trees, and the simpler model wins unless the other is clearly better.",
+      validation: "Trained on 2013, tuned on February 2014, and scored once on October 2014, a term the model never saw. Reported with bootstrap confidence intervals: AUC, calibration, and how many withdrawals each risk level catches. Differences between students who stay and students who leave are tested with Mann–Whitney U and chi-square and reported by effect size, with Holm correction. [Headline results once the test term is opened.]",
+      result: "[What the model achieved against the bars in the plan, including anything it missed.]",
+      reflection: "[What you would change, once the results are in.]"
+    }
+  },
+  {
     slug: "scoresheet-scanner",
     demo: "scanner",
     lane: "build",
