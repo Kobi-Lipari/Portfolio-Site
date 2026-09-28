@@ -1,6 +1,7 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
 import { mkdir, writeFile, copyFile, rm, cp } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { projects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
@@ -22,7 +23,9 @@ const SITE = {
     { label: 'GitHub', href: '#' },
     { label: 'Tableau Public', href: '#' },
   ],
-  resume: 'resume.pdf',
+  // Until src/resume.pdf exists, the Résumé link goes to a short placeholder page.
+  resume: existsSync('src/resume.pdf') ? 'resume.pdf' : 'resume/',
+  headshot: existsSync('src/img/headshot.webp') ? 'headshot' : null,
 };
 
 // Escape text, then highlight [placeholders] so they're easy to find and replace.
@@ -70,17 +73,29 @@ const footer = () => `
     <p style="margin:16px 0 0"><a href="mailto:${SITE.email}">${esc(SITE.email)}</a></p>
   </div>
   <div class="footer__links">
-    ${SITE.links.map((l) => `<a href="${l.href}">${esc(l.label)}</a>`).join('\n    ')}
+    ${SITE.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ')}
     <span style="font-family:var(--mono);font-size:13px;color:var(--ink-3)">Kenner, Louisiana</span>
   </div>
 </footer>
 </body>
 </html>`;
 
+// Blueprint-style stand-in for an image that hasn't been added yet.
+const ph = (label, hint = '', cls = '') =>
+  `<div class="ph ${cls}" role="img" aria-label="${esc(label)} (coming soon)"><span class="ph__tag">Coming soon</span><span class="ph__label">${esc(label)}</span>${hint ? `<span class="ph__hint">${esc(hint)}</span>` : ''}</div>`;
+
+// Small preview for the homepage lists: first screenshot, or a placeholder.
+const listThumb = (p) => {
+  const first = p.gallery?.desktop?.[0];
+  return first && first.src
+    ? `<img class="item__thumb" src="${u(0, `img/${first.src}-sm.webp`)}" alt="" width="${first.w / 2}" height="${first.h / 2}" decoding="async">`
+    : `<span class="item__thumb item__thumb--ph" aria-hidden="true"></span>`;
+};
+
 const listItem = (p) => `
       <li><a class="item" href="${u(0, `work/${p.slug}/`)}">
-        <span class="item__text"><span class="item__title">${esc(p.title)}</span><span class="item__note">${txt(p.note)}</span></span>
-        <span class="item__tools">${esc(p.tools)}</span>
+        ${listThumb(p)}
+        <span class="item__text"><span class="item__tools">${esc(p.tools)}</span><span class="item__title">${esc(p.title)}</span><span class="item__note">${txt(p.note)}</span></span>
       </a></li>`;
 
 const barHeights = [150, 190, 170, 230, 260, 300];
@@ -176,7 +191,12 @@ ${nav()}
 </section>
 
 <section class="about" id="about">
-  <h2>About</h2>
+  <div class="about__side">
+    <h2>About</h2>
+    ${SITE.headshot
+      ? `<img class="about__photo" src="${u(0, 'img/headshot.webp')}" alt="Kobi Lipari" width="480" height="600" loading="lazy" decoding="async">`
+      : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
+  </div>
   <div>
     <p>I'm a data analyst in a university Office of Institutional Research and a part-time web developer. I like the whole path: pulling messy data, getting the numbers right, and making the result easy to read and use.</p>
     <p>${txt('[One or two sentences on what you want next and the kind of team you want to join.]')}</p>
@@ -201,33 +221,35 @@ const SECTION_ORDER = [
 const shot = (depth, img, { eager = false, cls = '', sizes = '(max-width: 1160px) 100vw, 1040px' } = {}) =>
   `<img class="${cls}" src="${u(depth, `img/${img.src}.webp`)}" srcset="${u(depth, `img/${img.src}-sm.webp`)} ${img.w / 2}w, ${u(depth, `img/${img.src}.webp`)} ${img.w}w" sizes="${sizes}" width="${img.w}" height="${img.h}" alt="${esc(img.alt)}"${eager ? '' : ' loading="lazy"'} decoding="async">`;
 
-// Browser + phone frames with thumbnails to switch the desktop view.
+// One gallery item: a real screenshot when `src` is set, otherwise a placeholder.
+const view = (depth, img, eager) => img.src ? shot(depth, img, { eager, cls: 'browser__img' }) : ph(img.label, img.hint);
+
+// Browser + phone frames; thumbnails switch between the stacked views.
 const showcase = (p, depth) => {
   const g = p.gallery;
   const site = p.links.find((l) => l.href.startsWith('http'));
-  const host = site ? site.href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : '';
+  const host = g.host || (site ? site.href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : '');
   const first = g.desktop[0];
+  const ratio = first.src ? `${first.w} / ${first.h}` : '16 / 10';
   return `
   <section class="showcase" aria-label="Screenshots of ${esc(p.title)}" data-gallery>
-    <div class="showcase__stage">
+    <div class="showcase__stage${g.mobile ? '' : ' showcase__stage--solo'}">
       <figure class="browser">
         <div class="browser__bar">
           <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
           <span class="browser__url">${esc(host)}</span>
-          ${site ? `<a class="browser__visit" href="${site.href}" target="_blank" rel="noopener">Visit site ↗</a>` : ''}
+          ${site ? `<a class="browser__visit" href="${site.href}" target="_blank" rel="noopener">${esc(g.visit || 'Visit site')} ↗</a>` : ''}
         </div>
-        <div class="browser__view" style="aspect-ratio:${first.w} / ${first.h}">
-          ${shot(depth, first, { eager: true, cls: 'browser__img' })}
+        <div class="browser__view" style="aspect-ratio:${ratio}">
+          ${g.desktop.map((img, k) => `<div class="browser__pane" data-view="${k}"${k ? ' hidden' : ''}>${view(depth, img, k === 0)}</div>`).join('\n          ')}
         </div>
       </figure>
-      ${g.mobile ? `<figure class="phone-frame">${shot(depth, g.mobile, { sizes: '(max-width: 700px) 45vw, 220px' })}</figure>` : ''}
+      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
     </div>
-    <p class="showcase__caption" data-caption>${esc(first.caption)}</p>
+    <p class="showcase__caption" data-caption>${txt(first.caption)}</p>
     ${g.desktop.length > 1 ? `<div class="thumbs" role="group" aria-label="Choose a view">
-      ${g.desktop.map((img, k) => `<button type="button" class="thumb" aria-pressed="${k === 0}"
-        data-src="${u(depth, `img/${img.src}.webp`)}" data-srcset="${u(depth, `img/${img.src}-sm.webp`)} ${img.w / 2}w, ${u(depth, `img/${img.src}.webp`)} ${img.w}w"
-        data-w="${img.w}" data-h="${img.h}" data-alt="${esc(img.alt)}" data-caption="${esc(img.caption)}">
-        <img src="${u(depth, `img/${img.src}-sm.webp`)}" alt="" width="${img.w / 2}" height="${img.h / 2}" loading="lazy" decoding="async">
+      ${g.desktop.map((img, k) => `<button type="button" class="thumb" aria-pressed="${k === 0}" data-view="${k}" data-caption="${esc(img.caption)}">
+        ${img.src ? `<img src="${u(depth, `img/${img.src}-sm.webp`)}" alt="" width="${img.w / 2}" height="${img.h / 2}" loading="lazy" decoding="async">` : `<span class="thumb__ph" aria-hidden="true"></span>`}
         <span>${esc(img.label)}</span>
       </button>`).join('\n      ')}
     </div>` : ''}
@@ -248,12 +270,12 @@ ${nav(2)}
     <div><dt>Role</dt><dd>${txt(p.role)}</dd></div>
     <div><dt>Timeline</dt><dd>${txt(p.timeline)}</dd></div>
     <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
-    ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
+    ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
   ${p.gallery ? showcase(p, 2) : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
   <section class="pipeline" aria-label="How it's built">
     <h2>HOW IT'S BUILT</h2>
-    <ol>${p.pipeline.map((s) => `<li><span>${esc(s)}</span></li>`).join('')}</ol>
+    <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
   </section>
   <div class="sections">
     ${SECTION_ORDER.map(([k, label]) => `<section class="section"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n    ')}
@@ -278,7 +300,20 @@ await copyFile('src/styles.css', 'dist/styles.css');
 await copyFile('src/seam.js', 'dist/seam.js');
 await copyFile('src/gallery.js', 'dist/gallery.js');
 await cp('src/img', 'dist/img', { recursive: true });
-await copyFile('src/resume.pdf', 'dist/resume.pdf').catch(() => console.warn('No src/resume.pdf yet — the Résumé link will 404 until you add one.'));
+if (SITE.resume === 'resume.pdf') {
+  await copyFile('src/resume.pdf', 'dist/resume.pdf');
+} else {
+  console.warn('No src/resume.pdf yet, so the Résumé link goes to a placeholder page.');
+  await mkdir('dist/resume', { recursive: true });
+  await writeFile('dist/resume/index.html', `${head({ title: `Résumé — ${SITE.name}`, description: SITE.description, path: '/resume/', depth: 1 })}
+${nav(1)}
+<main id="main" class="proj proj--narrow">
+  <p class="proj__eyebrow">Résumé</p>
+  <h1>Résumé PDF coming soon.</h1>
+  <p class="proj__outcome">In the meantime, email <a href="mailto:${SITE.email}">${esc(SITE.email)}</a> and I'll send a copy.</p>
+</main>
+${footer()}`);
+}
 await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: SITE.description, path: '/404' })}
 ${nav()}
 <main id="main" class="proj"><h1 style="margin-top:48px">Nothing here.</h1><p class="proj__outcome"><a href="${u(0)}">Back to the homepage</a></p></main>

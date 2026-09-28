@@ -19,9 +19,10 @@
     snaps.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.snap) === split)));
   }
 
-  // Scale the fixed 1280×620 composition to the stage width.
+  // Scale the fixed-size composition (1280×620, cropped narrower on phones) to the stage width.
   function fit() {
-    canvas.style.setProperty('--scale', stage.clientWidth / 1280);
+    const composedWidth = parseFloat(getComputedStyle(stage).getPropertyValue('--cw')) || 1280;
+    canvas.style.setProperty('--scale', stage.clientWidth / composedWidth);
   }
   new ResizeObserver(fit).observe(stage);
   fit();

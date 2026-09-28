@@ -19,6 +19,15 @@ export const projects = [
       { label: "Live demo", href: "#" },
       { label: "Code", href: "#" }
     ],
+    gallery: {
+      host: "louisianachess.org/scanner",
+      desktop: [
+        { label: "Demo video", hint: "Photo → parsed moves → Lichess board", caption: "Demo: a scoresheet photo becomes a playable game." },
+        { label: "Move review", hint: "Screenshot of the review step, with low-confidence moves flagged", caption: "Review: the player confirms any move the reader wasn't sure about." },
+        { label: "Result", hint: "Screenshot of the finished PGN and Lichess link", caption: "Result: a clean PGN and a one-click Lichess analysis link." }
+      ],
+      mobile: { label: "Phone capture", hint: "Camera screen framing a scoresheet" }
+    },
     pipeline: ["Photo upload", "Find move boxes", "Read handwriting", "Legal-move check", "PGN + Lichess link"],
     sections: {
       problem: "Tournament games live on handwritten carbon scoresheets. Typing them into software is slow, so most games never get analyzed. [Who asked for this and why it mattered to LCA players.]",
@@ -71,6 +80,14 @@ export const projects = [
     role: "Analyst",
     timeline: "[month year]",
     links: [{ label: "Dashboard", href: "#" }],
+    gallery: {
+      host: "public.tableau.com",
+      desktop: [
+        { label: "Retention dashboard", hint: "Tableau Public embed, synthetic data", caption: "Second-fall retention by entering cohort, rebuilt on synthetic data." },
+        { label: "Cohort SQL", hint: "Screenshot of the query that builds first-time freshman cohorts", caption: "The SQL that turns ten fall extracts into one cohort table." },
+        { label: "Data model", hint: "Diagram: term extracts → cohort table → retention and graduation rates", caption: "How the pieces connect, from raw extracts to published rates." }
+      ]
+    },
     pipeline: ["Fall term extracts", "Union into one table", "First-time freshman cohorts", "Match to later terms", "Retention & grad rates"],
     sections: {
       problem: "Leadership needed consistent 2- and 3-year retention and 4- and 6-year graduation rates, broken out by student groups, every year.",
@@ -121,6 +138,14 @@ export const projects = [
     role: "Analyst & designer",
     timeline: "[month year]",
     links: [{ label: "Tableau Public", href: "#" }],
+    gallery: {
+      host: "public.tableau.com",
+      desktop: [
+        { label: "Retention dashboard", hint: "Tableau Public embed, synthetic data", caption: "Retention: who comes back for a second fall." },
+        { label: "Graduation dashboard", hint: "Tableau Public embed, synthetic data", caption: "Graduation: four- and six-year completion by cohort." },
+        { label: "Enrollment dashboard", hint: "Tableau Public embed, synthetic data", caption: "Enrollment: first-time freshmen by high school and parish." }
+      ]
+    },
     pipeline: ["Question", "Chart choice", "Layout", "Filters", "Publish"],
     sections: {
       problem: "[Who reads these dashboards and the one question each answers.]",
@@ -142,6 +167,13 @@ export const projects = [
     role: "Analyst",
     timeline: "[month year]",
     links: [],
+    gallery: {
+      host: "Maritime program proposal",
+      desktop: [
+        { label: "Key chart", hint: "The one chart that makes the case", caption: "The chart that carried the recommendation." },
+        { label: "Market segments", hint: "Peer program enrollment broken into segments", caption: "Where students come from, and which groups nobody nearby serves." }
+      ]
+    },
     pipeline: ["Peer program data", "Segment the market", "Find the gaps", "Tell the story"],
     sections: {
       problem: "Leadership wanted to know whether a maritime studies program would find students, and which ones.",
