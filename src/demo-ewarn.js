@@ -667,10 +667,11 @@ function renderAdvising(sec, d) {
 // ── 5. Case files ───────────────────────────────────────────────────
 function renderCasefiles(sec, d) {
   const OPEN = 4; // an even number, so two-column rows come out full
-  const card = (f, k) => h('article', { class: `ew-case ${f.rows ? 'is-changed' : 'is-clean'}` },
+  // A check can touch many rows and still need no change, so the stamp follows `changed`, not the count.
+  const card = (f, k) => h('article', { class: `ew-case ${f.changed ? 'is-changed' : 'is-clean'}` },
     h('div', { class: 'ew-case__top' },
       h('span', { class: 'ew-case__n', text: `CASE ${String(k + 1).padStart(2, '0')}` }),
-      h('span', { class: 'ew-stamp', text: f.rows ? 'Changed the analysis' : 'Clean' })),
+      h('span', { class: 'ew-stamp', text: f.changed ? 'Changed the analysis' : f.rows ? 'Noted, no change' : 'Clean' })),
     h('h3', { text: f.title }),
     h('dl', {},
       h('div', {}, h('dt', { text: 'Expected' }), h('dd', { text: f.expected })),
@@ -687,12 +688,12 @@ function renderCasefiles(sec, d) {
     btn.setAttribute('aria-expanded', String(open));
     btn.textContent = open ? 'Show fewer' : `Show the other ${rest.length} checks`;
   });
-  const changed = d.files.filter((f) => f.rows).length;
+  const changed = d.files.filter((f) => f.changed).length;
   sec.replaceChildren(
     head(sec, {
       eyebrow: 'CASE FILES', standin: d.standin,
       title: 'Before any model: what the data got wrong.',
-      lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Largest first. The clean ones are listed too.`,
+      lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Biggest effect first; the checks that needed no change are listed too.`,
     }),
     h('div', { class: 'ew-cases' }, first), rest.length ? more : null, rest.length ? btn : null);
 }
