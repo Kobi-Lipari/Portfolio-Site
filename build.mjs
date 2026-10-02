@@ -257,8 +257,9 @@ const siteRoot = (depth) => (PREVIEW ? '../'.repeat(depth) : '/');
 const DEMOS = {
   scanner: () => `<section class="demo" data-demo="scanner" aria-label="Live decoder demo"><p class="demo__noscript">The live decoder demo needs JavaScript.</p></section>`,
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
+  dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>`,
 };
-const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js' };
+const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js', dash: 'demo-dash.js' };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -321,7 +322,7 @@ ${nav(2)}
     ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
   ${p.demo ? DEMOS[p.demo](2) : ''}
-  ${p.gallery ? showcase(p, 2) : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
+  ${p.gallery ? showcase(p, 2) : p.demo ? '' : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
   <section class="pipeline" aria-label="How it's built">
     <h2>HOW IT'S BUILT</h2>
     <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
@@ -353,6 +354,8 @@ await copyFile('src/site.js', 'dist/site.js');
 await copyFile('src/demo-scanner.js', 'dist/demo-scanner.js');
 await copyFile('src/demo-worker.js', 'dist/demo-worker.js');
 await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
+await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
+if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
 if (SITE.resume === 'resume.pdf') {

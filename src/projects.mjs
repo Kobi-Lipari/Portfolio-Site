@@ -131,31 +131,24 @@ export const projects = [
   },
   {
     slug: "tableau-dashboards",
+    demo: "dash",
     lane: "design",
-    title: "Tableau Public Dashboards",
-    kind: "Dashboards · synthetic data",
-    tools: "Tableau",
-    note: "Institutional dashboards rebuilt on synthetic data.",
-    outcome: "Retention, graduation and enrollment dashboards that someone can read in under a minute.",
-    role: "Analyst & designer",
-    timeline: "[month year]",
-    links: [{ label: "Tableau Public", href: "#" }],
-    gallery: {
-      host: "public.tableau.com",
-      desktop: [
-        { label: "Retention dashboard", hint: "Tableau Public embed, synthetic data", caption: "Retention: who comes back for a second fall." },
-        { label: "Graduation dashboard", hint: "Tableau Public embed, synthetic data", caption: "Graduation: four- and six-year completion by cohort." },
-        { label: "Enrollment dashboard", hint: "Tableau Public embed, synthetic data", caption: "Enrollment: first-time freshmen by high school and parish." }
-      ]
-    },
-    pipeline: ["Question", "Chart choice", "Layout", "Filters", "Publish"],
+    title: "Institutional Research Dashboards",
+    kind: "Dashboard redesign · Nicholls State University",
+    tools: "Tableau · Python · Access",
+    note: "Public Tableau dashboards moved onto one written design system.",
+    outcome: "Nicholls State's public Tableau dashboards rebuilt to one design system, so every workbook reads the same way: key numbers first, one red for the mark that matters, and the filters in one bar.",
+    role: "Data analyst, Office of Institutional Research",
+    timeline: "September 2026 – present",
+    links: [{ label: "Nicholls IR dashboards", href: "https://www.nicholls.edu/irep/dashboards/" }],
+    pipeline: ["Audit the old workbooks", "Write the design spec", "Python rewrites the .twb XML", "Structure check", "Open in Tableau & publish"],
     sections: {
-      problem: "[Who reads these dashboards and the one question each answers.]",
-      data: "Synthetic data with the same shape as the real institutional files. No real student records.",
-      approach: "[Chart choices, color, what you left out on purpose.]",
-      validation: "[How you tested that people could read them.]",
-      result: "[Embedded dashboards go here.]",
-      reflection: "[What you would change.]"
+      problem: "The office publishes about 30 Tableau workbooks for the public and for university leadership. They were built over the years by different people: default colors, raw field names like ACADEMIC_PERIOD, filters wherever they fit, and no two pages laid out alike. Every dashboard had to be learned from scratch.",
+      data: "Admissions counts applicants, admits and enrolled students by fall term and student population; first-time freshmen are counted by race, gender, first-generation status and department. For the admissions dashboard I rebuilt the source query in Access as a true funnel, with applications as the base and admissions and enrollment joined onto them, so no group can show more students enrolled than admitted. The versions on this page use only the published aggregate figures.",
+      approach: "One written spec: Nicholls red (#A6192E) and gray, Tableau's own fonts, a 1400 × 900 frame with a red header, navigation buttons and a single filter bar, and fixed type sizes from the 32 pt title down to 11 pt table headers. Python scripts apply it by rewriting each workbook's XML instead of reformatting by hand, so the same rules land on every page. The chart rules are short: key numbers first, gray by default with red for the mark that matters, no pies, and groups that differ by an order of magnitude get their own scale instead of one flattened axis.",
+      validation: "Tableau checks workbooks against a schema it doesn't publish, so a script compares every rewritten file's structure with the original workbooks before it ships, and each version is opened in Tableau before it's published. The rebuilt admissions query was checked against the old figures for every fall from 2015 to 2026: applications and admits within about 1%, and every population and department consistent from applied to admitted to enrolled.",
+      result: "[Which dashboards are republished, and what changed for the people who use them.]",
+      reflection: "Tableau rewrites some filters without their data source each time a workbook is saved, which breaks them on the next open, so the scripts check for it after every save. Next I'd like the structure check to run automatically on every change, and to move the remaining workbooks onto the spec."
     }
   },
   {

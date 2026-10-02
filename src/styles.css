@@ -813,3 +813,71 @@ kbd {
   padding: 8px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap;
   background: var(--paper-2); color: var(--ink); border: 1px solid var(--line-2); box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
 }
+
+
+/* ================================================================
+   Dashboards before ⇄ after (project page)
+   ================================================================ */
+.dash { position: relative; }
+.dash-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 14px; }
+.dash-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.dash-tabs button {
+  font: inherit; font-size: 14px; min-height: 40px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line-2); background: var(--card); color: var(--ink);
+}
+.dash-tabs button[aria-selected="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.dash-field { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
+.dash-field[hidden] { display: none; }
+.dash-field select {
+  font: inherit; font-size: 14px; min-height: 40px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--line-2); background: var(--card); color: var(--ink);
+}
+.dash-stage {
+  --split: 50; position: relative; aspect-ratio: 1400 / 900; border-radius: 10px; overflow: hidden;
+  background: #fff; border: 1px solid var(--line-2); box-shadow: 0 14px 40px -24px rgba(21, 23, 28, 0.55);
+  user-select: none; -webkit-user-select: none;
+}
+.dash-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dash-svg--after { clip-path: inset(0 0 0 calc(var(--split) * 1%)); }
+.dash-svg text { pointer-events: none; }
+.dash-svg .hit-line { pointer-events: stroke; }
+.dash-svg [data-tip] { cursor: default; }
+.dash-seam {
+  position: absolute; top: 0; bottom: 0; left: calc(var(--split) * 1%); width: 3px; margin-left: -1.5px;
+  background: var(--accent); cursor: ew-resize; touch-action: none;
+}
+.dash-seam::before { content: ""; position: absolute; inset: 0 -14px; }
+.dash-handle {
+  position: absolute; top: 50%; left: calc(var(--split) * 1%); transform: translate(-50%, -50%);
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; cursor: ew-resize; touch-action: none;
+  background: #fff; border: 2px solid var(--accent); box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.45);
+}
+.dash-handle:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.dash-stage.is-animating .dash-svg--after { transition: clip-path 0.6s cubic-bezier(.2, .7, .2, 1); }
+.dash-stage.is-animating .dash-seam, .dash-stage.is-animating .dash-handle { transition: left 0.6s cubic-bezier(.2, .7, .2, 1); }
+.dash-tag {
+  position: absolute; bottom: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  padding: 4px 8px; border-radius: 6px; background: rgba(21, 23, 28, 0.78); color: #fff; pointer-events: none;
+}
+.dash-tag { transition: opacity 0.2s; }
+.dash-tag--before { left: 10px; opacity: var(--before-tag, 1); }
+.dash-tag--after { right: 10px; background: rgba(166, 25, 46, 0.9); opacity: var(--after-tag, 1); }
+.dash-tip {
+  position: absolute; z-index: 5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; max-width: 280px;
+  padding: 8px 10px; border-radius: 8px; font-size: 13px; background: #fff; color: #15171C;
+  border: 1px solid #D9D2C5; box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.35);
+}
+.dash-tip[hidden] { display: none; }
+.dash-tip__head { font-weight: 600; }
+.dash-snaps { margin-top: 14px; }
+.dash-note { margin: 12px 0 0; min-height: 3em; color: var(--ink-2); font-size: 15px; }
+.dash-credit { margin: 6px 0 0; font-size: 13px; color: var(--ink-3); }
+.dash-cursor {
+  position: absolute; top: 0; left: 0; z-index: 8; pointer-events: none; margin: -3px 0 0 -4px;
+  transition: transform 0.6s cubic-bezier(.3, .7, .2, 1); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+.dash-cursor[hidden] { display: none; }
+.dash-cursor svg { transition: transform 0.15s; }
+.dash-cursor.is-click svg { transform: scale(0.82); }
+.dash.is-touring .dash-stage { outline: 2px dashed rgba(200, 85, 58, 0.5); outline-offset: 4px; }
+@media (max-width: 600px) { .dash-tag { font-size: 10px; padding: 3px 6px; } }
