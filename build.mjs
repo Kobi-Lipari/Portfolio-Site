@@ -19,8 +19,8 @@ const SITE = {
   description: 'Kobi Lipari — data analyst and web developer. I build the engine and design what people see.',
   email: 'KobiLipari@gmail.com',
   links: [
-    { label: 'LinkedIn', href: '#' },
-    { label: 'GitHub', href: '#' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/in/kobi-lipari-2a8b24327/' },
+    { label: 'GitHub', href: 'https://github.com/Kobi-Lipari' },
     { label: 'Tableau Public', href: '#' },
   ],
   // Until src/resume.pdf exists, the Résumé link goes to a short placeholder page.
@@ -28,10 +28,14 @@ const SITE = {
   headshot: existsSync('src/img/headshot.webp') ? 'headshot' : null,
 };
 
-// Escape text, then highlight [placeholders] so they're easy to find and replace.
+// Escape text. [Placeholders] are left out of the live site; DRAFT=1 shows them highlighted
+// so they're easy to find and replace.
+const DRAFT = process.env.DRAFT === '1';
 const esc = (s = '') => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const txt = (s) => esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`);
+const txt = (s = '') => DRAFT
+  ? esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`)
+  : esc(String(s).replace(/\s*\[[^\]]+\]/g, '').trim());
 
 const head = ({ title, description, path, depth = 0, fonts = '' }) => `<!doctype html>
 <html lang="en">
@@ -238,7 +242,7 @@ ${nav()}
   </div>
   <div>
     <p>I'm a data analyst in a university Office of Institutional Research and a part-time web developer. I like the whole path: pulling messy data, getting the numbers right, and making the result easy to read and use.</p>
-    <p>${txt('[One or two sentences on what you want next and the kind of team you want to join.]')}</p>
+    <p>Next, I want a data analyst or full-stack role on a team where getting the numbers right and making them easy to use both count. New Orleans is home base, and I'm open to relocating for the right team.</p>
     <dl>
       <dt>NOW</dt><dd>Data Analyst, Institutional Research · Web Developer &amp; IT, Healingly</dd>
       <dt>ALSO</dt><dd>Technical lead, Louisiana Chess Association</dd>
@@ -257,8 +261,9 @@ const siteRoot = (depth) => (PREVIEW ? '../'.repeat(depth) : '/');
 const DEMOS = {
   scanner: () => `<section class="demo" data-demo="scanner" aria-label="Live decoder demo"><p class="demo__noscript">The live decoder demo needs JavaScript.</p></section>`,
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
+  dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>`,
 };
-const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js' };
+const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js', dash: 'demo-dash.js' };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -316,18 +321,18 @@ ${nav(2)}
   <p class="proj__outcome"><strong>Outcome:</strong> ${txt(p.outcome)}</p>
   <dl class="meta">
     <div><dt>Role</dt><dd>${txt(p.role)}</dd></div>
-    <div><dt>Timeline</dt><dd>${txt(p.timeline)}</dd></div>
+    ${txt(p.timeline) ? `<div><dt>Timeline</dt><dd>${txt(p.timeline)}</dd></div>` : ''}
     <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
     ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
   </dl>
   ${p.demo ? DEMOS[p.demo](2) : ''}
-  ${p.gallery ? showcase(p, 2) : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
+  ${p.gallery ? showcase(p, 2) : p.demo || !DRAFT ? '' : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
   <section class="pipeline" aria-label="How it's built">
     <h2>HOW IT'S BUILT</h2>
     <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
   </section>
   <div class="sections">
-    ${SECTION_ORDER.map(([k, label]) => `<section class="section"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n    ')}
+    ${SECTION_ORDER.filter(([k]) => txt(p.sections[k])).map(([k, label]) => `<section class="section"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n    ')}
   </div>
   <nav class="pager" aria-label="More projects">
     <a href="${u(2, `work/${prev.slug}/`)}">← ${esc(prev.title)}</a>
@@ -353,6 +358,8 @@ await copyFile('src/site.js', 'dist/site.js');
 await copyFile('src/demo-scanner.js', 'dist/demo-scanner.js');
 await copyFile('src/demo-worker.js', 'dist/demo-worker.js');
 await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
+await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
+if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
 if (SITE.resume === 'resume.pdf') {
