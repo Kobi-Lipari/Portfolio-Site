@@ -7,6 +7,7 @@
 export const projects = [
   {
     slug: "scoresheet-scanner",
+    thumb: { src: "thumb-scanner", w: 960, h: 600, alt: "" },
     demo: "scanner",
     lane: "build",
     title: "Chess Scoresheet Scanner",
@@ -72,6 +73,7 @@ export const projects = [
   },
   {
     slug: "retention-analysis",
+    thumb: { src: "thumb-sql", w: 960, h: 600, alt: "" },
     demo: "sql",
     lane: "build",
     title: "Retention & Graduation Analysis",
@@ -131,6 +133,7 @@ export const projects = [
   },
   {
     slug: "tableau-dashboards",
+    thumb: { src: "thumb-dashboards", w: 960, h: 600, alt: "" },
     demo: "dash",
     lane: "design",
     title: "Institutional Research Dashboards",
@@ -139,8 +142,21 @@ export const projects = [
     note: "Public Tableau dashboards moved onto one written design system.",
     outcome: "Nicholls State's public Tableau dashboards rebuilt to one design system, so every workbook reads the same way: key numbers first, one red for the mark that matters, and the filters in one bar.",
     role: "Data analyst, Office of Institutional Research",
-    timeline: "September 2026 – present",
+    timeline: "March 2025 – present",
     links: [{ label: "Nicholls IR dashboards", href: "https://www.nicholls.edu/irep/dashboards/" }],
+    // The story of this project is the work on the dashboards, not one problem and fix.
+    process: [
+      { label: "Recode", title: "Rebuilt the data behind them", visual: "Applications → admissions → enrollment, joined as one funnel",
+        text: "The admissions numbers came from sources that didn't line up as a funnel. I rebuilt the query in Access with applications as the base and admissions and enrollment joined onto them, so each student counts once per term at the furthest stage they reached. Then I checked every fall from 2015 to 2026 against the old figures." },
+      { label: "Document", title: "Wrote down how they're updated", visual: "A refresh checklist per dashboard",
+        text: "Each refresh used to live in someone's memory. I documented the steps for each dashboard: which extracts to pull, which queries to run and in what order, and what to check before publishing, so an update is a checklist anyone in the office can follow." },
+      { label: "Build", title: "Built new ones when people asked", visual: "New dashboards for offices and leadership",
+        text: "When offices and leadership needed numbers the catalog didn't show, I built new dashboards around their questions, starting from the decision they had to make and working back to the data." },
+      { label: "Present", title: "Took them where decisions get made", visual: "Reports and presentations for task forces",
+        text: "I bring the dashboards to university task forces and senior leadership as written reports and presentations: what the numbers show, what they don't, and the options they point to." },
+      { label: "Remodel", title: "Remodeled and rebranded the catalog", visual: "One brand, applied to every workbook by script",
+        text: "One written brand and design system: Nicholls red and gray, fixed type sizes, a red header with navigation and one filter bar. Python scripts apply it by rewriting each workbook's XML and check its structure before it ships. Eight dashboards are on it so far." }
+    ],
     pipeline: ["Audit the old workbooks", "Write the design spec", "Python rewrites the .twb XML", "Structure check", "Open in Tableau & publish"],
     sections: {
       problem: "The office publishes about 30 Tableau workbooks for the public and for university leadership. They were built over the years by different people: default colors, raw field names like ACADEMIC_PERIOD, filters wherever they fit, and no two pages laid out alike. Every dashboard had to be learned from scratch.",

@@ -316,13 +316,21 @@ root.innerHTML = `${HERO ? '' : `
     </div>
     <button type="button" class="demo__go" data-tour-toggle aria-pressed="false">Play the tour</button>
   </div>`}
-  <div class="dash-bar">
-    ${HERO ? '<p class="dash-hero-title">Admissions dashboard, Nicholls State University</p>' : `<div class="dash-tabs" role="tablist" aria-label="Dashboard">
+  ${HERO ? '' : `<div class="dash-bar">
+    <div class="dash-tabs" role="tablist" aria-label="Dashboard">
       ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
-    </div>`}
+    </div>
     <label class="dash-field">Fall term <select data-fall></select></label>
     <label class="dash-field" data-group-wrap>Students <select data-group></select></label>
-  </div>
+  </div>`}
+  ${HERO ? `<div class="dash-frame">
+  <div class="dash-chrome">
+    <span class="dash-chrome__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <div class="dash-chrome__tabs" role="tablist" aria-label="Dashboard">
+      ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
+    </div>
+    <span class="dash-live"><span class="dash-live__dot" aria-hidden="true"></span>LIVE</span>
+  </div>` : ''}
   <div class="dash-stage" data-dash-stage>
     <svg class="dash-svg dash-svg--before" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Original dashboard"></svg>
     <svg class="dash-svg dash-svg--after" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Redesigned dashboard"></svg>
@@ -333,13 +341,18 @@ root.innerHTML = `${HERO ? '' : `
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l-6 6 6 6"/><path d="M15 6l6 6-6 6"/></svg>
     </div>
     <div class="dash-tip" hidden></div>
+  </div>${HERO ? `
   </div>
+  <div class="dash-under">
+    <label class="dash-field">Fall term <select data-fall></select></label>
+    <span data-group-wrap hidden><select data-group aria-label="Students"></select></span>` : ''}
   <div class="snaps dash-snaps" role="group" aria-label="Jump to a view">
     <button type="button" data-split="100" aria-pressed="false">Original</button>
-    <button type="button" data-split="50" aria-pressed="true">Half and half</button>
+    <button type="button" class="dash-snaps__half" data-split="50" aria-pressed="true">Half and half</button>
     <button type="button" data-split="0" aria-pressed="false">Redesign</button>
-  </div>
-  <p class="dash-note" data-note></p>
+  </div>${HERO ? `
+  </div>` : ''}
+  <p class="dash-note" data-note${HERO ? ' hidden' : ''}></p>
   ${HERO ? `<p class="dash-credit">One of the dashboards I redesigned for Nicholls State's Office of Institutional Research, drawn from its published figures · <a href="${BASE}work/tableau-dashboards/">See the full before and after, and six more →</a></p>` : `<p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>`}
   <div class="dash-cursor" aria-hidden="true" hidden><svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2l14 9-6 1.5 3.5 7-3 1.5-3.5-7L4 18z" fill="#15171C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
 
@@ -387,7 +400,7 @@ function fillControls() {
   fallSel.innerHTML = D.falls.slice().reverse().map((f) => `<option value="${f.code}">${f.label}</option>`).join('');
   if (!D.falls.some((f) => f.code === state.fall)) state.fall = D.falls[D.falls.length - 1].code;
   fallSel.value = state.fall;
-  groupWrap.hidden = state.dash !== 'admissions';
+  groupWrap.hidden = HERO || state.dash !== 'admissions';
   if (D.groups) groupSel.innerHTML = D.groups.map((g) => `<option value="${g.key}">${g.label}</option>`).join('');
   groupSel.value = state.group;
   root.querySelectorAll('[data-dash]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.dash === state.dash)));
@@ -467,9 +480,9 @@ function cursorTo(el, { dx = 0.5, dy = 0.5 } = {}) {
 }
 async function click() { cursor.classList.add('is-click'); await wait(220); cursor.classList.remove('is-click'); }
 async function dragSeam(to, run, ms = 1400) {
-  const from = state.split, t0 = performance.now();
   cursorTo(handle);
   await wait(500);
+  const from = state.split, t0 = performance.now();
   stage.classList.remove('is-animating');
   while (run === tourRun) {
     const t = Math.min(1, (performance.now() - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -540,15 +553,23 @@ tourBtn?.addEventListener('click', () => (touring ? stopTour() : startTour()));
 await switchTo('admissions');
 setSplit(50);
 if (HERO) {
-  // One sweep across the seam shortly after load; any interaction stops it.
-  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((ev) => root.addEventListener(ev, (e) => { if (e.isTrusted) tourRun++; }, { passive: true }));
+  // The seam keeps sweeping while the demo is on screen, so it reads as live; any
+  // interaction stops it for good. Reduced motion: no sweep.
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((ev) => root.addEventListener(ev, (e) => {
+    if (e.isTrusted) { tourRun++; root.classList.add('is-touched'); }
+  }, { passive: true }));
+  let onScreen = false;
+  new IntersectionObserver((entries) => { onScreen = entries.some((en) => en.isIntersecting); }, { threshold: 0.3 }).observe(stage);
   if (!reduceMotion) {
     const run = ++tourRun;
     await wait(900);
-    for (const [to, ms, pause] of [[94, 1300, 1500], [6, 1900, 1500], [50, 900, 0]]) {
-      if (run !== tourRun) break;
-      await dragSeam(to, run, ms);
-      await wait(pause);
+    sweep: while (run === tourRun) {
+      for (const [to, ms, pause] of [[88, 1400, 1600], [12, 2000, 1600], [50, 1000, 2600]]) {
+        while (!onScreen && run === tourRun) await wait(400);
+        if (run !== tourRun) break sweep;
+        await dragSeam(to, run, ms);
+        await wait(pause);
+      }
     }
   }
 } else if (!reduceMotion) {
