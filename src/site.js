@@ -47,8 +47,8 @@
 
   // What gets a permanent label. Hover-inspect covers everything else.
   const LABELLED = [
-    '.nav', '.hero h1', '.hero__lede', '.stage', '.snaps', '.col--built', '.col--designed',
-    '.col--built .item', '.about h2', '.about__photo', '.about dl', '.footer__cta',
+    '.nav', '.hero h1', '.hero__pitch', '.hero__photo', '.dash-frame', '.proof', '.cards', '.rows',
+    '.card', '.about h2', '.about__photo', '.about dl', '.footer__cta', '.rail', '.process__list',
     '.proj h1', '.proj__outcome', '.meta', '.showcase .browser', '.phone-frame', '.demo', '.sqlpad',
     '.pipeline', '.sections .section', '.pager',
   ];
@@ -360,4 +360,43 @@
     if (e.key === 'b' || e.key === 'B') toggleBlueprint();
     else if (e.key === '/') { e.preventDefault(); openPalette(); }
   });
+})();
+
+// ── Project pages: the "At a glance" sheet and the five-step story ───
+(() => {
+  // Desktop shows the glance details in the side rail; phones get a sheet that starts closed.
+  const glance = document.querySelector('[data-glance]');
+  if (glance) {
+    const phone = window.matchMedia('(max-width: 900px)');
+    const fit = () => { glance.open = !phone.matches; };
+    fit();
+    phone.addEventListener('change', fit);
+    // On a phone, following a link inside the sheet closes it.
+    glance.addEventListener('click', (e) => { if (phone.matches && e.target.closest('a[href^="#"]')) glance.open = false; });
+  }
+
+  // Steps: one panel always open on desktop; on phones a step can also be folded away.
+  const list = document.querySelector('[data-process]');
+  if (list) {
+    const wide = window.matchMedia('(min-width: 701px)');
+    const steps = [...list.querySelectorAll('.process__step')];
+    const show = (i) => steps.forEach((b, k) => {
+      b.setAttribute('aria-expanded', String(k === i));
+      document.getElementById(b.getAttribute('aria-controls')).hidden = k !== i;
+    });
+    show(0);
+    steps.forEach((b, k) => b.addEventListener('click', () => {
+      const open = b.getAttribute('aria-expanded') === 'true';
+      show(open && !wide.matches ? -1 : k);
+    }));
+    // Arrow keys move along the row on desktop.
+    list.addEventListener('keydown', (e) => {
+      const k = steps.indexOf(document.activeElement);
+      if (k < 0 || !wide.matches || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      e.preventDefault();
+      const n = (k + (e.key === 'ArrowRight' ? 1 : -1) + steps.length) % steps.length;
+      steps[n].focus(); show(n);
+    });
+    wide.addEventListener('change', () => { if (wide.matches && steps.every((b) => b.getAttribute('aria-expanded') !== 'true')) show(0); });
+  }
 })();

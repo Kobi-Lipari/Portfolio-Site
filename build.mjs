@@ -64,9 +64,9 @@ const nav = (depth = 0) => `
 <header class="nav">
   <a class="nav__name" href="${u(depth)}">${SITE.name}</a>
   <nav class="nav__links" aria-label="Main">
-    <a class="hide-sm" href="${u(depth, '#built')}">Build</a>
-    <a class="hide-sm" href="${u(depth, '#designed')}">Design</a>
+    <a class="hide-sm" href="${u(depth, '#work')}">Work</a>
     <a class="hide-sm" href="${u(depth, '#about')}">About</a>
+    <a class="hide-sm" href="${u(depth, '#contact')}">Contact</a>
     <span class="nav__tools">
       <button type="button" class="icon-btn icon-btn--wide hide-sm" data-palette-open aria-label="Jump to a page or action" title="Jump to (Ctrl/⌘ K)">
         ${ICON.search}<kbd><span data-shortcut-mod>⌘</span>K</kbd>
@@ -83,8 +83,8 @@ const nav = (depth = 0) => `
 const siteIndex = (depth) => {
   const items = [
     ...projects.map((p) => ({ group: 'Projects', title: p.title, hint: p.lane === 'build' ? 'Built' : 'Designed', keywords: `${p.tools} ${p.kind}`, href: u(depth, `work/${p.slug}/`) })),
-    { group: 'On this site', title: 'Built work', keywords: 'engineering analysis', href: u(depth, '#built') },
-    { group: 'On this site', title: 'Designed work', keywords: 'presentation ux', href: u(depth, '#designed') },
+    { group: 'On this site', title: 'Featured work', keywords: 'projects portfolio', href: u(depth, '#work') },
+    { group: 'On this site', title: 'All work', keywords: 'projects list engineering design', href: u(depth, 'work/') },
     { group: 'On this site', title: 'About Kobi', keywords: 'bio experience', href: u(depth, '#about') },
     { group: 'On this site', title: 'Résumé', keywords: 'cv pdf', href: u(depth, SITE.resume) },
     ...projects.flatMap((p) => p.links.filter((l) => l.href.startsWith('http')).map((l) => ({
@@ -110,12 +110,13 @@ const ICON = {
 const footer = (depth = 0) => `
 <footer class="footer" id="contact">
   <div>
-    <p class="footer__cta">Let's build <i>something.</i></p>
-    <p style="margin:16px 0 0"><a href="mailto:${SITE.email}">${esc(SITE.email)}</a></p>
+    <p class="footer__cta">Let's <i>talk.</i></p>
+    <p class="footer__sub">Open to data analyst and full-stack roles · New Orleans or relocating</p>
   </div>
   <div class="footer__links">
-    ${SITE.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ')}
-    <span style="font-family:var(--mono);font-size:13px;color:var(--ink-3)">Kenner, Louisiana</span>
+    <a class="footer__mail" href="mailto:${SITE.email}">${esc(SITE.email)}</a>
+    ${SITE.links.filter((l) => l.href !== '#').map((l) => `<a class="footer__link" href="${l.href}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ')}
+    <a class="footer__link" href="${u(depth, SITE.resume)}">Résumé</a>
   </div>
 </footer>
 ${siteIndex(depth)}
@@ -127,68 +128,102 @@ ${siteIndex(depth)}
 const ph = (label, hint = '', cls = '') =>
   `<div class="ph ${cls}" role="img" aria-label="${esc(label)} (coming soon)"><span class="ph__tag">Coming soon</span><span class="ph__label">${esc(label)}</span>${hint ? `<span class="ph__hint">${esc(hint)}</span>` : ''}</div>`;
 
-// Small preview for the homepage lists: first screenshot, or a placeholder.
-const listThumb = (p) => {
-  const first = p.gallery?.desktop?.[0];
-  return first && first.src
-    ? `<img class="item__thumb" src="${u(0, `img/${first.src}-sm.webp`)}" alt="" width="${first.w / 2}" height="${first.h / 2}" decoding="async">`
-    : `<span class="item__thumb item__thumb--ph" aria-hidden="true"></span>`;
+// Project picture for cards and rows: its own thumbnail, else its first screenshot.
+const pic = (p) => p.thumb || (p.gallery?.desktop?.[0]?.src ? p.gallery.desktop[0] : null);
+const picImg = (depth, p, cls) => {
+  const im = pic(p);
+  return im
+    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}" loading="lazy" decoding="async">`
+    : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
-const listItem = (p) => `
-      <li><a class="item" href="${u(0, `work/${p.slug}/`)}">
-        ${listThumb(p)}
-        <span class="item__text"><span class="item__tools">${esc(p.tools)}</span><span class="item__title">${esc(p.title)}</span><span class="item__note">${txt(p.note)}</span></span>
+// Featured order on the homepage; the rest go in "More work". All of them are on /work/.
+const FEATURED = ['tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
+const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug));
+const others = projects.filter((p) => !FEATURED.includes(p.slug));
+
+const card = (depth, p) => `
+      <li><a class="card" href="${u(depth, `work/${p.slug}/`)}">
+        ${picImg(depth, p, 'card__img')}
+        <span class="card__tools">${esc(p.tools)}</span>
+        <span class="card__title">${esc(p.title)}</span>
+        <span class="card__note">${txt(p.note)}</span>
       </a></li>`;
 
+const row = (depth, p) => `
+      <li><a class="row" href="${u(depth, `work/${p.slug}/`)}">
+        ${picImg(depth, p, 'row__img')}
+        <span class="row__title">${esc(p.title)}</span>
+        <span class="row__tools">${esc(p.tools)}</span>
+        <span class="row__go" aria-hidden="true">→</span>
+      </a></li>`;
 
 const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/' })}
 ${nav()}
 <main id="main">
-<section class="hero">
-  <h1>Real insights,<br> <i>made beautiful.</i></h1>
-  <p class="hero__lede">Data analyst and web developer. Drag the seam: a real university dashboard, before and after my redesign.</p>
-</section>
-
-<div class="stage-wrap">
-  <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(0)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(0, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
-</div>
-
-<section class="work" aria-label="Selected work">
-  <div class="col col--built" id="built">
-    <h2>BUILT · ENGINEERING &amp; ANALYSIS</h2>
-    <ul>${projects.filter((p) => p.lane === 'build').map(listItem).join('')}
-    </ul>
+<section class="hero" aria-label="Introduction">
+  <div class="hero__intro">
+    <div class="hero__me">
+      ${SITE.headshot ? `<img class="hero__photo" src="${u(0, 'img/headshot-sm.webp')}" alt="Kobi Lipari" width="329" height="376" decoding="async">` : ''}
+      <div><p class="hero__name">${SITE.name}</p><p class="hero__role">Data analyst · Web developer</p></div>
+    </div>
+    <h1>Real insights,<br> <i>made beautiful.</i></h1>
+    <p class="hero__pitch">I'm looking for my next challenge: a data analyst or full-stack role with real scale and real stakes. Based in New Orleans, open to relocating.</p>
+    <div class="hero__actions"><a class="btn" href="#work">See the work</a><a class="pill" href="${u(0, SITE.resume)}">Résumé</a></div>
   </div>
-  <div class="col col--designed" id="designed">
-    <h2>DESIGNED · PRESENTATION &amp; UX</h2>
-    <ul>${projects.filter((p) => p.lane === 'design').map(listItem).join('')}
-    </ul>
+  <div class="hero__demo">
+    <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(0)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(0, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
   </div>
 </section>
+<ul class="proof" aria-label="In numbers">
+  <li>30+ Tableau dashboards</li><li>15+ data sources in one retention model</li><li>112 automated tests</li><li>3 live sites</li><li>SQL · Python · Tableau · React</li>
+</ul>
 
-<section class="about" id="about">
-  <div class="about__side">
-    <h2>About</h2>
+<section class="featured" id="work" aria-labelledby="featured-h">
+  <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(0, 'work/')}">All work →</a></div>
+  <ul class="cards">${featured.map((p) => card(0, p)).join('')}
+  </ul>
+</section>
+
+<section class="more" aria-labelledby="more-h">
+  <div class="sec-head"><h2 id="more-h">More work</h2><a href="${u(0, 'work/')}">See all ${projects.length} →</a></div>
+  <ul class="rows">${others.slice(0, 3).map((p) => row(0, p)).join('')}
+  </ul>
+</section>
+
+<section class="about" id="about" aria-labelledby="about-h">
+  <div class="about__card">
     ${SITE.headshot
       ? `<img class="about__photo" src="${u(0, 'img/headshot.webp')}" alt="Kobi Lipari" width="657" height="751" loading="lazy" decoding="async">`
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
-  </div>
-  <div>
-    <p>I'm looking for my next challenge: a data analyst or full-stack role with real scale and real stakes.</p>
-    <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting and research support. Part time, I build full-stack web platforms that members and patients use every day.</p>
-    <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk. I'm based in New Orleans and ready to relocate for the right role.</p>
-    <dl>
-      <dt>NOW</dt><dd>Data Analyst, Institutional Research</dd>
-      <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer and IT Support, Healingly</dd>
-      <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette</dd>
-      <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
-    </dl>
+    <div>
+      <h2 id="about-h">About</h2>
+      <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting and research support. Part time, I build full-stack web platforms that members and patients use every day.</p>
+      <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk.</p>
+      <dl>
+        <dt>NOW</dt><dd>Data Analyst, Institutional Research</dd>
+        <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer and IT Support, Healingly</dd>
+        <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette</dd>
+        <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
+        <dt>AWARD</dt><dd>Employee of the Year, St. Mary Parish (2018)</dd>
+      </dl>
+    </div>
   </div>
 </section>
 </main>
 <script type="module" src="${u(0, 'demo-dash.js')}"></script>
 ${footer()}`;
+
+// Every project, as cards.
+const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: SITE.description, path: '/work/', depth: 1 })}
+${nav(1)}
+<main id="main" class="work-all">
+  <a class="back" href="${u(1)}">← Home</a>
+  <h1>All work</h1>
+  <ul class="cards">${projects.map((p) => card(1, p)).join('')}
+  </ul>
+</main>
+${footer(1)}`;
 
 // Interactive pieces a project page can embed. Each is a container that its
 // script fills in; the text inside is what shows without JavaScript.
@@ -249,35 +284,69 @@ const showcase = (p, depth) => {
   </section>`;
 };
 
+// The five-part story of the dashboards work: a step row on desktop, a timeline on phones.
+const processSteps = (p) => `
+    <section class="process" id="my-work" aria-labelledby="process-h">
+      <h2 id="process-h">How I changed the way they're made</h2>
+      <ol class="process__list" data-process>
+        ${p.process.map((st, k) => `<li class="process__item">
+          <button type="button" class="process__step" id="ps-${k}" aria-expanded="${k === 0}" aria-controls="pp-${k}">
+            <span class="process__n">${String(k + 1).padStart(2, '0')}</span><span class="process__label">${esc(st.label)}</span><span class="process__name">${esc(st.title)}</span>
+          </button>
+          <div class="process__panel" id="pp-${k}" role="region" aria-labelledby="ps-${k}">
+            <div class="process__text"><p class="process__kicker">Step ${k + 1} of ${p.process.length}</p><h3>${esc(st.title)}</h3><p>${txt(st.text)}</p></div>
+            <div class="process__visual" aria-hidden="true"><span>${esc(st.visual)}</span></div>
+          </div>
+        </li>`).join('\n        ')}
+      </ol>
+    </section>`;
+
 const projectPage = (p, i) => {
   const prev = projects[(i - 1 + projects.length) % projects.length];
   const next = projects[(i + 1) % projects.length];
+  const sections = SECTION_ORDER.filter(([k]) => p.sections && txt(p.sections[k]));
+  const toc = [
+    ...(p.demo || p.gallery ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
+    ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
+  ];
+  const links = p.links.filter((l) => l.href !== '#');
   return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2, fonts: p.demo === 'scanner' ? '&family=Caveat:wght@500;600' : '' })}
 ${nav(2)}
 <main id="main" class="proj">
-  <a class="back" href="${u(2, p.lane === 'build' ? '#built' : '#designed')}">← All work</a>
-  <p class="proj__eyebrow">${esc(p.kind)}</p>
-  <h1>${esc(p.title)}</h1>
-  <p class="proj__outcome"><strong>Outcome:</strong> ${txt(p.outcome)}</p>
-  <dl class="meta">
-    <div><dt>Role</dt><dd>${txt(p.role)}</dd></div>
-    ${txt(p.timeline) ? `<div><dt>Timeline</dt><dd>${txt(p.timeline)}</dd></div>` : ''}
-    <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
-    ${p.links.length ? `<div><dt>Links</dt><dd>${p.links.map((l) => l.href === '#' ? `<span class="soon">${esc(l.label)} <em>soon</em></span>` : `<a href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a>`).join(' · ')}</dd></div>` : ''}
-  </dl>
-  ${p.demo ? DEMOS[p.demo](2) : ''}
-  ${p.gallery ? showcase(p, 2) : p.demo || !DRAFT ? '' : `<div class="media">${txt('[Screenshot, demo video or embedded dashboard]')}</div>`}
-  <section class="pipeline" aria-label="How it's built">
-    <h2>HOW IT'S BUILT</h2>
-    <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
-  </section>
-  <div class="sections">
-    ${SECTION_ORDER.filter(([k]) => txt(p.sections[k])).map(([k, label]) => `<section class="section"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n    ')}
+  <div class="proj__grid">
+  <aside class="rail" aria-label="About this project">
+    <a class="back" href="${u(2, 'work/')}">← All work</a>
+    <p class="proj__eyebrow">${esc(p.kind)}</p>
+    <h1>${esc(p.title)}</h1>
+    <p class="proj__outcome">${txt(p.outcome)}</p>
+    <details class="glance" open data-glance>
+      <summary><span class="glance__grip" aria-hidden="true"></span>At a glance</summary>
+      <div class="glance__body">
+        <dl class="meta">
+          <div><dt>Role</dt><dd>${txt(p.role)}</dd></div>
+          ${txt(p.timeline) ? `<div><dt>Timeline</dt><dd>${txt(p.timeline)}</dd></div>` : ''}
+          <div><dt>Tools</dt><dd>${esc(p.tools)}</dd></div>
+        </dl>
+        ${links.length ? `<div class="glance__links">${links.map((l, k) => `<a class="${k ? 'pill' : 'btn'}" href="${l.href}"${l.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}${l.href.startsWith('http') ? ' ↗' : ''}</a>`).join('')}</div>` : ''}
+        ${toc.length > 1 ? `<nav class="toc" aria-label="On this page"><p>On this page</p>${toc.map(([id, label]) => `<a href="#${id}">${esc(label)}</a>`).join('')}</nav>` : ''}
+      </div>
+    </details>
+  </aside>
+  <div class="proj__body">
+    ${p.demo || p.gallery ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${p.gallery ? showcase(p, 2) : ''}</div>` : ''}
+    ${p.process ? processSteps(p) : `<section class="pipeline" id="how" aria-label="How it's built">
+      <h2>HOW IT'S BUILT</h2>
+      <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
+    </section>
+    <div class="sections">
+      ${sections.map(([k, label]) => `<section class="section" id="s-${k}"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n      ')}
+    </div>`}
+    <nav class="pager" aria-label="More projects">
+      <a href="${u(2, `work/${prev.slug}/`)}">← ${esc(prev.title)}</a>
+      <a href="${u(2, `work/${next.slug}/`)}">${esc(next.title)} →</a>
+    </nav>
   </div>
-  <nav class="pager" aria-label="More projects">
-    <a href="${u(2, `work/${prev.slug}/`)}">← ${esc(prev.title)}</a>
-    <a href="${u(2, `work/${next.slug}/`)}">${esc(next.title)} →</a>
-  </nav>
+  </div>
 </main>
 ${p.gallery ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
 ${p.demo ? DEMO_SCRIPTS[p.demo].map((f) => `<script type="module" src="${u(2, f)}"></script>`).join('\n') : ''}
@@ -287,6 +356,8 @@ ${footer(2)}`;
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 await writeFile('dist/index.html', home());
+await mkdir('dist/work', { recursive: true });
+await writeFile('dist/work/index.html', workIndex());
 for (const [i, p] of projects.entries()) {
   await mkdir(`dist/work/${p.slug}`, { recursive: true });
   await writeFile(`dist/work/${p.slug}/index.html`, projectPage(p, i));
