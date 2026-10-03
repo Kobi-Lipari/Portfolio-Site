@@ -241,7 +241,6 @@ ${nav()}
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
   </div>
   <div>
-    <p>I'm a data analyst in a university Office of Institutional Research and a part-time web developer. I like the whole path: pulling messy data, getting the numbers right, and making the result easy to read and use.</p>
     <p>I'm looking for my next challenge: a data analyst or full-stack role with real scale and real stakes. Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting and research support. Part time, I build full-stack web platforms that members and patients use every day. I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk. I'm based in New Orleans and ready to relocate for the right role.</p>
     <dl>
       <dt>NOW</dt><dd>Data Analyst, Institutional Research · Web Developer &amp; IT, Healingly</dd>
