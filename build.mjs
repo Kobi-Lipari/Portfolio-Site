@@ -16,7 +16,7 @@ const u = (depth, target = '') => {
 const SITE = {
   name: 'Kobi Lipari',
   url: 'https://kobilipari.com',
-  description: 'Kobi Lipari — data analyst and web developer. I turn messy data into answers, and I design the spotlight.',
+  description: 'Kobi Lipari — data analyst and web developer. Real insights, made beautiful.',
   email: 'KobiLipari@gmail.com',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/kobi-lipari-2a8b24327/' },
@@ -146,7 +146,7 @@ const home = () => `${head({ title: `${SITE.name} — Data analyst & web develop
 ${nav()}
 <main id="main">
 <section class="hero">
-  <h1>I turn messy data into answers, <i>and I design the spotlight.</i></h1>
+  <h1>Real insights,<br> <i>made beautiful.</i></h1>
   <p class="hero__lede">Data analyst and web developer. Drag the seam: a real university dashboard, before and after my redesign.</p>
 </section>
 
