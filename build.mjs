@@ -245,8 +245,8 @@ ${nav()}
     <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting and research support. Part time, I build full-stack web platforms that members and patients use every day.</p>
     <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk. I'm based in New Orleans and ready to relocate for the right role.</p>
     <dl>
-      <dt>NOW</dt><dd>Data Analyst, Institutional Research · Web Developer &amp; IT, Healingly</dd>
-      <dt>ALSO</dt><dd>Technical lead, Louisiana Chess Association</dd>
+      <dt>NOW</dt><dd>Data Analyst, Institutional Research</dd>
+      <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer and IT Support, Healingly</dd>
       <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette</dd>
       <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
     </dl>
