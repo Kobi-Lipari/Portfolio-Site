@@ -262,9 +262,14 @@ const siteRoot = (depth) => (PREVIEW ? '../'.repeat(depth) : '/');
 const DEMOS = {
   scanner: () => `<section class="demo" data-demo="scanner" aria-label="Live decoder demo"><p class="demo__noscript">The live decoder demo needs JavaScript.</p></section>`,
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
-  dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>`,
+  dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>${CATALOG ? `
+  <section class="demo cat" data-demo="catalog" data-base="${siteRoot(depth)}" aria-label="More redesigned dashboards"><p class="demo__noscript">The slideshow needs JavaScript.</p></section>` : ''}`,
 };
-const DEMO_SCRIPTS = { scanner: 'demo-scanner.js', sql: 'demo-sql.js', dash: 'demo-dash.js' };
+// The dashboards slideshow appears once all six of its data files are in src/data/dashboards
+// (written by scripts/export_catalog.py in the dashboards repo).
+const CATALOG = ['enrollment', 'graduates', 'retention12', 'retention13', 'grad4', 'grad6']
+  .every((k) => existsSync(`src/data/dashboards/${k}.json`));
+const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])] };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -341,7 +346,7 @@ ${nav(2)}
   </nav>
 </main>
 ${p.gallery ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
-${p.demo ? `<script type="module" src="${u(2, DEMO_SCRIPTS[p.demo])}"></script>` : ''}
+${p.demo ? DEMO_SCRIPTS[p.demo].map((f) => `<script type="module" src="${u(2, f)}"></script>`).join('\n') : ''}
 ${footer(2)}`;
 };
 
@@ -360,6 +365,8 @@ await copyFile('src/demo-scanner.js', 'dist/demo-scanner.js');
 await copyFile('src/demo-worker.js', 'dist/demo-worker.js');
 await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
 await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
+await copyFile('src/demo-catalog.js', 'dist/demo-catalog.js');
+await copyFile('src/dash-kit.js', 'dist/dash-kit.js');
 if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
