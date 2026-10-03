@@ -237,7 +237,7 @@ ${nav()}
   <div class="about__side">
     <h2>About</h2>
     ${SITE.headshot
-      ? `<img class="about__photo" src="${u(0, 'img/headshot.webp')}" alt="Kobi Lipari" width="480" height="600" loading="lazy" decoding="async">`
+      ? `<img class="about__photo" src="${u(0, 'img/headshot.webp')}" alt="Kobi Lipari" width="657" height="751" loading="lazy" decoding="async">`
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
   </div>
   <div>
