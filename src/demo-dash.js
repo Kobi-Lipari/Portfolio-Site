@@ -10,6 +10,8 @@ import {
 const root = document.querySelector('[data-demo="dash"]');
 const BASE = root.dataset.base || '/';
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// On the homepage the demo is the hero: Admissions only, no tabs or tour, one seam sweep.
+const HERO = root.dataset.mode === 'hero';
 
 const header = (title, buttons, active) => kitHeader(title, buttons, active, BASE);
 
@@ -305,7 +307,7 @@ const DASHES = {
 
 const state = { dash: 'admissions', fall: null, group: 'all', split: 50, data: {} };
 
-root.innerHTML = `
+root.innerHTML = `${HERO ? '' : `
   <div class="demo__head">
     <div>
       <p class="demo__eyebrow">BEFORE ⇄ AFTER · DATA AS PUBLISHED</p>
@@ -313,11 +315,11 @@ root.innerHTML = `
       <p class="demo__lede">Two of the dashboards I redesigned for Nicholls State's Office of Institutional Research, rebuilt here from their published figures. Drag the seam to compare the original with the redesign; the filters drive both sides.</p>
     </div>
     <button type="button" class="demo__go" data-tour-toggle aria-pressed="false">Play the tour</button>
-  </div>
+  </div>`}
   <div class="dash-bar">
-    <div class="dash-tabs" role="tablist" aria-label="Dashboard">
+    ${HERO ? '<p class="dash-hero-title">Admissions dashboard, Nicholls State University</p>' : `<div class="dash-tabs" role="tablist" aria-label="Dashboard">
       ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
-    </div>
+    </div>`}
     <label class="dash-field">Fall term <select data-fall></select></label>
     <label class="dash-field" data-group-wrap>Students <select data-group></select></label>
   </div>
@@ -338,7 +340,7 @@ root.innerHTML = `
     <button type="button" data-split="0" aria-pressed="false">Redesign</button>
   </div>
   <p class="dash-note" data-note></p>
-  <p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>
+  ${HERO ? `<p class="dash-credit">One of the dashboards I redesigned for Nicholls State's Office of Institutional Research, drawn from its published figures · <a href="${BASE}work/tableau-dashboards/">See the full before and after, and six more →</a></p>` : `<p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>`}
   <div class="dash-cursor" aria-hidden="true" hidden><svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2l14 9-6 1.5 3.5 7-3 1.5-3.5-7L4 18z" fill="#15171C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
 
 const $ = (s) => root.querySelector(s);
@@ -528,7 +530,7 @@ function startTour() {
   tourBtn.textContent = 'Stop the tour'; tourBtn.setAttribute('aria-pressed', 'true');
   tour();
 }
-tourBtn.addEventListener('click', () => (touring ? stopTour() : startTour()));
+tourBtn?.addEventListener('click', () => (touring ? stopTour() : startTour()));
 // Any real interaction hands control back to the visitor.
 ['pointerdown', 'keydown', 'wheel'].forEach((ev) => root.addEventListener(ev, (e) => {
   if (e.isTrusted && touring && !tourBtn.contains(e.target)) stopTour();
@@ -537,7 +539,19 @@ tourBtn.addEventListener('click', () => (touring ? stopTour() : startTour()));
 // Start: load Admissions; play the tour once it scrolls into view (unless reduced motion).
 await switchTo('admissions');
 setSplit(50);
-if (!reduceMotion) {
+if (HERO) {
+  // One sweep across the seam shortly after load; any interaction stops it.
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((ev) => root.addEventListener(ev, (e) => { if (e.isTrusted) tourRun++; }, { passive: true }));
+  if (!reduceMotion) {
+    const run = ++tourRun;
+    await wait(900);
+    for (const [to, ms, pause] of [[94, 1300, 1500], [6, 1900, 1500], [50, 900, 0]]) {
+      if (run !== tourRun) break;
+      await dragSeam(to, run, ms);
+      await wait(pause);
+    }
+  }
+} else if (!reduceMotion) {
   const io = new IntersectionObserver((entries) => {
     if (entries.some((en) => en.isIntersecting)) { io.disconnect(); if (!touring) startTour(); }
   }, { threshold: 0.5 });

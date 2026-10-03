@@ -141,83 +141,17 @@ const listItem = (p) => `
         <span class="item__text"><span class="item__tools">${esc(p.tools)}</span><span class="item__title">${esc(p.title)}</span><span class="item__note">${txt(p.note)}</span></span>
       </a></li>`;
 
-const barHeights = [150, 190, 170, 230, 260, 300];
-const barYears = ['F20', 'F21', 'F22', 'F23', 'F24', 'F25'];
 
 const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/' })}
 ${nav()}
 <main id="main">
 <section class="hero">
   <h1>I build the engine, <i>and I design</i> what people see.</h1>
-  <p class="hero__lede">Data analyst and web developer. Drag the seam to see the same work as it was built and as it was presented.</p>
+  <p class="hero__lede">Data analyst and web developer. Drag the seam: a real university dashboard, before and after my redesign.</p>
 </section>
 
 <div class="stage-wrap">
-  <div class="stage" data-stage>
-    <div class="stage__canvas" aria-hidden="true">
-      <div class="layer layer--final">
-        <div class="abs f-card">
-          <div class="f-card__eyebrow">Dashboard · synthetic data</div>
-          <div class="f-card__title">Who comes back for year two?</div>
-          <div class="f-card__sub">Second-fall retention by entering cohort</div>
-          <div class="bars">
-            ${barHeights.map((h, i) => `<div class="bar${i === 5 ? ' bar--hi' : ''}"><div class="bar__fill" style="height:${h}px"></div><span class="bar__label">${barYears[i]}</span></div>`).join('')}
-          </div>
-        </div>
-        <div class="abs phone"><div class="phone__screen">
-          <div style="font-size:12px;color:var(--ink-3)">Telehealth site · mobile</div>
-          <div class="phone__title">Talk to a provider today.</div>
-          <div class="phone__img">[hero photo]</div>
-          <div class="chips"><span class="chip">9:30</span><span class="chip chip--on">10:15</span><span class="chip">1:00</span></div>
-          <div class="phone__cta">Book a visit</div>
-        </div></div>
-        <div class="abs tiles">
-          <div class="tile tile--accent"><span>Dashboards</span><span>Tableau</span></div>
-          <div class="tile tile--plain"><span>Web</span><span>Sites</span></div>
-          <div class="tile tile--dark"><span>Tools</span><span>Scanner</span></div>
-        </div>
-        <div class="abs corner-label" style="right:24px;color:var(--ink-3)">HOW IT'S PRESENTED</div>
-      </div>
-
-      <div class="layer layer--blueprint">
-        <div class="abs bp-box bp-card">
-          <div class="bp-dim">section.chart-card · 700 × 492 · padding 32</div>
-          <div style="font-size:13px;color:var(--bp-stroke)">-- retention.sql</div>
-<pre class="bp-code"><span class="kw">SELECT</span> cohort_year,
-       COUNT(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> enrolled_fall_2)
-         * 1.0 / COUNT(*) <span class="kw">AS</span> retention
-<span class="kw">FROM</span>   ftf_cohorts
-<span class="kw">GROUP BY</span> cohort_year
-<span class="kw">ORDER BY</span> cohort_year;</pre>
-          <div class="bp-bars">${barHeights.map((h) => `<div class="bp-bar" style="height:${h}px"></div>`).join('')}</div>
-        </div>
-        <div class="abs bp-box bp-phone">
-          <div style="color:var(--bp-stroke)">viewport 390 × 844</div>
-          <div class="bp-el">h1 · clamp(28px, 7vw, 40px)</div>
-          <div class="bp-el" style="height:110px;display:flex;align-items:center;justify-content:center">img · lazy · 4:3</div>
-          <div class="bp-el" style="line-height:1.6">fetch('/api/slots')<br>.then(renderChips)</div>
-          <div class="bp-el" style="margin-top:auto;text-align:center">button · 44px min</div>
-        </div>
-        <div class="abs bp-tiles">
-          <div class="bp-box">tile[0]<br>extract → model → viz</div>
-          <div class="bp-box">tile[1]<br>HTML · CSS · Cloudflare</div>
-          <div class="bp-box">tile[2]<br>Python · legal-move check</div>
-        </div>
-        <div class="abs corner-label" style="left:24px;color:var(--bp-stroke)">HOW IT'S BUILT</div>
-      </div>
-    </div>
-
-    <div class="seam" aria-hidden="true"></div>
-    <div class="seam__handle" role="slider" tabindex="0" aria-label="Compare how it's built with how it's presented"
-         aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l-6 6 6 6"/><path d="M15 6l6 6-6 6"/></svg>
-    </div>
-  </div>
-  <div class="snaps" role="group" aria-label="Jump to a view">
-    <button type="button" data-snap="100" aria-pressed="false">All build</button>
-    <button type="button" data-snap="50" aria-pressed="true">Half and half</button>
-    <button type="button" data-snap="0" aria-pressed="false">All design</button>
-  </div>
+  <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(0)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(0, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
 </div>
 
 <section class="work" aria-label="Selected work">
@@ -253,7 +187,7 @@ ${nav()}
   </div>
 </section>
 </main>
-<script src="${u(0, 'seam.js')}" defer></script>
+<script type="module" src="${u(0, 'demo-dash.js')}"></script>
 ${footer()}`;
 
 // Interactive pieces a project page can embed. Each is a container that its
@@ -358,7 +292,6 @@ for (const [i, p] of projects.entries()) {
   await writeFile(`dist/work/${p.slug}/index.html`, projectPage(p, i));
 }
 await copyFile('src/styles.css', 'dist/styles.css');
-await copyFile('src/seam.js', 'dist/seam.js');
 await copyFile('src/gallery.js', 'dist/gallery.js');
 await copyFile('src/site.js', 'dist/site.js');
 await copyFile('src/demo-scanner.js', 'dist/demo-scanner.js');

@@ -7,7 +7,7 @@ Portfolio site for Kobi Lipari: plain HTML, CSS and JavaScript, no dependencies.
 - **Projects:** `src/projects.mjs`. Each project has a `lane` (`"build"` or `"design"`), a short `note` for the homepage list, and case-study `sections`.
 - **Homepage, nav, footer, about:** `build.mjs` (search for the text you want to change). Contact links are in the `SITE` object at the top.
 - **Styles:** `src/styles.css`. Colors live as variables at the top.
-- **Hero seam behavior:** `src/seam.js`.
+- **Hero:** the Admissions before/after from the dashboards project (`src/demo-dash.js` with `data-mode="hero"`).
 
 Anything in `[square brackets]` is a placeholder. The live build leaves placeholders out (and drops a case-study section or timeline that is only a placeholder); `DRAFT=1 node build.mjs` shows them with a dashed orange underline so they're easy to find.
 
