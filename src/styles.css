@@ -40,6 +40,10 @@
   --ink-3: #6A6358;
   --accent: #C8553A;
   --accent-ink: #A8432B;
+  /* Accent as a fill behind text, and the text on it. The fill is a shade darker than
+     --accent in the light theme so white text reaches 4.5:1; the dark looks use dark text. */
+  --accent-fill: #C25238;
+  --on-accent: #FFFFFF;
   --bp: #0E2438;
   --bp-line: #28435E;
   --bp-stroke: #7FB6F0;
@@ -126,7 +130,7 @@ a:hover { color: var(--accent-ink); }
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px;
   background: var(--ink); color: var(--on-ink); text-decoration: none; font-weight: 500;
 }
-.btn:hover { background: var(--accent-ink); color: #fff; }
+.btn:hover { background: var(--accent-ink); color: var(--on-accent); }
 .hero__demo .demo { margin: 0; padding: 0; background: none; border: 0; }
 
 /* The live demo in the hero: a browser window with dashboard tabs */
@@ -322,7 +326,7 @@ a:hover { color: var(--accent-ink); }
 .process__name { display: none; }
 .process__step:hover .process__n { border-color: var(--accent); }
 .process__step[aria-expanded="true"] { color: var(--ink); }
-.process__step[aria-expanded="true"] .process__n { background: var(--accent); border-color: var(--accent); color: #fff; }
+.process__step[aria-expanded="true"] .process__n { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
 .process__step[aria-expanded="true"] .process__label { font-weight: 600; }
 .process__step:focus-visible { outline: none; }
 .process__step:focus-visible .process__n { outline: 3px solid var(--ink); outline-offset: 2px; }
@@ -510,6 +514,8 @@ a:hover { color: var(--accent-ink); }
   --ink-3: #978F84;
   --accent: #E0704F;
   --accent-ink: #F2946F;
+  --accent-fill: #E0704F;
+  --on-accent: #111418;
   --on-ink: #111418;
   --soft-fill: #262C34;
   --soft-fill-2: #3A424D;
@@ -562,6 +568,11 @@ kbd {
   --ink: #E4F0FB;
   --ink-2: #A9C4DE;
   --ink-3: #86A9CB;
+  /* Same accent as the dark theme, whichever theme blueprint mode was switched on from. */
+  --accent: #E0704F;
+  --accent-ink: #F2946F;
+  --accent-fill: #E0704F;
+  --on-accent: #0E2438;
   --on-ink: #0E2438;
   --soft-fill: #173552;
   --soft-fill-2: #2A4E72;
@@ -680,7 +691,7 @@ kbd {
 .demo__lede { margin: 10px 0 0; max-width: 620px; color: var(--ink-2); font-size: 16px; }
 .demo__go {
   font: inherit; font-weight: 500; min-height: 48px; padding: 0 22px; border-radius: 999px; cursor: pointer;
-  background: var(--accent); color: #fff; border: 0;
+  background: var(--accent-fill); color: var(--on-accent); border: 0;
 }
 .demo__go:hover { background: var(--accent-ink); }
 .demo__go:disabled { opacity: 0.6; cursor: progress; }
@@ -697,7 +708,7 @@ kbd {
 .sheet__table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .sheet__table thead th { font-size: 11px; font-weight: 600; color: #5B6275; text-align: left; padding: 6px 8px 4px; }
 .sheet__table thead th:first-child, .sheet__table tbody th { width: 34px; }
-.sheet__table tbody th { font-size: 11px; font-weight: 500; color: #8A8FA0; text-align: right; padding-right: 8px; border-right: 1px solid #D8D0C0; }
+.sheet__table tbody th { font-size: 11px; font-weight: 500; color: #6C7286; text-align: right; padding-right: 8px; border-right: 1px solid #D8D0C0; }
 .sheet__table td { border-bottom: 1px solid #E6DFD1; padding: 1px 8px; height: 30px; vertical-align: middle; white-space: nowrap; }
 .sheet__table td + td { border-left: 1px solid #E6DFD1; }
 .sheet__ink { font-family: 'Caveat', 'Segoe Print', cursive; font-size: 21px; line-height: 1; color: #1D3F8F; }
@@ -743,8 +754,8 @@ kbd {
 .demo__status { margin: 14px 0 0; font-size: 15px; color: var(--ink-2); min-height: 1.5em; }
 .demo__status.is-look { color: var(--ink); }
 .demo__status.is-good { color: var(--ink); }
-.demo__status.is-good b { color: #1E8A45; }
-:root[data-theme="dark"] .demo__status.is-good b { color: #7CD69A; }
+.demo__status.is-good b { color: #1A7C3E; }
+:root[data-theme="dark"] .demo__status.is-good b, :root.bp-mode .demo__status.is-good b { color: #7CD69A; }
 .demo__time { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
 
 .picker {
@@ -788,7 +799,7 @@ kbd {
 .sqlpad__hint { font-size: 12px; color: var(--ink-3); }
 .sqlpad__meta { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
 .sqlpad__meta.is-error { color: #B3261E; font-family: var(--mono); }
-:root[data-theme="dark"] .sqlpad__meta.is-error { color: #F2A29B; }
+:root[data-theme="dark"] .sqlpad__meta.is-error, :root.bp-mode .sqlpad__meta.is-error { color: #F2A29B; }
 @media (hover: none) { .sqlpad__hint { display: none; } }
 .sqlpad__schema { margin-top: 12px; font-size: 14px; }
 .sqlpad__schema summary { cursor: pointer; color: var(--ink-2); }
@@ -966,7 +977,7 @@ kbd {
    ================================================================ */
 .ew {
   --ew-out: #C8553A; --ew-student: #2E6FB8; --ew-dot: #B3AA9C; --ew-zone: rgba(200, 85, 58, 0.09);
-  --ew-good: #1E8A45; --ew-bad: #B3261E;
+  --ew-good: #1A7C3E; --ew-bad: #B3261E;
   margin: 32px 0 8px;
 }
 :root[data-theme="dark"] .ew { --ew-out: #E0704F; --ew-student: #4F86D8; --ew-dot: #5F6772; --ew-zone: rgba(224, 112, 79, 0.13); --ew-good: #7CD69A; --ew-bad: #F2A29B; }
@@ -1018,6 +1029,7 @@ kbd {
   min-height: 48px; padding: 6px 20px; border-radius: 999px; border: 0; cursor: pointer; background: transparent; color: var(--ink-2);
 }
 .ew-switch button small { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+:root[data-theme="dark"]:not(.bp-mode) .ew-switch button small { color: #A1998E; }
 .ew-switch button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
 .ew-sum { margin: 16px 0 20px; font-size: 16px; color: var(--ink-2); max-width: 760px; }
 .ew-promises { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 18px 28px; }

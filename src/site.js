@@ -295,6 +295,11 @@
       if (!results.length) {
         const li = document.createElement('li');
         li.className = 'cmdk__empty';
+        // Still an option, so the listbox stays valid and a screen reader reads the message.
+        li.id = 'cmdk-none';
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-disabled', 'true');
+        li.setAttribute('aria-selected', 'false');
         li.textContent = 'Nothing matches. Try “scanner”, “email” or “dark”.';
         list.append(li);
       }
@@ -302,7 +307,7 @@
     }
     function paint() {
       list.querySelectorAll('.cmdk__item').forEach((li, i) => li.setAttribute('aria-selected', String(i === active)));
-      input.setAttribute('aria-activedescendant', results.length ? `cmdk-${active}` : '');
+      input.setAttribute('aria-activedescendant', results.length ? `cmdk-${active}` : 'cmdk-none');
       list.querySelector(`#cmdk-${active}`)?.scrollIntoView({ block: 'nearest' });
     }
     async function run(i) {
