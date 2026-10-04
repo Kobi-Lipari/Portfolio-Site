@@ -15,7 +15,7 @@ export const projects = [
     kind: "Analysis · public data",
     tools: "Python · pandas · scikit-learn · statsmodels",
     note: "The bar was set before the data was opened. The model missed it, and the page shows it.",
-    outcome: "An early-warning model for course withdrawal, built on 32,600 real registrations and judged against a plan committed before any results were seen. Scored once on a term it never saw, it missed its own bar: an AUC of 0.616 against a declared 0.75.",
+    outcome: "An early-warning model for course withdrawal, built on about 32,600 real registrations and judged against a plan committed before any results were seen. Scored once on a term it never saw, it missed its own bar: an AUC of 0.616 against a declared 0.75.",
     role: "Solo: analysis, modelling, write-up",
     timeline: "September – October 2026",
     // The analysis repo is private for now, so links into it would be dead for visitors.
