@@ -1107,6 +1107,8 @@ kbd {
 .ew-table table { border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
 .ew-table th, .ew-table td { padding: 6px 12px; border-bottom: 1px solid var(--line); text-align: right; }
 .ew-table th:first-child { text-align: left; font-weight: 500; }
+/* All four columns fit a 320px phone; the table scrolls inside its card if it ever cannot. */
+@media (max-width: 400px) { .ew-table th, .ew-table td { padding: 6px 5px; } }
 
 /* 3. Beat the model */
 .ew-rule { margin: 0 0 8px; padding: 10px 14px; max-width: 860px; font-size: 15px; background: var(--soft-fill); border-left: 3px solid var(--ink-3); border-radius: 0 8px 8px 0; }
