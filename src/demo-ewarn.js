@@ -267,7 +267,7 @@ function renderReplay(sec, d) {
     head(sec, {
       eyebrow: 'REPLAY A TERM', standin: d.standin,
       title: 'Watch the warning list form, then see who left.',
-      lede: `${fmt(n)} registrations drawn at random from the ${fmt(d.population)} students who started the October 2014 term, which the model never trained on. Each week everyone is re-scored from what they've done so far, by the same recipe refitted for that week. On day ${d.warnDay} the list locks: the shaded zone is High risk, a score of ${cutPct(d.highCut)} or more, a cut point fixed on an earlier term. Then the term plays out, and students drop into the tray on the day they withdrew.`,
+      lede: `${fmt(n)} registrations drawn at random from the ${fmt(d.population)} that started the October 2014 term, which the model never trained on. Each week everyone is re-scored from what they've done so far, by the same recipe refitted for that week. On day ${d.warnDay} the list locks: the shaded zone is High risk, a score of ${cutPct(d.highCut)} or more, a cut point fixed on an earlier term. Then the term plays out, and students drop into the tray on the day they withdrew.`,
     }),
     h('div', { class: 'ew-replay__controls' }, playBtn, restartBtn, h('label', { class: 'ew-scrub-wrap' }, dayLabel, scrub)),
     stage, caption, tiles, table);
@@ -437,6 +437,8 @@ function renderReplay(sec, d) {
     return h('div', { class: `ew-tile ${cls}` }, h('span', { class: 'ew-tile__label', text: label }), h('span', { class: 'ew-tile__value', text: value }), note ? h('span', { class: 'ew-tile__note', text: note }) : null);
   }
 
+  // The caption is read out when it changes, so it changes only between phases, not every day.
+  const say = (text) => { if (caption.textContent !== text) caption.textContent = text; };
   function update(newDay, animate = true) {
     const prevJ = d.cutoffs.reduce((a, c, k) => (c <= day ? k : a), 0);
     const prevDay = day;
@@ -451,13 +453,13 @@ function renderReplay(sec, d) {
     const c = counts(day);
     const later = T.caught + T.missed;
     if (day < d.warnDay) {
-      caption.textContent = `Week ${week}. The model re-scores every student from their activity so far; dots move right as risk rises. ${c.early ? `${fmt(c.early)} have already left, before any warning was possible.` : ''}`;
+      say(`Week ${week}. Everyone still enrolled is re-scored from their activity so far; dots move right as risk rises. Students who leave before day ${d.warnDay} are counted in the last tile below.`);
     } else if (day < d.warnDay + 10) {
-      caption.textContent = `Day ${d.warnDay}: the warning list locks with ${fmt(T.flagged)} students in the shaded zone (${pct(T.flagged / T.enrolled28)} of those still enrolled). From here no score changes; the term plays out.`;
+      say(`Day ${d.warnDay}: the warning list locks with ${fmt(T.flagged)} students in the shaded zone (${pct(T.flagged / T.enrolled28)} of those still enrolled). From here no score changes; the term plays out.`);
     } else if (day < end) {
-      caption.textContent = `Day ${day}. Students drop into the tray on the day they withdrew. Solid dots were on the list (caught); hollow dots were not (missed).`;
+      say('The term plays out. Students drop into the tray on the day they withdrew. Solid dots were on the list (caught); hollow dots were not (missed).');
     } else {
-      caption.textContent = `End of term. The day-${d.warnDay} list caught ${fmt(T.caught)} of the ${fmt(later)} students who withdrew later (${pct(T.caught / Math.max(later, 1))}). ${fmt(T.falseAlarm)} students on the list stayed (false alarms). ${fmt(T.early)} left before a warning was possible.${undated ? ` ${fmt(undated)} withdrew with no date recorded and are shown leaving on the last day.` : ''}`;
+      say(`End of term. The day-${d.warnDay} list caught ${fmt(T.caught)} of the ${fmt(later)} students who withdrew later (${pct(T.caught / Math.max(later, 1))}). ${fmt(T.falseAlarm)} students on the list stayed (false alarms). ${fmt(T.early)} left before a warning was possible.${undated ? ` ${fmt(undated)} withdrew with no date recorded and are shown leaving on the last day.` : ''}`);
     }
     tiles.replaceChildren(
       tile('Caught', day < d.warnDay ? '—' : fmt(c.caught), 'on the list, then withdrew', 'is-caught'),
@@ -789,7 +791,7 @@ function renderCasefiles(sec, d) {
     head(sec, {
       eyebrow: 'CASE FILES', standin: d.standin,
       title: 'Before any model: what the data got wrong.',
-      lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Open here: the ${first.length} that touched the most registrations. The other ${rest.length}, including the checks that needed no change, are one tap away.`,
+      lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Open here: the ${first.length} that changed the analysis for the most registrations. The other ${rest.length}, including the checks that needed no change, are one tap away.`,
     }),
     h('div', { class: 'ew-cases ew-cases--top' }, first), rest.length ? more : null, rest.length ? btn : null);
 }

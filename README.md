@@ -17,6 +17,7 @@ Anything in `[square brackets]` is a placeholder. The live build leaves placehol
 - **Command palette** (`Ctrl/⌘ K` or `/`): jump to any project, section or live site, copy the email address. Its entries are built per page by `siteIndex()` in `build.mjs`.
 - **Dark theme:** follows the system setting until the visitor picks one with the moon/sun button. Colors are the variables under "Dark theme" in `src/styles.css`.
 - **Scanner decoder demo** (scanner project page): the real decoder from the LCA site, running in the browser on a noisy transcription of the Opera Game. `src/demo-scanner.js` and `src/demo-worker.js`; the decoder itself is in `src/vendor/decoder/`.
+- **Withdrawal project page:** five pieces, each filled from its own JSON file in `src/data/ewarn/`: the plan against the result, a replayed term, a guessing game against the model, an advising simulator and the data-check case files. `src/demo-ewarn.js` (and `src/ewarn-read.js`, which reads the declared bars out of the plan's wording), styles under "Withdrawal project" in `src/styles.css`. See "Refreshing the withdrawal page's data" below.
 - **SQL playground** (retention project page): SQLite in the browser (sql.js, `src/vendor/sqljs/`, MIT) over synthetic cohort data. `src/demo-sql.js`. Chart colors were checked for colorblind separation and contrast on the light, dark and blueprint backgrounds.
 
 A project gets a demo by setting `demo: "scanner"` or `demo: "sql"` in `src/projects.mjs`.
@@ -40,7 +41,11 @@ node tools/sync-ewarn.mjs ../withdrawal-early-warning
 
 The path is a checkout of the analysis repo (the files are read from `reports/showcase/` inside it); that path is also the default. The tool checks every file against the shape the page reads before it copies anything, copies nothing if one of them fails, and prints what changed. Add `--dry-run` to check without copying.
 
-Stand-in files (made to design the page before the analysis ran, marked `"standin": true`) are refused unless you pass `--allow-standin`. If one is in `src/data/ewarn/` anyway, `node build.mjs` leaves the whole project out of the site: no page, no card, no palette entry, no data files. `PREVIEW=1` builds still show it, under a "Stand-in data" banner.
+Stand-in files (made to design the page before the analysis ran, marked `"standin": true`) are refused unless you pass `--allow-standin`. Stand-in numbers are never published: if one of the files in `src/data/ewarn/` is a stand-in, `node build.mjs` stops with an error and writes nothing, so a deploy fails and the live site keeps its last good version. To publish the rest of the site without the project (no page, no card, no palette entry, no data files), run `HOLD_BACK=1 node build.mjs`. `PREVIEW=1` builds always show the project, under a "Stand-in data" banner.
+
+The page's links into the analysis repo (code, plan, commits) are off while that repo is private: commit IDs show as plain text. Set `repoIsPublic: true` on the project in `src/projects.mjs` once it is public.
+
+The homepage card's picture is made from the page's replay chart: `TOOLS_DIR=<folder with playwright and sharp installed> node tools/thumb-ewarn.mjs` after a build.
 
 `node --test` runs the tool's tests, and checks that the committed files match the contract.
 

@@ -174,7 +174,7 @@ export async function sync({ from, to = DEST, allowStandin = false, dryRun = fal
   }
   if (problems.length) throw new ShowcaseError(`Nothing was copied.\n  ${problems.join('\n  ')}`);
   if (standins.length && !allowStandin) {
-    throw new ShowcaseError(`Nothing was copied: ${standins.map((n) => `${n}.json`).join(', ')} ${standins.length === 1 ? 'is a stand-in' : 'are stand-ins'}, not the real analysis.\n  Pass --allow-standin to copy anyway; the production build then leaves the page out.`);
+    throw new ShowcaseError(`Nothing was copied: ${standins.map((n) => `${n}.json`).join(', ')} ${standins.length === 1 ? 'is a stand-in' : 'are stand-ins'}, not the real analysis.\n  Pass --allow-standin to copy anyway; the production build then refuses to publish the page.`);
   }
 
   const report = [];
@@ -208,7 +208,7 @@ export function formatReport({ dir, report, standins, dryRun }) {
   lines.push(dryRun
     ? `Dry run: ${changed} of ${report.length} files would change. Nothing was copied.`
     : `${changed} of ${report.length} files changed.${changed ? ' Rebuild with `node build.mjs`.' : ''}`);
-  if (standins.length) lines.push('Stand-in data: the production build leaves the page out until the real files are synced.');
+  if (standins.length) lines.push('Stand-in data: `node build.mjs` will stop until the real files are synced (HOLD_BACK=1 builds the site without the page).');
   return lines.join('\n');
 }
 

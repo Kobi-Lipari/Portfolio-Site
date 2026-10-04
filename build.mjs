@@ -8,7 +8,9 @@ import { projects as allProjects } from './src/projects.mjs';
 const PREVIEW = process.env.PREVIEW === '1';
 
 // A project whose data files are stand-ins (made to design the page before the
-// real analysis ran) is built in preview only, never published.
+// real analysis ran) is never published. A production build stops with an error,
+// so the live site keeps its last good version. HOLD_BACK=1 builds the rest of
+// the site without the project instead. PREVIEW=1 builds show it, under a banner.
 const isStandin = async (dataset) => {
   const dir = `src/data/${dataset}`;
   if (!existsSync(dir)) return true;
@@ -21,6 +23,10 @@ const projects = [];
 const heldBack = [];
 for (const p of allProjects) {
   if (p.data && !PREVIEW && (await isStandin(p.data))) {
+    if (process.env.HOLD_BACK !== '1') {
+      console.error(`Not built: the data for "${p.title}" in src/data/${p.data} is stand-in or missing, and stand-in numbers must not be published.\nBring in the real files (node tools/sync-ewarn.mjs), or run HOLD_BACK=1 node build.mjs to build the site without this project.`);
+      process.exit(1);
+    }
     console.warn(`Skipping "${p.title}": its data in src/data/${p.data} is still stand-in. It shows in PREVIEW=1 builds only.`);
     heldBack.push(p.data);
     continue;
