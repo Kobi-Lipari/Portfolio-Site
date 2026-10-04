@@ -66,7 +66,10 @@ const txt = (s = '') => DRAFT
   ? esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`)
   : esc(String(s).replace(/\s*\[[^\]]+\]/g, '').trim());
 
-const head = ({ title, description, path, depth = 0, fonts = '' }) => `<!doctype html>
+// Font files every page shows above the fold, fetched early so the first paint already has
+// them. A page can add more with `fonts`. The files and their @font-face rules: src/vendor/fonts, src/styles.css.
+const FONT_PRELOAD = ['geist-latin-wght-normal', 'instrument-serif-latin-400-normal'];
+const head = ({ title, description, path, depth = 0, fonts = [] }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -81,9 +84,7 @@ const head = ({ title, description, path, depth = 0, fonts = '' }) => `<!doctype
 <meta name="theme-color" content="#F3EEE6">
 <script>(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light'})()</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%230E2438'/%3E%3Crect x='16' width='16' height='32' fill='%23F3EEE6'/%3E%3Crect x='15' width='2' height='32' fill='%23C8553A'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1${fonts}&display=swap" rel="stylesheet">
+${[...FONT_PRELOAD, ...fonts].map((f) => `<link rel="preload" href="${u(depth, `vendor/fonts/${f}.woff2`)}" as="font" type="font/woff2" crossorigin>`).join('\n')}
 <link rel="stylesheet" href="${u(depth, 'styles.css')}">
 </head>
 <body>
@@ -188,7 +189,7 @@ const row = (depth, p) => `
         <span class="row__go" aria-hidden="true">→</span>
       </a></li>`;
 
-const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/' })}
+const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/', fonts: ['instrument-serif-latin-400-italic'] })}
 ${nav()}
 <main id="main">
 <section class="hero" aria-label="Introduction">
@@ -347,7 +348,7 @@ const projectPage = (p, i) => {
     ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
   ];
   const links = p.links.filter((l) => l.href !== '#');
-  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2, fonts: p.demo === 'scanner' ? '&family=Caveat:wght@500;600' : '' })}
+  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2 })}
 ${nav(2)}
 <main id="main" class="proj">
   <div class="proj__grid">
