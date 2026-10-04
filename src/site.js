@@ -89,6 +89,28 @@
     return { x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height };
   }
 
+  // Not on the page as far as a label is concerned: inside a closed <details>, or inside
+  // something pinned to the screen (the label would stay behind when the page scrolls).
+  function offPage(el) {
+    if (el.checkVisibility && !el.checkVisibility()) return true;
+    for (let a = el; a && a !== document.body; a = a.parentElement) if (getComputedStyle(a).position === 'fixed') return true;
+    return false;
+  }
+
+  // Where each line of text on the page sits.
+  function textLines() {
+    const out = [];
+    const range = document.createRange();
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const el = n.parentElement;
+      if (!n.textContent.trim() || !el || el.closest('.bp-overlay, .bp-toast, script, style') || offPage(el)) continue;
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) out.push({ el, x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height });
+    }
+    return out;
+  }
+
   function drawOverlay() {
     if (!overlay) return;
     overlay.replaceChildren();
@@ -113,11 +135,14 @@
     // Labels on the main blocks. First match per selector only for the
     // repeated ones, so the page stays readable.
     const seen = new Set();
+    // On a phone a label is as wide as the column, so one that lands on a line of text hides
+    // it. There, a label is kept only where it has clear space; the outline is always drawn.
+    const lines = width <= 600 ? textLines() : null;
     for (const selector of LABELLED) {
       const matches = [...document.querySelectorAll(selector)];
       const pick = selector === '.sections .section' ? matches.slice(0, 2) : matches.slice(0, 1);
       for (const el of pick) {
-        if (seen.has(el) || !el.offsetParent) continue;
+        if (seen.has(el) || !el.offsetParent || offPage(el)) continue;
         seen.add(el);
         const r = docRect(el);
         if (r.w < 40 || r.h < 16) continue;
@@ -129,7 +154,12 @@
         label.textContent = describe(el);
         label.style.left = `${r.x}px`;
         label.style.top = `${Math.max(r.y - 22, 0)}px`;
+        label.style.maxWidth = `${Math.max(width - r.x - 8, 80)}px`;
         overlay.append(box, label);
+        if (lines) {
+          const b = docRect(label);
+          if (lines.some((t) => !el.contains(t.el) && t.x < b.x + b.w - 2 && t.x + t.w > b.x + 2 && t.y < b.y + b.h - 4 && t.y + t.h > b.y + 4)) label.remove();
+        }
       }
     }
 
