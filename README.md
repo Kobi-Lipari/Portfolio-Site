@@ -7,6 +7,7 @@ Portfolio site for Kobi Lipari: plain HTML, CSS and JavaScript, no dependencies.
 - **Projects:** `src/projects.mjs`. Each project has a `lane` (`"build"` or `"design"`), a short `note` for the homepage list, and case-study `sections`.
 - **Homepage, nav, footer, about:** `build.mjs` (search for the text you want to change). Contact links are in the `SITE` object at the top.
 - **Styles:** `src/styles.css`. Colors live as variables at the top.
+- **Fonts:** served from the site, not from Google: `src/vendor/fonts` (Geist, Geist Mono, Instrument Serif and Caveat; Latin subsets from the Fontsource npm packages, SIL Open Font License, licences alongside). The `@font-face` rules are at the top of `src/styles.css`; the build preloads the faces every page shows first (`FONT_PRELOAD` in `build.mjs`).
 - **Hero:** the Admissions before/after from the dashboards project (`src/demo-dash.js` with `data-mode="hero"`).
 
 Anything in `[square brackets]` is a placeholder. The live build leaves placeholders out (and drops a case-study section or timeline that is only a placeholder); `DRAFT=1 node build.mjs` shows them with a dashed orange underline so they're easy to find.
@@ -56,9 +57,32 @@ Requires Node 18 or newer (no `npm install` needed).
 ```
 node build.mjs            # writes the site into dist/
 PREVIEW=1 node build.mjs  # relative links, for opening files locally or preview hosts
+NOINDEX=1 node build.mjs  # the same site, hidden from search engines (see below)
 ```
 
 To view locally: `npx serve dist` or `python -m http.server --directory dist`, then open http://localhost:8000. The two demos need this (browsers block their scripts on `file://` pages).
+
+## Sharing and search
+
+- Every page has its own title and description, a canonical URL, and Open Graph and Twitter card tags. The homepage also carries a schema.org `Person` block (`personLd()` in `build.mjs`); its job, employer and degree repeat the About block, so change them together.
+- The picture that link previews show (`src/img/og.png`), the touch icon and `src/favicon.ico` are made by `tools/share-image.mjs` from the homepage headline, the site's fonts and its colours. Re-run it after the headline, the role line or the headshot changes (Playwright is not a dependency; install it anywhere and point `TOOLS_DIR` at that folder):
+
+```
+node build.mjs
+TOOLS_DIR=/path/to/folder-with-playwright node tools/share-image.mjs
+```
+
+- The build writes `sitemap.xml` (every page) and `robots.txt`.
+
+### Hiding the site from search engines
+
+The default build can be indexed. When the job hunt is over, build with `NOINDEX=1`:
+
+```
+NOINDEX=1 node build.mjs
+```
+
+That adds `<meta name="robots" content="noindex, nofollow">` to every page, writes a `robots.txt` that disallows everything, and leaves out the sitemap. On Cloudflare, either change the build command to `NOINDEX=1 node build.mjs` or add a build variable `NOINDEX` with the value `1`; remove it to be findable again. Pages a search engine already has can take a few weeks to drop out. Because `robots.txt` stops crawlers from re-reading the pages, a result can linger as a bare link; Google Search Console's removal tool clears those sooner.
 
 ## Deploy on Cloudflare
 

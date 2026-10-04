@@ -842,7 +842,7 @@ if (host) {
     });
   }
 
-  host.prepend(h('nav', { class: 'ew-nav', 'aria-label': 'On this page' },
+  host.prepend(h('nav', { class: 'ew-nav', 'aria-label': 'Interactive pieces' },
     [['plan', 'The plan'], ['replay', 'Replay a term'], ['beat', 'Beat the model'], ['advising', 'You run advising'], ['casefiles', 'Case files']]
       .map(([id, label]) => h('a', { href: `#${id}`, text: label, onclick: () => setTimeout(settle, 0) }))));
   if ('IntersectionObserver' in window) {
