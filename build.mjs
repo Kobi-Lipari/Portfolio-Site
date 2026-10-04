@@ -195,10 +195,10 @@ const ph = (label, hint = '', cls = '') =>
 
 // Project picture for cards and rows: its own thumbnail, else its first screenshot.
 const pic = (p) => p.thumb || (p.gallery?.desktop?.[0]?.src ? p.gallery.desktop[0] : null);
-const picImg = (depth, p, cls) => {
+const picImg = (depth, p, cls, eager = false) => {
   const im = pic(p);
   return im
-    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}" loading="lazy" decoding="async">`
+    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}"${eager ? '' : ' loading="lazy"'} decoding="async">`
     : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
@@ -208,9 +208,10 @@ const FEATURED = ['withdrawal-early-warning', 'tableau-dashboards', 'lca-website
 const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug)).filter(Boolean).slice(0, 3);
 const others = projects.filter((p) => !featured.includes(p));
 
-const card = (depth, p) => `
+// `eager` is for cards at the top of a page: their pictures load with the page, not on scroll.
+const card = (depth, p, eager = false) => `
       <li><a class="card" href="${u(depth, `work/${p.slug}/`)}">
-        ${picImg(depth, p, 'card__img')}
+        ${picImg(depth, p, 'card__img', eager)}
         <span class="card__tools">${esc(p.tools)}</span>
         <span class="card__title">${esc(p.title)}</span>
         <span class="card__note">${txt(p.note)}</span>
@@ -285,7 +286,7 @@ ${nav(1)}
 <main id="main" class="work-all">
   <a class="back" href="${u(1)}">← Home</a>
   <h1>All work</h1>
-  <ul class="cards">${projects.map((p) => card(1, p)).join('')}
+  <ul class="cards">${projects.map((p, k) => card(1, p, k < 3)).join('')}
   </ul>
 </main>
 ${footer(1)}`;
@@ -345,7 +346,7 @@ const showcase = (p, depth) => {
           ${g.desktop.map((img, k) => `<div class="browser__pane" data-view="${k}"${k ? ' hidden' : ''}>${view(depth, img, k === 0)}</div>`).join('\n          ')}
         </div>
       </figure>
-      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
+      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { eager: true, sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
     </div>
     <p class="showcase__caption" data-caption>${txt(first.caption)}</p>
     ${g.desktop.length > 1 ? `<div class="thumbs" role="group" aria-label="Choose a view">
