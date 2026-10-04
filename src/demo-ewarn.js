@@ -560,7 +560,8 @@ function renderBeat(sec, d) {
     h('p', { class: 'ew-rule' },
       h('b', { text: 'The model\'s call: ' }), `"withdraws" when the student is in its High-risk group, a score of ${cut} or more. `,
       h('b', { text: 'The pool: ' }), `${pct(d.poolRate, 1)} of these ${fmt(d.cards.length)} students withdrew, so always guessing "stays" would be right ${pct(alwaysStays, 1)} of the time. `, termNote),
-    h('p', { class: 'ew-small ew-rule__why', text: 'The plan first set the model\'s call at 50%. On the earlier term, the one used to set the cut points, no student scored that high, so the model would have said "stays" on every card. The rule was changed in the plan\'s change log before the test term was opened.' }),
+    // Shown once the file's cut point is no longer the plan's first rule (50%).
+    d.threshold === 0.5 ? '' : h('p', { class: 'ew-small ew-rule__why', text: 'The plan first set the model\'s call at 50%. On the earlier term, the one used to set the cut points, no student scored that high, so the model would have said "stays" on every card. The rule was changed in the plan\'s change log before the test term was opened.' }),
     stage);
   // The term's own rate sits in the advising file; add it for comparison when it arrives.
   load('advising').then((a) => {
@@ -793,7 +794,7 @@ function renderCasefiles(sec, d) {
       title: 'Before any model: what the data got wrong.',
       lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Open here: the ${first.length} that changed the analysis for the most registrations. The other ${rest.length}, including the checks that needed no change, are one tap away.`,
     }),
-    h('div', { class: 'ew-cases ew-cases--top' }, first), rest.length ? more : null, rest.length ? btn : null);
+    h('div', { class: 'ew-cases ew-cases--top' }, first), ...(rest.length ? [more, btn] : []));
 }
 
 // ── Load each piece when it comes near the screen ───────────────────
