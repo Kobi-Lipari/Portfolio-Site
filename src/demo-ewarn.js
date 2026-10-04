@@ -822,14 +822,34 @@ async function build(sec) {
 }
 
 if (host) {
+  const parts = [...host.querySelectorAll('[data-ew]')];
+  const started = new Map();
+  const ensure = (sec) => { if (!started.has(sec)) started.set(sec, build(sec)); return started.get(sec); };
+
+  // A piece grows a lot when it loads. Jumping to something below pieces that have not
+  // loaded yet would land in the wrong place in browsers that don't hold the scroll
+  // position (Safari), so build everything above the target, then line it up again.
+  function settle() {
+    let target = null;
+    try { target = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null; } catch { /* not an id */ }
+    if (!target) return;
+    const above = parts.filter((p) => p === target || (p.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING));
+    if (!above.length) return;
+    Promise.all(above.map(ensure)).then(() => {
+      const top = target.getBoundingClientRect().top;
+      if (top < 0 || top > 120) target.scrollIntoView();
+    });
+  }
+
   host.prepend(h('nav', { class: 'ew-nav', 'aria-label': 'On this page' },
     [['plan', 'The plan'], ['replay', 'Replay a term'], ['beat', 'Beat the model'], ['advising', 'You run advising'], ['casefiles', 'Case files']]
-      .map(([id, label]) => h('a', { href: `#${id}`, text: label }))));
-  const parts = [...host.querySelectorAll('[data-ew]')];
+      .map(([id, label]) => h('a', { href: `#${id}`, text: label, onclick: () => setTimeout(settle, 0) }))));
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
-      for (const en of entries) if (en.isIntersecting) { io.unobserve(en.target); build(en.target); }
+      for (const en of entries) if (en.isIntersecting) { io.unobserve(en.target); ensure(en.target); }
     }, { rootMargin: '400px 0px' });
     parts.forEach((p) => io.observe(p));
-  } else parts.forEach(build);
+  } else parts.forEach(ensure);
+  window.addEventListener('hashchange', settle);
+  settle();
 }
