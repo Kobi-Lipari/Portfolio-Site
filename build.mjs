@@ -158,10 +158,11 @@ const picImg = (depth, p, cls) => {
     : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
-// Featured order on the homepage; the rest go in "More work". All of them are on /work/.
-const FEATURED = ['tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
-const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug));
-const others = projects.filter((p) => !FEATURED.includes(p.slug));
+// Featured order on the homepage: the first three of these that are published. The rest go in
+// "More work". All of them are on /work/.
+const FEATURED = ['withdrawal-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
+const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug)).filter(Boolean).slice(0, 3);
+const others = projects.filter((p) => !featured.includes(p));
 
 const card = (depth, p) => `
       <li><a class="card" href="${u(depth, `work/${p.slug}/`)}">
