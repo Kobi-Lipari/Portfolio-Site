@@ -30,6 +30,20 @@ git clone --branch v1.4.0 --depth 1 https://github.com/jhlywa/chess.js.git /tmp/
 node tools/vendor-decoder.mjs ../lca-website /tmp/chess.js
 ```
 
+### Refreshing the withdrawal page's data
+
+The five pieces on the withdrawal project page read five small JSON files in `src/data/ewarn/`, written by the analysis repo (`ewarn/showcase.py` there describes them). When the analysis changes, bring them in again (needs Node 22):
+
+```
+node tools/sync-ewarn.mjs ../withdrawal-early-warning
+```
+
+The path is a checkout of the analysis repo (the files are read from `reports/showcase/` inside it); that path is also the default. The tool checks every file against the shape the page reads before it copies anything, copies nothing if one of them fails, and prints what changed. Add `--dry-run` to check without copying.
+
+Stand-in files (made to design the page before the analysis ran, marked `"standin": true`) are refused unless you pass `--allow-standin`. If one is in `src/data/ewarn/` anyway, `node build.mjs` leaves the whole project out of the site: no page, no card, no palette entry, no data files. `PREVIEW=1` builds still show it, under a "Stand-in data" banner.
+
+`node --test` runs the tool's tests, and checks that the committed files match the contract.
+
 ## Build
 
 Requires Node 18 or newer (no `npm install` needed).
