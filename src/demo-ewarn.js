@@ -9,14 +9,20 @@
 //   advising   choose how many students to contact; see who is caught, by group
 //   casefiles  the data checks: expected, found, decided
 
+import { readBar, readInterval, judge, barText } from './ewarn-read.js';
+
 const host = document.querySelector('[data-ewarn]');
 const BASE = host?.dataset.base || '';
+// Links into the analysis repo are shown only once it is public (repoIsPublic in src/projects.mjs).
+const REPO_LINKS = host?.dataset.repoLinks === 'on';
 const root = document.documentElement;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ── Small helpers ───────────────────────────────────────────────────
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
 const pct = (x, digits = 0) => `${(100 * x).toFixed(digits)}%`;
+// A cut point as a percentage, with a decimal only when it has one: 27.7%, 43%.
+const cutPct = (p) => `${Number((100 * p).toFixed(1))}%`;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 function h(tag, attrs = {}, ...children) {
@@ -81,52 +87,119 @@ function standinBanner() {
 }
 
 // ── 1. Plan first, results second ───────────────────────────────────
+const longDate = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
+// A commit, by its short ID. It is a link only when the analysis repo is public
+// (repoIsPublic in src/projects.mjs) and the file carries a real address.
+const commitRef = (c) => (REPO_LINKS && /^https:\/\//.test(c.url)
+  ? h('a', { href: c.url, target: '_blank', rel: 'noopener' }, h('code', { text: c.sha }))
+  : h('code', { text: c.sha }));
+
+// A declared numeric bar, drawn on one line: the passing range, the estimate
+// and its 95% interval. Position carries the verdict, not colour.
+function gauge(bar, iv) {
+  const j = judge(bar, iv);
+  const pts = [iv.lo, iv.hi, bar.lo, bar.hi].filter((v) => v != null);
+  const span = Math.max(...pts) - Math.min(...pts) || 1;
+  const lo = bar.lo == null ? Math.min(0, iv.lo) : Math.min(...pts) - span * 0.2;
+  const hi = Math.max(...pts) + span * 0.2;
+  const W = 320; const x = (v) => 10 + ((v - lo) / (hi - lo)) * (W - 20);
+  const zoneL = x(bar.lo ?? lo); const zoneR = x(bar.hi ?? hi);
+  const says = `Estimate ${iv.est}, 95% interval ${iv.lo} to ${iv.hi}. The bar: ${barText(bar)}. The estimate is ${j.estimate ? 'inside' : 'outside'} the bar${j.crosses ? `, and the interval reaches ${j.estimate ? 'past' : 'inside'} it` : ''}.`;
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} 52`, class: 'ew-gauge', role: 'img', 'aria-label': says });
+  const text = (tx, ty, anchor, str) => { const t = svgEl('text', { class: 'ew-gauge__num', x: tx, y: ty, 'text-anchor': anchor }); t.textContent = str; return t; };
+  svg.append(
+    svgEl('rect', { class: 'ew-gauge__zone', x: zoneL, y: 14, width: Math.max(0, zoneR - zoneL), height: 20 }),
+    text(bar.lo == null ? zoneL : bar.hi == null ? zoneR : (zoneL + zoneR) / 2, 10, bar.lo == null ? 'start' : bar.hi == null ? 'end' : 'middle', 'passes'),
+    svgEl('line', { class: 'ew-gauge__axis', x1: 10, x2: W - 10, y1: 24, y2: 24 }));
+  for (const v of [bar.lo, bar.hi]) {
+    if (v == null) continue;
+    svg.append(svgEl('line', { class: 'ew-gauge__limit', x1: x(v), x2: x(v), y1: 12, y2: 37 }), text(x(v), 49, 'middle', String(v)));
+  }
+  svg.append(
+    svgEl('path', { class: 'ew-gauge__ci', d: `M${x(iv.lo)},19 v10 M${x(iv.lo)},24 H${x(iv.hi)} M${x(iv.hi)},19 v10` }),
+    svgEl('circle', { class: 'ew-gauge__est', cx: x(iv.est), cy: 24, r: 5 }));
+  return h('div', { class: 'ew-promise__gauge' }, svg,
+    j.crosses ? h('p', { class: 'ew-cross' }, h('span', { 'aria-hidden': 'true', text: '↔ ' }), `The 95% interval reaches ${j.estimate ? 'past' : 'inside'} the bar.`) : null);
+}
+
 function renderPromises(sec, d) {
-  const planDate = new Date(`${d.planCommit.date}T12:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  const opened = d.testOpened && !/-00$/.test(d.testOpened.date)
-    ? new Date(`${d.testOpened.date}T12:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
-    : null;
+  const planDate = longDate(d.planCommit.date);
+  const opened = d.testOpened && !/-00$/.test(d.testOpened.date) ? longDate(d.testOpened.date) : null;
   const counts = { met: 0, missed: 0, pending: 0 };
   d.items.forEach((it) => counts[it.status]++);
+  const WORD = { met: 'Met', missed: 'Missed', pending: 'Pending' };
+  const ICON = { met: '✓', missed: '✕', pending: '…' };
 
   const planBtn = h('button', { type: 'button', 'data-view': 'plan' }, h('span', { text: 'The plan' }), h('small', { text: planDate }));
   const resultBtn = h('button', { type: 'button', 'data-view': 'result' }, h('span', { text: 'The result' }), h('small', { text: opened || 'not yet' }));
   const summary = h('p', { class: 'ew-sum', 'aria-live': 'polite' });
 
+  // Missed comes first: a visitor should be able to pull up the misses in one tap.
+  const filters = ['all', 'missed', 'met', 'pending'].filter((f) => f === 'all' || counts[f]);
+  const filterBtns = filters.map((f) => h('button', { type: 'button', 'data-show': f }, f === 'all' ? `All ${d.items.length}` : `${WORD[f]} ${counts[f]}`));
+  const filterRow = h('div', { class: 'ew-filter' }, h('span', { class: 'ew-small', text: 'Show' }), h('div', { class: 'ew-seg', role: 'group', 'aria-label': 'Show promises by outcome' }, filterBtns));
+
+  let crossedMet = 0;
   const groups = [...new Set(d.items.map((it) => it.group))];
   let k = 0;
-  const list = h('div', { class: 'ew-promises' }, groups.map((g) => h('div', { class: 'ew-group' },
+  const rows = [];
+  const groupEls = groups.map((g) => h('div', { class: 'ew-group' },
     h('h3', { text: g }),
-    h('ol', {}, d.items.filter((it) => it.group === g).map((it) => h('li', { class: `ew-promise is-${it.status}`, style: `--i:${k++}` },
-      h('p', { class: 'ew-promise__text', text: it.promise }),
-      h('div', { class: 'ew-promise__plan' }, h('span', { class: 'ew-badge ew-badge--plan', text: 'Declared' })),
-      h('div', { class: 'ew-promise__out' },
-        h('span', { class: `ew-badge ew-badge--${it.status}` },
-          h('span', { 'aria-hidden': 'true', text: it.status === 'met' ? '✓' : it.status === 'missed' ? '✕' : '…' }),
-          it.status === 'met' ? 'Met' : it.status === 'missed' ? 'Missed' : 'Pending'),
-        h('span', { class: 'ew-promise__result', text: it.result }))))))));
+    h('ol', {}, d.items.filter((it) => it.group === g).map((it) => {
+      const bar = it.status === 'pending' ? null : readBar(it.promise);
+      const iv = bar && readInterval(it.result);
+      if (iv && it.status === 'met' && judge(bar, iv).crosses) crossedMet++;
+      const li = h('li', { class: `ew-promise is-${it.status}`, style: `--i:${k++}` },
+        h('p', { class: 'ew-promise__text', text: it.promise }),
+        h('div', { class: 'ew-promise__plan' }, h('span', { class: 'ew-badge ew-badge--plan', text: 'Declared' })),
+        h('div', { class: 'ew-promise__out' },
+          h('span', { class: `ew-badge ew-badge--${it.status}` }, h('span', { 'aria-hidden': 'true', text: ICON[it.status] }), WORD[it.status]),
+          h('span', { class: 'ew-promise__result', text: it.result }),
+          iv ? gauge(bar, iv) : null));
+      rows.push([li, it.status]);
+      return li;
+    }))));
+  const list = h('div', { class: 'ew-promises' }, groupEls);
 
-  const commit = (c, label) => c && c.url && c.url !== '#'
-    ? h('a', { href: c.url, target: '_blank', rel: 'noopener' }, h('code', { text: c.sha }))
-    : h('code', { text: c ? c.sha : label });
-  const foot = h('p', { class: 'ew-commits' },
-    'Plan committed ', commit(d.planCommit), ` on ${planDate}. `,
-    opened ? ['Test term first scored in ', commit(d.testOpened), ` on ${opened}.`] : 'Test term not opened yet.');
+  // The order things happened, oldest first, as far as the file records it.
+  const steps = [
+    [d.planCommit, 'Plan committed, before any outcome data was opened'],
+    [d.rulesCommit, 'Rules and model settings logged, before any model was fitted'],
+    [d.freezeCommit, 'Model, calibration and cut points frozen'],
+    [opened ? d.testOpened : null, 'Test term scored, once, with the frozen model'],
+  ].filter(([c]) => c);
+  const chain = h('div', { class: 'ew-chain' },
+    h('h3', { text: 'In this order, by commit' }),
+    h('ol', {}, steps.map(([c, what]) => h('li', {},
+      h('span', { class: 'ew-chain__what', text: what }),
+      h('span', { class: 'ew-chain__ref' }, commitRef(c), ` · ${longDate(c.date)}`))),
+    opened ? null : h('li', { class: 'is-open' }, h('span', { class: 'ew-chain__what', text: 'Test term not opened yet' }))));
 
-  function setView(view) {
+  let view = 'result'; let show = 'all';
+  function paint() {
     sec.dataset.view = view;
     planBtn.setAttribute('aria-pressed', String(view === 'plan'));
     resultBtn.setAttribute('aria-pressed', String(view === 'result'));
+    filterRow.hidden = view === 'plan';
+    filterBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.show === show)));
+    rows.forEach(([li, status]) => { li.hidden = view === 'result' && show !== 'all' && status !== show; });
+    groupEls.forEach((g) => { g.hidden = ![...g.querySelectorAll('li')].some((li) => !li.hidden); });
+    const useful = d.items.find((it) => it.id === 'useful' && it.status !== 'pending');
     summary.replaceChildren(view === 'plan'
       ? `${d.items.length} promises, each written down before any outcome data was opened. Nothing that turned out badly has been removed.`
       : h('span', {},
-        h('b', { class: 'ew-t-met', text: `${counts.met} met` }), ' · ',
-        h('b', { class: 'ew-t-missed', text: `${counts.missed} missed` }),
+        h('b', { class: 'ew-t-missed' }, h('span', { 'aria-hidden': 'true', text: '✕ ' }), `${counts.missed} missed`), ' · ',
+        h('b', { class: 'ew-t-met' }, h('span', { 'aria-hidden': 'true', text: '✓ ' }), `${counts.met} met`),
         counts.pending ? [' · ', h('b', { class: 'ew-t-pending', text: `${counts.pending} pending` })] : '',
-        '. The misses stay on the page: that is the point of writing them down first.'));
+        '. ', useful ? `${useful.result} ` : '',
+        crossedMet ? `${crossedMet} of the met bars ${crossedMet === 1 ? 'has' : 'have'} an interval that reaches past the bar; it is drawn, not ticked off. ` : '',
+        'The misses stay on the page: that is the point of writing them down first.'));
   }
+  const setView = (v) => { view = v; paint(); };
   planBtn.addEventListener('click', () => setView('plan'));
   resultBtn.addEventListener('click', () => setView('result'));
+  filterBtns.forEach((b) => b.addEventListener('click', () => { show = b.dataset.show; paint(); }));
   document.addEventListener('blueprint:change', (e) => setView(e.detail.on ? 'plan' : 'result'));
 
   sec.replaceChildren(
@@ -136,7 +209,7 @@ function renderPromises(sec, d) {
       lede: 'Before opening any outcomes I committed a plan: every test, the train/test split, and what would count as failure. Flip between what I promised and what happened. Blueprint mode (<kbd>B</kbd>) flips it too.',
     }),
     h('div', { class: 'ew-switch', role: 'group', 'aria-label': 'Show the plan or the result' }, planBtn, resultBtn),
-    summary, list, foot);
+    summary, filterRow, list, chain);
   setView(root.classList.contains('bp-mode') ? 'plan' : 'result');
 }
 
@@ -146,6 +219,10 @@ function renderReplay(sec, d) {
   const K = d.cutoffs.length;
   const warnIdx = d.cutoffs.indexOf(d.warnDay);
   const hc = d.highCut * 100;
+  // The axis ends at the first round number past the highest score, so the dots fill the plot.
+  const XMAX = Math.min(100, Math.max(20, Math.ceil(Math.max(hc, ...d.risk) / 10) * 10));
+  const TICK = XMAX <= 50 ? 10 : XMAX <= 80 ? 20 : 25;
+  const undated = Array.from({ length: n }, (_, i) => i).filter((i) => d.left[i] == null && d.result[i] === 'W').length;
   const start = d.cutoffs[0];
   const end = d.length;
   const risk = (i, j) => d.risk[i * K + j];
@@ -168,7 +245,7 @@ function renderReplay(sec, d) {
   }
 
   // ─ DOM
-  const canvas = h('canvas', { class: 'ew-replay__canvas', role: 'img', 'aria-label': 'Animated dot plot of 1,000 students by risk score' });
+  const canvas = h('canvas', { class: 'ew-replay__canvas', role: 'img', 'aria-label': `Dot plot of ${fmt(n)} students by weekly risk score, with the High-risk zone at ${cutPct(d.highCut)} and above. The caption and the table below give the numbers.` });
   const tip = h('div', { class: 'viz__tip', hidden: true });
   const stage = h('div', { class: 'ew-replay__stage' }, canvas, tip);
   const playBtn = h('button', { type: 'button', class: 'demo__go ew-play' }, 'Play');
@@ -182,15 +259,15 @@ function renderReplay(sec, d) {
     h('table', {},
       h('thead', {}, h('tr', {}, h('th', { text: '' }), h('th', { text: 'Withdrew later' }), h('th', { text: 'Stayed' }), h('th', { text: 'Total' }))),
       h('tbody', {},
-        h('tr', {}, h('th', { text: 'On the day-28 warning list' }), h('td', { text: fmt(T.caught) }), h('td', { text: fmt(T.falseAlarm) }), h('td', { text: fmt(T.flagged) })),
+        h('tr', {}, h('th', { text: `On the day-${d.warnDay} warning list` }), h('td', { text: fmt(T.caught) }), h('td', { text: fmt(T.falseAlarm) }), h('td', { text: fmt(T.flagged) })),
         h('tr', {}, h('th', { text: 'Not on the list' }), h('td', { text: fmt(T.missed) }), h('td', { text: fmt(T.enrolled28 - T.flagged - T.missed) }), h('td', { text: fmt(T.enrolled28 - T.flagged) })),
-        h('tr', {}, h('th', { text: 'Left before day 28' }), h('td', { text: fmt(T.early) }), h('td', { text: '—' }), h('td', { text: fmt(T.early) })))));
+        h('tr', {}, h('th', { text: `Left before day ${d.warnDay}, before a warning was possible` }), h('td', { text: fmt(T.early) }), h('td', { text: '—' }), h('td', { text: fmt(T.early) })))));
 
   sec.replaceChildren(
     head(sec, {
       eyebrow: 'REPLAY A TERM', standin: d.standin,
       title: 'Watch the warning list form, then see who left.',
-      lede: `${fmt(n)} students picked at random from the October 2014 term, which the model never trained on. Each week it re-scores everyone from what they've done so far. On day ${d.warnDay} the list locks: the shaded zone is High risk. Then the term plays out, and students drop into the tray on the day they withdrew.`,
+      lede: `${fmt(n)} registrations drawn at random from the ${fmt(d.population)} students who started the October 2014 term, which the model never trained on. Each week everyone is re-scored from what they've done so far, by the same recipe refitted for that week. On day ${d.warnDay} the list locks: the shaded zone is High risk, a score of ${cutPct(d.highCut)} or more, a cut point fixed on an earlier term. Then the term plays out, and students drop into the tray on the day they withdrew.`,
     }),
     h('div', { class: 'ew-replay__controls' }, playBtn, restartBtn, h('label', { class: 'ew-scrub-wrap' }, dayLabel, scrub)),
     stage, caption, tiles, table);
@@ -206,13 +283,13 @@ function renderReplay(sec, d) {
   function layout() {
     W = stage.clientWidth;
     const narrow = W < 560;
-    const bw = narrow ? 5 : 2.5; // bin width in risk points
+    const bw = (narrow ? 5 : 2.5) * (XMAX / 100); // bin width in risk points
     const off = hc % bw;
-    const nb = Math.ceil((100 - off) / bw) + 1;
+    const nb = Math.ceil((XMAX - off) / bw) + 1;
     const bin = (r) => clamp(Math.floor((r - off) / bw) + 1, 0, nb - 1);
     const pad = { l: 8, r: 8 };
     const plotW = W - pad.l - pad.r;
-    const edge = (b) => pad.l + (clamp(b === 0 ? 0 : off + (b - 1) * bw, 0, 100) / 100) * plotW;
+    const edge = (b) => pad.l + (clamp(b === 0 ? 0 : off + (b - 1) * bw, 0, XMAX) / XMAX) * plotW;
     // Largest stacks over the whole replay decide the dot size.
     let maxMain = 1; let maxTray = 1;
     for (let j = 0; j < K; j++) {
@@ -223,7 +300,7 @@ function renderReplay(sec, d) {
     const ct = new Int32Array(nb);
     for (let i = 0; i < n; i++) if (leaveDay[i] != null && leaveDay[i] >= d.warnDay) ct[bin(r28[i])]++;
     maxTray = Math.max(1, ...ct);
-    const binPx = plotW * (bw / 100);
+    const binPx = plotW * (bw / XMAX);
     const mainMax = narrow ? 240 : 300;
     const trayMax = narrow ? 130 : 160;
     let s = 3;
@@ -303,7 +380,7 @@ function renderReplay(sec, d) {
     c.clearRect(0, 0, W, H);
     const locked = day >= d.warnDay;
     // High-risk zone: faint before the list locks, solid after.
-    const zx = pad.l + (hc / 100) * plotW;
+    const zx = pad.l + (hc / XMAX) * plotW;
     c.fillStyle = P.zone;
     c.globalAlpha = locked ? 1 : 0.45;
     c.fillRect(zx, top - 18, pad.l + plotW - zx, H - top + 10);
@@ -312,22 +389,22 @@ function renderReplay(sec, d) {
     c.beginPath(); c.moveTo(zx + 0.5, top - 18); c.lineTo(zx + 0.5, H - 8); c.stroke(); c.setLineDash([]);
     c.font = '500 12px Geist, system-ui, sans-serif'; c.textBaseline = 'alphabetic';
     c.fillStyle = P.ink; c.textAlign = 'left';
-    const zoneLabel = narrow ? `High risk ≥ ${Math.round(hc)}%` : `Warning list: High risk ≥ ${Math.round(hc)}%${locked ? ' · locked' : ''}`;
+    const zoneLabel = narrow ? `High risk ≥ ${cutPct(d.highCut)}` : `Warning list: High risk ≥ ${cutPct(d.highCut)}${locked ? ' · locked' : ''}`;
     c.fillText(zoneLabel, Math.min(zx + 8, W - c.measureText(zoneLabel).width - 4), top - 6);
     // Axis between the plot and the tray.
     c.strokeStyle = P.line; c.lineWidth = 1;
     c.beginPath(); c.moveTo(pad.l, base + 1.5); c.lineTo(pad.l + plotW, base + 1.5); c.stroke();
     c.fillStyle = P.ink3; c.font = '12px Geist, system-ui, sans-serif';
-    for (const t of [0, 25, 50, 75, 100]) {
-      const x = pad.l + (t / 100) * plotW;
-      c.textAlign = t === 0 ? 'left' : t === 100 ? 'right' : 'center';
+    for (let t = 0; t <= XMAX; t += TICK) {
+      const x = pad.l + (t / XMAX) * plotW;
+      c.textAlign = t === 0 ? 'left' : t === XMAX ? 'right' : 'center';
       c.fillText(`${t}%`, x, base + 17);
     }
     // Axis title at the right end, clear of the warning line wherever the cut point falls.
     // On a phone the tray label needs the room; the caption below says what the axis is.
     if (!narrow) {
       c.textAlign = 'right';
-      c.fillText(locked ? 'Risk score on day 28 →' : 'Risk score this week →', pad.l + plotW, base + 33);
+      c.fillText(locked ? `Risk score on day ${d.warnDay} →` : 'Risk score this week →', pad.l + plotW, base + 33);
     }
     c.textAlign = 'left'; c.fillStyle = P.ink2;
     c.fillText(`Withdrew after day ${d.warnDay} ↓`, pad.l, trayTop - 4 < base + 36 ? trayTop + 12 : trayTop - 4);
@@ -380,13 +457,13 @@ function renderReplay(sec, d) {
     } else if (day < end) {
       caption.textContent = `Day ${day}. Students drop into the tray on the day they withdrew. Solid dots were on the list (caught); hollow dots were not (missed).`;
     } else {
-      caption.textContent = `End of term. The day-${d.warnDay} list caught ${fmt(T.caught)} of the ${fmt(later)} students who withdrew later (${pct(T.caught / Math.max(later, 1))}). ${fmt(T.falseAlarm)} students on the list stayed. ${fmt(T.early)} left before any warning was possible.`;
+      caption.textContent = `End of term. The day-${d.warnDay} list caught ${fmt(T.caught)} of the ${fmt(later)} students who withdrew later (${pct(T.caught / Math.max(later, 1))}). ${fmt(T.falseAlarm)} students on the list stayed (false alarms). ${fmt(T.early)} left before a warning was possible.${undated ? ` ${fmt(undated)} withdrew with no date recorded and are shown leaving on the last day.` : ''}`;
     }
     tiles.replaceChildren(
       tile('Caught', day < d.warnDay ? '—' : fmt(c.caught), 'on the list, then withdrew', 'is-caught'),
       tile('Missed', day < d.warnDay ? '—' : fmt(c.missed), 'not on the list, withdrew', 'is-missed'),
       tile(day >= end ? 'False alarms' : 'On the list, still here', day < d.warnDay ? '—' : fmt(c.flaggedStill), day >= end ? 'flagged, but stayed' : 'flagged, still enrolled'),
-      tile('Left before day 28', fmt(c.early), 'too early to warn'));
+      tile(`Left before day ${d.warnDay}`, fmt(c.early), 'before a warning was possible'));
   }
 
   // ─ Playback: slow through the weekly scores, pause at the lock, then faster.
@@ -467,14 +544,28 @@ function renderBeat(sec, d) {
   const total = { you: 0, model: 0, cards: 0 };
   const stage = h('div', { class: 'ew-beat__stage', 'aria-live': 'polite' });
   const alwaysStays = 1 - d.poolRate;
+  const cut = cutPct(d.threshold);
+  // How the model's calls do over the whole pool, for the running score's context.
+  const modelPool = d.cards.filter((c) => (c.p >= d.threshold) === c.withdrew).length / d.cards.length;
+  const termNote = h('span', {});
 
   sec.replaceChildren(
     head(sec, {
       eyebrow: 'BEAT THE MODEL', standin: d.standin,
       title: 'Six students. Who withdraws?',
-      lede: `Each card is a real student still enrolled at the end of week 4, drawn at random. You see what the model saw. Call each one, then compare with the model and with what actually happened. In this pool ${pct(d.poolRate)} withdrew, so always guessing "stays" would score about ${pct(alwaysStays)}.`,
+      lede: `Each card is a real student who was still enrolled at the end of week 4. The pool is ${fmt(d.cards.length)} of them drawn at random, and every round deals six, never picked for whether the model was right. You see what the model saw. Call each one, then compare with the model and with what actually happened.`,
     }),
+    h('p', { class: 'ew-rule' },
+      h('b', { text: 'The model\'s call: ' }), `"withdraws" when the student is in its High-risk group, a score of ${cut} or more. `,
+      h('b', { text: 'The pool: ' }), `${pct(d.poolRate, 1)} of these ${fmt(d.cards.length)} students withdrew, so always guessing "stays" would be right ${pct(alwaysStays, 1)} of the time. `, termNote),
+    h('p', { class: 'ew-small ew-rule__why', text: 'The plan first set the model\'s call at 50%. On the earlier term, the one used to set the cut points, no student scored that high, so the model would have said "stays" on every card. The rule was changed in the plan\'s change log before the test term was opened.' }),
     stage);
+  // The term's own rate sits in the advising file; add it for comparison when it arrives.
+  load('advising').then((a) => {
+    if (Boolean(a.standin) === Boolean(d.standin) && Math.abs(a.rate - d.poolRate) >= 0.005) {
+      termNote.textContent = `Across the whole term it was ${pct(a.rate, 1)}: the pool's rate is the luck of the draw, kept as drawn.`;
+    }
+  }).catch(() => {});
 
   function nextRound() {
     if (deckPos + ROUND > deck.length) deckPos = 0;
@@ -504,9 +595,11 @@ function renderBeat(sec, d) {
   }
 
   function facts(c) {
-    const reg = c.registered <= 0 ? 'Registered on the first day' : `Registered ${fmt(c.registered)} day${c.registered === 1 ? '' : 's'} before the start`;
+    const days = (k) => `${fmt(k)} day${k === 1 ? '' : 's'}`;
+    const reg = c.registered === 0 ? 'Registered on the first day' : c.registered > 0 ? `Registered ${days(c.registered)} before the start` : `Registered ${days(-c.registered)} after the start`;
     const attempt = c.attempts === 0 ? 'First attempt at this module' : `Attempt ${c.attempts + 1} at this module`;
-    const seen = c.lastSeen <= 1 ? 'Online in the last day' : `Last online ${c.lastSeen} days before day 28`;
+    // A student who never clicked has no last visit; the file's lastSeen is then a filler value.
+    const seen = c.neverOnline ? 'Never online' : c.lastSeen <= 1 ? 'Online in the last day' : `Last online ${c.lastSeen} days before day 28`;
     const task = { 'on time': 'Handed in on time', late: 'Handed in late', 'not submitted': 'Not handed in', 'none due': 'None due yet' }[c.firstTask];
     return h('dl', { class: 'ew-facts' },
       h('div', {}, h('dt', { text: 'Active' }), h('dd', { text: `${c.activeDays} of the first 28 days` })),
@@ -518,6 +611,8 @@ function renderBeat(sec, d) {
 
   function showCard() {
     const c = round[at];
+    // Checked before the old card is replaced: replacing it drops the focus it held.
+    const playing = sec.contains(document.activeElement);
     const clicks = c.weeks.reduce((a, b) => a + b, 0);
     const typical = c.typical.reduce((a, b) => a + b, 0);
     const choose = (leaves) => { guesses.push(leaves); at++; if (at < ROUND) showCard(); else reveal(); };
@@ -536,7 +631,7 @@ function renderBeat(sec, d) {
       h('div', { class: 'ew-card__calls' }, stays, leaves)));
     // Keep keyboard focus in the game once the visitor is playing, but don't
     // pull focus to it when the section first loads.
-    if (sec.contains(document.activeElement)) stays.focus({ preventScroll: true });
+    if (playing) stays.focus({ preventScroll: true });
   }
 
   function reveal() {
@@ -550,7 +645,7 @@ function renderBeat(sec, d) {
         h('span', { class: 'ew-rev__n', text: `${k + 1}` }),
         h('span', { class: 'ew-rev__truth', text: c.withdrew ? `Withdrew${c.leftDay ? ` on day ${c.leftDay}` : ''}` : 'Stayed' }),
         h('span', { class: 'ew-rev__you' }, mark(youRight), `You: ${guesses[k] ? 'withdraws' : 'stays'}`),
-        h('span', { class: 'ew-rev__model' }, mark(modelRight), `Model: ${pct(c.p)} → ${modelLeaves ? 'withdraws' : 'stays'}`));
+        h('span', { class: 'ew-rev__model' }, mark(modelRight), `Model: ${pct(c.p, 1)} → ${modelLeaves ? 'withdraws' : 'stays'}`));
     });
     total.you += you; total.model += model; total.cards += ROUND;
     const verdict = you > model ? 'You beat the model this round.' : you === model ? 'A tie this round.' : 'The model wins this round.';
@@ -561,7 +656,7 @@ function renderBeat(sec, d) {
         h('span', {}, h('small', { text: 'Model' }), h('b', { text: `${model}/${ROUND}` }))),
       h('p', { class: 'ew-verdict', text: verdict }),
       h('ol', { class: 'ew-revs' }, rows),
-      h('p', { class: 'ew-running', text: `So far: you ${pct(total.you / total.cards)}, the model ${pct(total.model / total.cards)} over ${total.cards} students. Always "stays" would be about ${pct(alwaysStays)}. The model's advantage isn't the easy calls; it's weighing six weak signals the same way every time.` }),
+      h('p', { class: 'ew-running', text: `So far: you ${pct(total.you / total.cards)}, the model ${pct(total.model / total.cards)} over ${total.cards} students. Over all ${fmt(d.cards.length)} cards in the pool the model's calls are right ${pct(modelPool, 1)} of the time; always guessing "stays" is right ${pct(alwaysStays, 1)}. The model calls "withdraws" at ${cut} or more.` }),
       again));
     again.focus({ preventScroll: true });
   }
@@ -591,7 +686,7 @@ function renderAdvising(sec, d) {
     head(sec, {
       eyebrow: 'YOU RUN ADVISING', standin: d.standin,
       title: 'How many students can your advisers call?',
-      lede: `Every student still enrolled at day 28 of the October 2014 term, ranked by the model. Advisers call from the top down. Pick how many they can reach, then see who gets caught, and for which groups. The plan's bar: catch rates within 5 points across groups.`,
+      lede: `All ${fmt(n)} students still enrolled at day 28 of the October 2014 term, ranked by the model's score; ${pct(d.rate, 1)} of them withdrew later. Advisers call from the top down. Pick how many they can reach, then see who gets caught, and for which groups. The plan's bar: catch rates within 5 points across groups.`,
     }),
     h('div', { class: 'ew-adv__controls' },
       h('div', { class: 'ew-adv__cap' }, capLabel, slider),
@@ -631,6 +726,7 @@ function renderAdvising(sec, d) {
       tile('Calls to students who stayed', fmt(contacts - nowCaught), `${(contacts / Math.max(nowCaught, 1)).toFixed(1)} calls per withdrawal reached`),
       tile('Calls made', fmt(contacts), equal ? `${extra >= 0 ? '+' : '−'}${fmt(Math.abs(extra))} versus one cut point for everyone` : `the top ${pct(share)} of ${fmt(n)} students`));
     capLabel.replaceChildren('Advisers can call ', h('b', { text: fmt(k) }), ` students (${pct(share)})`);
+    slider.setAttribute('aria-valuetext', `${fmt(k)} students, ${pct(share)} of ${fmt(n)}`);
 
     const judged = G.filter((g) => g.n >= 100 && g.w > 0);
     rows.replaceChildren(...G.map((g) => {
@@ -666,7 +762,7 @@ function renderAdvising(sec, d) {
 
 // ── 5. Case files ───────────────────────────────────────────────────
 function renderCasefiles(sec, d) {
-  const OPEN = 4; // an even number, so two-column rows come out full
+  const OPEN = 3; // fixed in the plan: the three checks with the largest effect open, the rest one tap away
   // A check can touch many rows and still need no change, so the stamp follows `changed`, not the count.
   const card = (f, k) => h('article', { class: `ew-case ${f.changed ? 'is-changed' : 'is-clean'}` },
     h('div', { class: 'ew-case__top' },
@@ -693,20 +789,29 @@ function renderCasefiles(sec, d) {
     head(sec, {
       eyebrow: 'CASE FILES', standin: d.standin,
       title: 'Before any model: what the data got wrong.',
-      lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Biggest effect first; the checks that needed no change are listed too.`,
+      lede: `${d.files.length} checks ran before any modelling, and ${changed} of them changed the analysis. Open here: the ${first.length} that touched the most registrations. The other ${rest.length}, including the checks that needed no change, are one tap away.`,
     }),
-    h('div', { class: 'ew-cases' }, first), rest.length ? more : null, rest.length ? btn : null);
+    h('div', { class: 'ew-cases ew-cases--top' }, first), rest.length ? more : null, rest.length ? btn : null);
 }
 
 // ── Load each piece when it comes near the screen ───────────────────
+// Each file is fetched once, however many pieces read it.
+const files = new Map();
+function load(name) {
+  if (!files.has(name)) {
+    files.set(name, fetch(`${BASE}${name}.json`).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }));
+  }
+  return files.get(name);
+}
 const RENDER = { promises: renderPromises, replay: renderReplay, beat: renderBeat, advising: renderAdvising, casefiles: renderCasefiles };
 
 async function build(sec) {
   const name = sec.dataset.ew;
   try {
-    const res = await fetch(`${BASE}${name}.json`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await load(name);
     if (data.standin) standinBanner();
     RENDER[name](sec, data);
   } catch (err) {

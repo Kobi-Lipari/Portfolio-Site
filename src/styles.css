@@ -1013,8 +1013,31 @@ kbd {
   .ew-part[data-view="result"] .ew-promise__out .ew-badge { animation: ew-in 0.45s ease both; animation-delay: calc(var(--i) * 45ms); }
 }
 @keyframes ew-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.ew-commits { margin: 18px 0 0; font-size: 13px; color: var(--ink-3); }
-.ew-commits code { font-family: var(--mono); font-size: 12px; }
+.ew-promise[hidden], .ew-group[hidden], .ew-filter[hidden] { display: none; }
+.ew-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 18px; }
+/* A miss is marked as strongly as a pass: badge, a bar down the side, and the result in full ink. */
+.ew-part[data-view="result"] .ew-promise.is-missed { box-shadow: inset 4px 0 0 var(--ew-bad); }
+.ew-part[data-view="result"] .ew-promise.is-missed .ew-promise__result { color: var(--ink); }
+/* A numeric bar, drawn: shaded passing range, dashed limits, the estimate and its interval. */
+.ew-promise__gauge { grid-column: 1 / -1; max-width: 340px; }
+.ew-part[data-view="plan"] .ew-promise__gauge { display: none; }
+.ew-gauge { display: block; width: 100%; height: auto; overflow: visible; }
+.ew-gauge__zone { fill: color-mix(in srgb, var(--ink) 11%, transparent); }
+.ew-gauge__axis { stroke: var(--line-2); stroke-width: 1; }
+.ew-gauge__limit { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.ew-gauge__ci { stroke: var(--ink); stroke-width: 2; fill: none; stroke-linecap: round; }
+.ew-gauge__est { fill: var(--ink); stroke: var(--card); stroke-width: 2; }
+.ew-gauge__num { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+.ew-cross { margin: 2px 0 0; font-size: 13px; font-weight: 500; color: var(--ink); }
+/* The four commits, oldest first */
+.ew-chain { margin: 24px 0 0; }
+.ew-chain h3 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 8px; font-weight: 500; }
+.ew-chain ol { list-style: none; margin: 0; padding: 0; counter-reset: ew-step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px 14px; }
+.ew-chain li { counter-increment: ew-step; display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 2px solid var(--ink-3); font-size: 14px; line-height: 1.4; }
+.ew-chain li::before { content: counter(ew-step, decimal-leading-zero); font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.ew-chain li.is-open { border-top-style: dashed; color: var(--ink-3); }
+.ew-chain__ref { font-size: 13px; color: var(--ink-2); }
+.ew-chain code { font-family: var(--mono); font-size: 12px; color: var(--ink); }
 
 /* 2. Replay */
 .ew-replay__controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 12px; }
@@ -1043,6 +1066,8 @@ kbd {
 .ew-table th:first-child { text-align: left; font-weight: 500; }
 
 /* 3. Beat the model */
+.ew-rule { margin: 0 0 8px; padding: 10px 14px; max-width: 860px; font-size: 15px; background: var(--soft-fill); border-left: 3px solid var(--ink-3); border-radius: 0 8px 8px 0; }
+.ew-rule__why { margin: 0 0 16px; max-width: 860px; }
 .ew-card { background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: clamp(16px, 2.5vw, 24px); max-width: 860px; }
 .ew-card__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .ew-card__n { font-family: var(--mono); font-size: 13px; color: var(--ink-3); }
@@ -1126,6 +1151,12 @@ kbd {
 
 /* 5. Case files */
 .ew-cases[hidden] { display: none; }
+/* The three open files run full width, with expected, found and decided side by side when there is room. */
+.ew-cases.ew-cases--top { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) {
+  .ew-cases--top .ew-case dl { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .ew-cases--top .ew-case dl div { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+}
 .ew-cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; margin-bottom: 14px; }
 .ew-case { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; }
 .ew-case__top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

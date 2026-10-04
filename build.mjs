@@ -25,7 +25,9 @@ for (const p of allProjects) {
     heldBack.push(p.data);
     continue;
   }
-  projects.push(p);
+  // Links into a repo that is still private are left out everywhere (rail, palette) until
+  // the project's repoIsPublic switch in src/projects.mjs is set to true.
+  projects.push(p.repoIsPublic === false ? { ...p, links: p.links.filter((l) => !l.repo) } : p);
 }
 const u = (depth, target = '') => {
   if (!PREVIEW) return '/' + target;
@@ -255,7 +257,7 @@ const DEMOS = {
   dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>${CATALOG ? `
   <section class="demo cat" data-demo="catalog" data-base="${siteRoot(depth)}" aria-label="More redesigned dashboards"><p class="demo__noscript">The slideshow needs JavaScript.</p></section>` : ''}`,
   // Five pieces for the withdrawal project, each filled from its own JSON file in data/ewarn/.
-  ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/">
+  ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/"${allProjects.some((p) => p.demo === 'ewarn' && p.repoIsPublic) ? ' data-repo-links="on"' : ''}>
     <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="replay" id="replay" aria-label="Replay a term"><p class="demo__noscript">The term replay needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
@@ -401,6 +403,7 @@ await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
 await copyFile('src/demo-catalog.js', 'dist/demo-catalog.js');
 await copyFile('src/dash-kit.js', 'dist/dash-kit.js');
 await copyFile('src/demo-ewarn.js', 'dist/demo-ewarn.js');
+await copyFile('src/ewarn-read.js', 'dist/ewarn-read.js');
 if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
