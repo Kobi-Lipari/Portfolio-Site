@@ -7,6 +7,7 @@ Portfolio site for Kobi Lipari: plain HTML, CSS and JavaScript, no dependencies.
 - **Projects:** `src/projects.mjs`. Each project has a `lane` (`"build"` or `"design"`), a short `note` for the homepage list, and case-study `sections`.
 - **Homepage, nav, footer, about:** `build.mjs` (search for the text you want to change). Contact links are in the `SITE` object at the top.
 - **Styles:** `src/styles.css`. Colors live as variables at the top.
+- **Fonts:** served from the site, not from Google: `src/vendor/fonts` (Geist, Geist Mono, Instrument Serif and Caveat; Latin subsets from the Fontsource npm packages, SIL Open Font License, licences alongside). The `@font-face` rules are at the top of `src/styles.css`; the build preloads the faces every page shows first (`FONT_PRELOAD` in `build.mjs`).
 - **Hero:** the Admissions before/after from the dashboards project (`src/demo-dash.js` with `data-mode="hero"`).
 
 Anything in `[square brackets]` is a placeholder. The live build leaves placeholders out (and drops a case-study section or timeline that is only a placeholder); `DRAFT=1 node build.mjs` shows them with a dashed orange underline so they're easy to find.
