@@ -6,6 +6,9 @@ import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
 const PREVIEW = process.env.PREVIEW === '1';
+// NOINDEX=1 asks search engines to leave the site out: a noindex tag on every page and a
+// robots.txt that turns crawlers away. Without it the site is indexable and has a sitemap.
+const NOINDEX = process.env.NOINDEX === '1';
 
 // A project whose data files are stand-ins (made to design the page before the
 // real analysis ran) is never published. A production build stops with an error,
@@ -66,26 +69,58 @@ const txt = (s = '') => DRAFT
   ? esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`)
   : esc(String(s).replace(/\s*\[[^\]]+\]/g, '').trim());
 
+// The picture link previews show (Open Graph, Twitter card), the touch icon and favicon.ico
+// are made by tools/share-image.mjs.
+const SHARE_IMAGE = { src: 'img/og.png', w: 1200, h: 630 };
+
+// Who the site is about, for search engines (schema.org Person). The job, employer and degree
+// repeat the About block on the homepage: change them together.
+const personLd = () => `<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  url: `${SITE.url}/`,
+  ...(SITE.headshot ? { image: `${SITE.url}/img/headshot.webp` } : {}),
+  description: SITE.description,
+  jobTitle: 'Data Analyst',
+  worksFor: { '@type': 'CollegeOrUniversity', name: 'Nicholls State University' },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of Louisiana at Lafayette' },
+  email: `mailto:${SITE.email}`,
+  sameAs: SITE.links.filter((l) => l.href !== '#').map((l) => l.href),
+}).replace(/</g, '\\u003c')}</script>`;
+
 // Font files every page shows above the fold, fetched early so the first paint already has
 // them. A page can add more with `fonts`. The files and their @font-face rules: src/vendor/fonts, src/styles.css.
 const FONT_PRELOAD = ['geist-latin-wght-normal', 'instrument-serif-latin-400-normal'];
-const head = ({ title, description, path, depth = 0, fonts = [] }) => `<!doctype html>
+// `noindex` is for a page that should never be listed (the 404 page); it also has no canonical URL.
+const head = ({ title, description, path, depth = 0, fonts = [], noindex = false, extra = '' }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${SITE.url}${path}">
+<meta name="description" content="${esc(description)}">${noindex || NOINDEX ? '\n<meta name="robots" content="noindex, nofollow">' : ''}${noindex ? '' : `
+<link rel="canonical" href="${SITE.url}${path}">`}
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="${SITE.url}${path}">
+<meta property="og:site_name" content="${SITE.name}">${noindex ? '' : `
+<meta property="og:url" content="${SITE.url}${path}">`}
+<meta property="og:image" content="${SITE.url}/${SHARE_IMAGE.src}">
+<meta property="og:image:width" content="${SHARE_IMAGE.w}">
+<meta property="og:image:height" content="${SHARE_IMAGE.h}">
+<meta property="og:image:alt" content="${esc(SITE.description)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(description)}">
+<meta name="twitter:image" content="${SITE.url}/${SHARE_IMAGE.src}">
 <meta name="theme-color" content="#F3EEE6">
 <script>(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light'})()</script>
+<link rel="icon" href="${u(depth, 'favicon.ico')}" sizes="32x32">
+<link rel="apple-touch-icon" href="${u(depth, 'img/apple-touch-icon.png')}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%230E2438'/%3E%3Crect x='16' width='16' height='32' fill='%23F3EEE6'/%3E%3Crect x='15' width='2' height='32' fill='%23C8553A'/%3E%3C/svg%3E">
 ${[...FONT_PRELOAD, ...fonts].map((f) => `<link rel="preload" href="${u(depth, `vendor/fonts/${f}.woff2`)}" as="font" type="font/woff2" crossorigin>`).join('\n')}
-<link rel="stylesheet" href="${u(depth, 'styles.css')}">
+<link rel="stylesheet" href="${u(depth, 'styles.css')}">${extra ? `\n${extra}` : ''}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>`;
@@ -189,7 +224,7 @@ const row = (depth, p) => `
         <span class="row__go" aria-hidden="true">→</span>
       </a></li>`;
 
-const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/', fonts: ['instrument-serif-latin-400-italic'] })}
+const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/', fonts: ['instrument-serif-latin-400-italic'], extra: personLd() })}
 ${nav()}
 <main id="main">
 <section class="hero" aria-label="Introduction">
@@ -245,7 +280,7 @@ ${nav()}
 ${footer()}`;
 
 // Every project, as cards.
-const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: SITE.description, path: '/work/', depth: 1 })}
+const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: `All ${projects.length} projects by ${SITE.name}, data analyst and web developer: ${projects.map((p) => p.title).join('; ')}.`, path: '/work/', depth: 1 })}
 ${nav(1)}
 <main id="main" class="work-all">
   <a class="back" href="${u(1)}">← Home</a>
@@ -428,8 +463,20 @@ ${nav(1)}
 </main>
 ${footer(1)}`);
 }
-await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: SITE.description, path: '/404' })}
+await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: `This page is not on ${SITE.name}'s site.`, path: '/404', noindex: true })}
 ${nav()}
 <main id="main" class="proj"><h1 style="margin-top:48px">Nothing here.</h1><p class="proj__outcome"><a href="${u(0)}">Back to the homepage</a></p></main>
 ${footer()}`);
-console.log(`Built ${projects.length} project pages + homepage into dist/`);
+if (existsSync('src/favicon.ico')) await copyFile('src/favicon.ico', 'dist/favicon.ico');
+// For search engines: every page in a sitemap and an open robots.txt, or with NOINDEX=1 a
+// robots.txt that turns all crawlers away (and no sitemap).
+if (!NOINDEX) {
+  const pages = ['/', '/work/', ...projects.map((p) => `/work/${p.slug}/`)];
+  await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pages.map((p) => `  <url><loc>${SITE.url}${p}</loc></url>`).join('\n')}
+</urlset>
+`);
+}
+await writeFile('dist/robots.txt', NOINDEX ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${SITE.url}/sitemap.xml\n`);
+console.log(`Built ${projects.length} project pages + homepage into dist/${NOINDEX ? ' (NOINDEX: search engines are asked to stay out)' : ''}`);
