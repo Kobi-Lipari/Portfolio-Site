@@ -198,14 +198,13 @@ ${nav()}
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
     <div>
       <h2 id="about-h">About</h2>
-      <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting and research support. Part time, I build full-stack web platforms that members and patients use every day.</p>
+      <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. Part time, I build full-stack web platforms that members and patients use every day.</p>
       <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk.</p>
       <dl>
-        <dt>NOW</dt><dd>Data Analyst, Institutional Research</dd>
+        <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
         <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer and IT Support, Healingly</dd>
         <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette</dd>
         <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
-        <dt>AWARD</dt><dd>Employee of the Year, St. Mary Parish (2018)</dd>
       </dl>
     </div>
   </div>
