@@ -48,19 +48,24 @@ function admissionsModel(D, sel) {
   };
 }
 
-// The redesign as the owner's v27 workbook (v28) lays it out (1400 × 900): red header with page buttons,
-// a fall stepper and filter summary with the filters behind one button, key figures with their change,
-// then the funnel and this fall against the one before. Tableau point sizes are drawn at 4/3 px.
+// The redesign as the owner's v28 workbook lays it out (1400 × 900), read from the .twb: zone positions,
+// the label runs' own font sizes (they override the sheets' cell styles), number formats and colors.
+// Tableau point sizes are drawn at 4/3 px. Text objects are top-aligned, as in Tableau.
 const PT = (n) => Math.round((n * 4) / 3);
 const STEP_OFF = '#d3d8da';
 const FUNNEL_FILL = ['#b9c2c6', '#d9848f', RED];
 const VS_FILL = { before: ['#dde2e4', '#f2d3d8', '#d26f7e'], sel: ['#b9c2c6', '#e3a3ac', RED] };
 const TYPE_NAME = { N: 'New FTF', T: 'Transfer', R: 'Readmit', I: 'International', A: 'Adult', Other: 'Other', grad: 'Graduate' };
+const NICHOLLS_IR = 'https://public.tableau.com/app/profile/nichollsir';
+
+// Tableau's custom formats: "*+0%;-0%;0%" and "*+#,##0.0;-#,##0.0;0.0" (a plain hyphen, blank when null).
+const tPct = (x) => (x == null || !isFinite(x) ? '' : `${x > 0 ? '+' : x < 0 ? '-' : ''}${Math.round(Math.abs(x) * 100)}%`);
+const tPts = (x) => (x == null || !isFinite(x) ? '' : x === 0 ? '0.0' : `${x > 0 ? '+' : '-'}${Math.abs(x).toFixed(1)}`);
 
 function admHeader(title, buttons, active) {
   let s = R(0, 0, W, 84, RED);
   s += R(8, 8, 123, 68, '#fff') + `<image href="${BASE}img/nicholls-n.webp" x="12" y="12" width="115" height="60" preserveAspectRatio="xMidYMid meet"/>`;
-  s += T(151, 58, title, { size: PT(32), weight: 700, fill: '#fff' });
+  s += T(151, 53, title, { size: PT(32), weight: 700, fill: '#fff' });
   [[699, 138], [861, 157], [1042, 119], [1185, 191]].forEach(([x, w], i) => {
     const on = i === active;
     s += R(x, 12, w, 60, on ? '#fff' : RED);
@@ -76,18 +81,43 @@ function filterSummary(m) {
 }
 
 function filterPanel(m) {
-  // Hidden until the Filters button is pressed, as in the workbook.
+  // Hidden until the Filters button is pressed, as in the workbook; its title row shows with it.
   let s = R(870, 131, 518, 302, '#fff', { stroke: FRAME });
+  s += `<text x="883" y="161" font-size="${PT(14)}" font-weight="700" fill="${INK}">Filters<tspan font-size="${PT(11)}" font-weight="400" fill="${MUTED}">   These apply to every page</tspan></text>`;
   const card = (x, y, title, value) => {
-    s += T(x + 4, y + 24, title, { size: PT(14), fill: INK });
-    s += R(x + 4, y + 36, 222, 30, '#fff', { stroke: '#c9cfd1' }) + T(x + 12, y + 57, value, { size: PT(12), fill: MUTED });
-    s += `<path d="M${x + 208} ${y + 47}l5 6 5-6" fill="none" stroke="${MUTED}" stroke-width="1.6"/>`;
+    s += T(x, y + 18, title, { size: PT(14), fill: INK });
+    s += R(x, y + 26, 236, 34, '#fff', { stroke: '#c9cfd1' }) + T(x + 8, y + 50, value, { size: PT(16), fill: INK });
+    s += `<path d="M${x + 218} ${y + 40}l5 6 5-6" fill="none" stroke="${MUTED}" stroke-width="1.6"/>`;
   };
   const type = m.groupKey === 'all' || m.groupKey === 'ug' ? '(All)' : TYPE_NAME[m.groupKey] || m.group;
   const level = m.groupKey === 'ug' ? 'Undergraduate' : m.groupKey === 'grad' ? 'Graduate' : '(All)';
-  card(886, 147, 'Fall term', m.fall);
-  card(886, 227, 'Student type', type); card(1136, 227, 'Level', level);
-  card(886, 307, 'Month applied', '(All)'); card(1136, 307, 'Department', '(All)');
+  card(886, 191, 'Fall term', m.fall);
+  card(886, 271, 'Student type', type); card(1136, 271, 'Level', level);
+  card(886, 351, 'Month applied', '(All)'); card(1136, 351, 'Department', '(All)');
+  return s;
+}
+
+// Tableau stacks a bar's segments in the color field's sort order; the owner's view shows the funnel
+// with Applied on top, so the stack is built from Enrolled (bottom) up to Applied (top).
+function stackFunnel(m, { cx, yT, yB, maxW, fills, inks, labelPt, underline, tour }) {
+  let s = '';
+  const app = m.cur[0] || 0, tot = m.cur.reduce((a, v) => a + (v || 0), 0);
+  const top = ticks(tot || 1, 6).top;
+  const sy = (v) => yB - ((yB - yT) * v) / top;
+  const size = labelPt, lh = Math.round(size * 1.25);
+  let acc = 0;
+  [2, 1, 0].forEach((k) => {
+    const st = ['Applied', 'Accepted', 'Enrolled'][k];
+    const v = m.cur[k] || 0, f = app ? v / app : 0, w = Math.max(maxW * f, 24);
+    const ya = sy(acc + v), yb = sy(acc);
+    const ofAcc = k && m.cur[1] ? `${pct(v / m.cur[1])} of Accepted\n` : '';
+    s += R(cx - w / 2, ya, w, yb - ya, fills[k], { tip: `${st}\n${pct(f)} of Applied\n${ofAcc}Total: ${fmt(m.cur[k])}`, tour: `${tour}-${k}` });
+    const ink = inks[k], mid = (ya + yb) / 2;
+    s += `<text x="${cx}" y="${mid - lh + size * 0.35}" text-anchor="middle" font-size="${size}" font-weight="700" fill="${ink}"${underline ? ' text-decoration="underline"' : ''}>${st}</text>`;
+    s += `<text x="${cx}" y="${mid + size * 0.35}" text-anchor="middle" font-size="${size}" fill="${ink}"><tspan font-weight="700">${pct(f)}</tspan> of Applied</text>`;
+    s += `<text x="${cx}" y="${mid + lh + size * 0.35}" text-anchor="middle" font-size="${size}" fill="${ink}">Total: <tspan font-weight="700">${fmt(m.cur[k])}</tspan></text>`;
+    acc += v;
+  });
   return s;
 }
 
@@ -95,64 +125,49 @@ function admissionsAfter(m) {
   let s = R(0, 0, W, H, '#fff');
   s += admHeader('Admissions Funnel', ['Funnel', 'By Type', 'Trend', 'Departments'], 0);
 
-  // Fall stepper: ◀ Fall 2026 ▶, an arrow greys out at the first or last fall.
+  // Fall stepper (three equal columns): ◀ Fall 2026 ▶; an arrow greys out at the first or last fall.
   const canPrev = !!m.prevCode, canNext = !!m.nextCode;
-  [[54, '◀', canPrev ? RED : STEP_OFF, canPrev ? 'prev' : ''], [157, m.fall, INK, ''], [260, '▶', canNext ? RED : STEP_OFF, canNext ? 'next' : '']].forEach(([x, t, fill, act]) => {
-    if (act) s += `<rect x="${x - 50}" y="90" width="100" height="37" fill="transparent" data-act="${act}" class="dash-act"><title>${act === 'prev' ? 'Previous fall' : 'Next fall'}</title></rect>`;
+  [[53.5, '◀', canPrev ? RED : STEP_OFF, canPrev ? 'prev' : ''], [156.5, m.fall, INK, ''], [259.5, '▶', canNext ? RED : STEP_OFF, canNext ? 'next' : '']].forEach(([x, t, fill, act]) => {
+    if (act) s += `<rect x="${x - 51}" y="90" width="102" height="37" fill="transparent" data-act="${act}" class="dash-act"><title>${act === 'prev' ? 'Previous fall' : 'Next fall'}</title></rect>`;
     s += T(x, 116, t, { anchor: 'middle', size: PT(16), weight: 700, fill });
   });
-  s += T(321, 114, filterSummary(m), { size: PT(12), fill: MUTED });
+  s += T(321, 114, filterSummary(m), { size: PT(12), fill: '#555555' });
   s += R(1258, 90, 130, 39, m.filtersOpen ? '#fff' : RED, { stroke: RED });
   s += T(1323, 116, m.filtersOpen ? 'Filters ▴' : 'Filters ▾', { anchor: 'middle', size: PT(14), weight: 700, fill: m.filtersOpen ? RED : '#fff' });
   s += `<rect x="1258" y="90" width="130" height="39" fill="transparent" data-act="filters" class="dash-act"><title>Show or hide the filters</title></rect>`;
 
-  // Key figures: Applied / Accepted / Enrolled for the fall, and the change on the fall before.
+  // Key figures: 16 pt headers, 14 pt row headers, 20 pt values; the change row is 20 pt bold black.
   s += tile(7, 136, 798, 186, '');
   const colX = (k, left) => left + ((795 - left) * (k + 0.5)) / 3;
   ['Applied', 'Accepted', 'Enrolled'].forEach((h, k) => { s += T(colX(k, 127), 178, h, { anchor: 'middle', size: PT(16), weight: 700, fill: INK }); });
   s += T(21, 230, m.fall, { size: PT(14), weight: 700, fill: INK }) + T(21, 289, `vs ${m.prevName}`, { size: PT(14), weight: 700, fill: INK });
   m.cur.forEach((v, k) => {
-    s += T(colX(k, 127), 232, fmt(v), { anchor: 'middle', size: PT(18), weight: 700, fill: INK });
-    s += T(colX(k, 133), 288, signedPct(change(v, m.before[k])), { anchor: 'middle', size: PT(12), fill: MUTED });
+    s += T(colX(k, 127), 233, fmt(v), { anchor: 'middle', size: PT(20), weight: 700, fill: INK });
+    s += T(colX(k, 133), 292, tPct(change(v, m.before[k])), { anchor: 'middle', size: PT(20), weight: 700, fill: '#000' });
   });
   [[819, 'Acceptance rate', m.acc, m.accPrev], [1113, 'Yield', m.yld, m.yldPrev]].forEach(([x, t, v, p]) => {
     s += tile(x, 136, 280, 186, '');
     s += T(x + 140, 178, t, { anchor: 'middle', size: PT(16), weight: 700, fill: INK });
-    s += T(x + 140, 232, pct(v), { anchor: 'middle', size: PT(18), weight: 700, fill: INK });
-    s += T(x + 140, 291, signedPts(v != null && p != null ? (v - p) * 100 : null), { anchor: 'middle', size: PT(18), weight: 700, fill: INK });
+    s += T(x + 140, 233, pct(v), { anchor: 'middle', size: PT(20), weight: 700, fill: INK });
+    s += T(x + 140, 292, tPts(v != null && p != null ? (v - p) * 100 : null), { anchor: 'middle', size: PT(20), weight: 700, fill: '#000' });
   });
 
-  // Funnel: one stacked bar, each status as tall and as wide as its count, Applied at the base.
+  // Funnel: one stacked bar sized by count, Applied on top; 12 pt labels.
   s += tile(7, 336, 686, 510, `Admissions funnel, ${m.fall}`);
-  const [app] = m.cur.map((v) => v || 0);
-  const tot = m.cur.reduce((a, v) => a + (v || 0), 0);
-  const yB = 832, yT = 382, top = ticks(tot || 1, 6).top, cx = 350, maxW = 460;
-  const sy = (v) => yB - ((yB - yT) * v) / top;
-  let acc = 0;
-  ['Applied', 'Accepted', 'Enrolled'].forEach((st, k) => {
-    const v = m.cur[k] || 0, f = app ? v / app : 0, w = Math.max(maxW * f, 24);
-    const ya = sy(acc + v), yb = sy(acc);
-    const ofAcc = k && m.cur[1] ? `${pct(v / m.cur[1])} of Accepted\n` : '';
-    s += R(cx - w / 2, ya, w, yb - ya, FUNNEL_FILL[k], { tip: `${st}\n${pct(f)} of Applied\n${ofAcc}Total: ${fmt(m.cur[k])}`, tour: `adm-funnel-${k}` });
-    const ink = k === 2 ? '#fff' : INK, mid = (ya + yb) / 2;
-    s += T(cx, mid - 14, st, { anchor: 'middle', size: PT(12), weight: 700, fill: ink });
-    s += `<text x="${cx}" y="${mid + 6}" text-anchor="middle" font-size="${PT(12)}" fill="${ink}"><tspan font-weight="700">${pct(f)}</tspan> of Applied</text>`;
-    s += `<text x="${cx}" y="${mid + 26}" text-anchor="middle" font-size="${PT(12)}" fill="${ink}">Total: <tspan font-weight="700">${fmt(m.cur[k])}</tspan></text>`;
-    acc += v;
-  });
+  s += stackFunnel(m, { cx: 350, yT: 380, yB: 836, maxW: 460, fills: FUNNEL_FILL, inks: [INK, INK, '#fff'], labelPt: PT(12), tour: 'adm-funnel' });
 
-  // This fall against the fall before: Status / Academic Period rows, six shades.
+  // This fall against the fall before: Status / Academic Period rows, six shades, 14 pt bold labels.
   s += tile(707, 336, 686, 510, `${m.fall} vs ${m.prevName}`);
   const rows = [];
   ['Applied', 'Accepted', 'Enrolled'].forEach((st, k) => {
     if (m.prevCode) rows.push({ st, k, lab: m.prevFall, v: m.before[k], fill: VS_FILL.before[k] });
     rows.push({ st, k, lab: m.fall, v: m.cur[k], fill: VS_FILL.sel[k] });
   });
-  const x0 = 905, x1 = 1330, rT = 372, rB = 792, band = (rB - rT) / rows.length;
+  const x0 = 880, x1 = 1320, rT = 380, rB = 790, band = (rB - rT) / rows.length;
   const { top: mx, step } = ticks(Math.max(...rows.map((r) => r.v || 0), 1), 5);
   const sx = (v) => x0 + ((x1 - x0) * v) / mx;
   for (let t = 0; t <= mx + 1e-9; t += step) s += L(sx(t), rT, sx(t), rB, '#eceeef') + T(sx(t), rB + 20, short(Math.round(t)), { anchor: 'middle', size: PT(11), fill: INK });
-  s += T((x0 + x1) / 2, rB + 44, 'Count', { anchor: 'middle', size: PT(11), weight: 700, fill: INK });
+  s += T((x0 + x1) / 2, rB + 42, 'Count', { anchor: 'middle', size: PT(11), fill: INK });
   const per = m.prevCode ? 2 : 1;
   rows.forEach((r, i) => {
     const y = rT + i * band, bh = Math.min(band * 0.62, 50);
@@ -160,55 +175,68 @@ function admissionsAfter(m) {
       s += T(723, y + (band * per) / 2 + 5, r.st, { size: PT(11), weight: 700, fill: INK });
       if (i) s += L(717, y, 1383, y, '#d5dadd');
     }
-    s += T(810, y + band / 2 + 5, r.lab, { size: PT(11), weight: 700, fill: INK });
+    s += T(803, y + band / 2 + 5, r.lab, { size: PT(11), weight: 700, fill: INK });
     s += R(x0, y + (band - bh) / 2, sx(r.v || 0) - x0, bh, r.fill, { tip: `${r.st}, ${r.lab}\nCount: ${fmt(r.v)}` });
     s += T(sx(r.v || 0) + 6, y + band / 2 + 7, fmt(r.v), { size: PT(14), weight: 700, fill: INK });
   });
   s += L(x0, rT, x0, rB, '#c9cfd1');
 
-  // Footer band with the link out to the rest of the catalog.
+  // Footer band (text top-aligned with 4 px padding, 15 px on the left) and the link to Nicholls IR on Tableau Public.
   s += R(0, 853, W, 47, RED);
-  s += T(19, 882, 'Nicholls State University   ·   Office of Institutional Research', { size: PT(12), weight: 600, fill: '#fff' });
-  s += R(1152, 859, 230, 35, '#fff', { stroke: '#fff' }) + T(1267, 882, 'More Nicholls Dashboards', { anchor: 'middle', size: PT(12), weight: 700, fill: RED });
-  s += `<a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener"><rect x="1152" y="859" width="230" height="35" fill="transparent" class="dash-act"><title>More Nicholls dashboards (opens a new tab)</title></rect></a>`;
+  s += T(15, 873, 'Nicholls State University   ·   Office of Institutional Research', { size: PT(12), weight: 600, fill: '#fff' });
+  s += R(1152, 859, 230, 35, '#fff', { stroke: '#fff' }) + T(1267, 879, 'More Nicholls Dashboards', { anchor: 'middle', size: PT(12), weight: 700, fill: RED });
+  s += `<a href="${NICHOLLS_IR}" target="_blank" rel="noopener"><rect x="1152" y="859" width="230" height="35" fill="transparent" class="dash-act"><title>More Nicholls dashboards on Tableau Public (opens a new tab)</title></rect></a>`;
 
   if (m.filtersOpen) s += filterPanel(m);
   return s;
 }
 
+// The original Admissions Funnel page as its .twb lays it out: a 1000 × 800 dashboard (stretched to this
+// frame; text scaled by 1.2), title over one stacked funnel in Nicholls red and gray with 14 pt labels and
+// no axis, four filters down the right (Level, Academic Period, Month Applied, Student Pop) and the N
+// monogram along the bottom. Tableau's default fonts are assumed where the file sets none.
+const OX = (x) => x * 1.4, OY = (y) => y * 1.125, OPT = (pt) => Math.round(pt * (4 / 3) * 1.2);
+const ORIG_FILL = ['#b7c2cc', '#c63b51', '#a1212f'];
+const ORIG_POP = { N: 'New FTF', T: 'Transfer', R: 'Readmit', I: 'International', A: 'Adult', Other: 'Other', grad: 'Graduate ONLY' };
+
+function origList(x, y, title, items, { radio = false, checked = () => true } = {}) {
+  let s = T(x, y + OPT(9), title, { size: OPT(9), weight: 700, fill: '#333' });
+  items.forEach((v, i) => {
+    const yy = y + OPT(9) + 10 + i * 22, on = checked(v, i);
+    if (radio) {
+      s += `<circle cx="${x + 6}" cy="${yy + 7}" r="6" fill="#fff" stroke="#888"/>` + (on ? `<circle cx="${x + 6}" cy="${yy + 7}" r="3" fill="#333"/>` : '');
+    } else {
+      s += R(x, yy + 1, 12, 12, '#fff', { stroke: '#888' }) + (on ? `<path d="M${x + 2} ${yy + 7}l3 3 5-6" fill="none" stroke="#333" stroke-width="1.4"/>` : '');
+    }
+    s += T(x + 18, yy + 12, v, { size: OPT(9), fill: '#333' });
+  });
+  return s;
+}
+
 function admissionsBefore(m) {
   let s = R(0, 0, W, H, '#fff');
-  s += T(16, 48, 'Admissions Funnel', { size: 26, fill: '#333' });
-  // The original: one stacked shape sized by count, Tableau's default colors, raw field names.
-  s += plainTitle(16, 100, 'Admissions Funnel - Total');
-  const x0 = 120, x1 = 1170, y0 = 120, y1 = 690;
-  const tot = m.cur.reduce((a, v) => a + (v || 0), 0);
-  const { top: mx, step } = ticks(tot || 1, 6);
-  const sy = (v) => y1 - ((y1 - y0) * v) / mx;
-  for (let t = 0; t <= mx + 1e-9; t += step) { s += L(x0, sy(t), x1, sy(t), '#e6e6e6') + T(x0 - 8, sy(t) + 5, short(Math.round(t)), { anchor: 'end', size: 13, fill: '#666' }); }
-  s += T(36, (y0 + y1) / 2, 'COUNT', { size: 13, fill: '#666', rotate: -90, anchor: 'middle' });
-  const colors = { Accepted: TAB10[0], Applied: TAB10[1], Enrolled: TAB10[2] };
-  let acc = 0;
-  const cx = (x0 + x1) / 2, maxW = 600, app = m.cur[0] || 1;
-  ['Applied', 'Accepted', 'Enrolled'].forEach((st, k) => {
-    const v = m.cur[k] || 0, w = Math.max(60, (maxW * v) / app);
-    const ya = sy(acc + v), yb = sy(acc);
-    s += R(cx - w / 2, ya, w, yb - ya, colors[st], { tip: `STATUS: ${st}\nSUM(COUNT): ${fmt(m.cur[k])}`, tour: `adm-before-${k}` });
-    s += T(cx, (ya + yb) / 2 - 4, st, { anchor: 'middle', size: 13, fill: '#fff' }) + T(cx, (ya + yb) / 2 + 13, fmt(m.cur[k]), { anchor: 'middle', size: 13, fill: '#fff' });
-    acc += v;
-  });
-  s += L(x0, y1, x1, y1, '#999');
-  // Color legend and the filter column
-  let lx = 1210;
-  s += T(lx, 100, 'STATUS', { size: 13, weight: 700, fill: '#333' });
-  Object.entries(colors).forEach(([k, c], i) => { s += R(lx, 110 + i * 20, 12, 12, c) + T(lx + 18, 121 + i * 20, k, { size: 12, fill: '#333' }); });
-  s += rawFilter(lx, 180, 175, 'ACADEMIC_PERIOD', String(m.fallCode));
-  s += rawFilter(lx, 240, 175, 'MONTH_OF_APP', '', ['(All)', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
-  const pops = { 'New freshmen': 'N', Transfer: 'T', Readmit: 'R', International: 'I', Adult: 'A', Other: 'Other', Graduate: 'Grad' };
-  s += rawFilter(lx, 520, 175, 'STUDENT_POP', '', [pops[m.group] ? pops[m.group] : '(All)']);
-  s += rawFilter(lx, 580, 175, 'LEVELofAPPLICANT', m.group === 'Graduate' || m.group === 'Undergraduate' ? m.group : '(All)');
-  // The banner image along the bottom of the original
-  s += R(16, 720, 1170, 160, '#e9e9e9') + T(600, 808, 'banner image', { anchor: 'middle', size: 16, fill: '#999' });
+  // Dashboard title: "<Sheet Name>", then the instruction line in 12 pt.
+  s += T(OX(12), OY(12) + OPT(18), 'Admissions Funnel', { size: OPT(18), weight: 600, fill: '#333' });
+  s += T(OX(12), OY(64), 'Choose Undergraduate and/or Graduate Applicants and Academic Period.', { size: OPT(12), fill: '#333' });
+
+  // Funnel sheet: title "<Level> Applicants in <Academic Period> Semester(s)", no axis.
+  const level = m.groupKey === 'ug' ? 'Undergraduate' : m.groupKey === 'grad' ? 'Graduate' : 'All';
+  s += T(OX(16), OY(79) + OPT(15), `${level} Applicants in ${m.fall} Semester(s)`, { size: OPT(15), weight: 600, fill: '#333' });
+  s += stackFunnel(m, { cx: OX(431.5), yT: OY(112), yB: OY(624), maxW: 620, fills: ORIG_FILL, inks: ['#333', '#fff', '#fff'], labelPt: OPT(14), underline: true, tour: 'adm-before' });
+
+  // The N monogram along the bottom (fit to the image zone, top-left).
+  s += `<image href="${BASE}img/nicholls-n.webp" x="${OX(12)}" y="${OY(634)}" width="${OY(154) * (300 / 153)}" height="${OY(154)}" preserveAspectRatio="xMinYMin meet"/>`;
+
+  // Filters down the right, in the original's order and modes.
+  const fx = OX(859);
+  s += origList(fx, OY(77), 'Level', ['(All)', 'Graduate', 'Undergraduate'], { radio: true, checked: (v) => v === (m.groupKey === 'ug' ? 'Undergraduate' : m.groupKey === 'grad' ? 'Graduate' : '(All)') });
+  const falls = ['(All)', ...Array.from({ length: 12 }, (_, i) => `Fall ${2015 + i}`)];
+  s += origList(fx, OY(170), 'Academic Period', falls, { checked: (v) => v === m.fall });
+  s += origList(fx, OY(455), 'Month Applied', ['(All)', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']);
+  const pop = ORIG_POP[m.groupKey] || '(All)';
+  s += T(fx, OY(740) + OPT(9), 'Student Pop', { size: OPT(9), weight: 700, fill: '#333' });
+  s += R(fx, OY(740) + OPT(9) + 8, OX(129), 26, '#fff', { stroke: '#bbb' }) + T(fx + 6, OY(740) + OPT(9) + 27, pop, { size: OPT(9), fill: '#333' });
+  s += `<path d="M${fx + OX(129) - 16} ${OY(740) + OPT(9) + 18}l4 5 4-5" fill="none" stroke="#555" stroke-width="1.4"/>`;
   return s;
 }
 
@@ -367,7 +395,7 @@ function ftfBefore(m) {
 // ── Component ───────────────────────────────────────────────────────
 const DASHES = {
   admissions: { label: 'Admissions', file: 'admissions.json', model: admissionsModel, before: admissionsBefore, after: admissionsAfter,
-    beforeNote: 'Before: one funnel sized by count, default colors, raw field names, filters stacked down the side.',
+    beforeNote: 'Before: the funnel on its own, labels only inside the shapes, four filter lists down the side and the logo along the bottom.',
     afterNote: 'After: step through falls with the arrows, the three counts and their change first, rates beside them, then the funnel and this fall against last; the filters wait behind one button.' },
   ftf: { label: 'First-Time Freshmen', file: 'ftf.json', model: ftfModel, before: ftfBefore, after: ftfAfter,
     beforeNote: 'Before: every race on one axis, so the smaller groups flatten against the bottom; term codes instead of names.',
