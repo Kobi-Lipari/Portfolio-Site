@@ -48,7 +48,7 @@ function admissionsModel(D, sel) {
   };
 }
 
-// The redesign as the owner's v27 workbook lays it out (1400 × 900): red header with page buttons,
+// The redesign as the owner's v27 workbook (v28) lays it out (1400 × 900): red header with page buttons,
 // a fall stepper and filter summary with the filters behind one button, key figures with their change,
 // then the funnel and this fall against the one before. Tableau point sizes are drawn at 4/3 px.
 const PT = (n) => Math.round((n * 4) / 3);
@@ -77,7 +77,7 @@ function filterSummary(m) {
 
 function filterPanel(m) {
   // Hidden until the Filters button is pressed, as in the workbook.
-  let s = R(870, 134, 518, 302, '#fff', { stroke: FRAME });
+  let s = R(870, 131, 518, 302, '#fff', { stroke: FRAME });
   const card = (x, y, title, value) => {
     s += T(x + 4, y + 24, title, { size: PT(14), fill: INK });
     s += R(x + 4, y + 36, 222, 30, '#fff', { stroke: '#c9cfd1' }) + T(x + 12, y + 57, value, { size: PT(12), fill: MUTED });
@@ -85,9 +85,9 @@ function filterPanel(m) {
   };
   const type = m.groupKey === 'all' || m.groupKey === 'ug' ? '(All)' : TYPE_NAME[m.groupKey] || m.group;
   const level = m.groupKey === 'ug' ? 'Undergraduate' : m.groupKey === 'grad' ? 'Graduate' : '(All)';
-  card(886, 150, 'Fall term', m.fall);
-  card(886, 230, 'Student type', type); card(1136, 230, 'Level', level);
-  card(886, 310, 'Month applied', '(All)'); card(1136, 310, 'Department', '(All)');
+  card(886, 147, 'Fall term', m.fall);
+  card(886, 227, 'Student type', type); card(1136, 227, 'Level', level);
+  card(886, 307, 'Month applied', '(All)'); card(1136, 307, 'Department', '(All)');
   return s;
 }
 
