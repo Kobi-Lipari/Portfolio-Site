@@ -843,6 +843,7 @@ kbd {
 .dash-svg text { pointer-events: none; }
 .dash-svg .hit-line { pointer-events: stroke; }
 .dash-svg [data-tip] { cursor: default; }
+.dash-svg .dash-act { cursor: pointer; }
 .dash-seam {
   position: absolute; top: 0; bottom: 0; left: calc(var(--split) * 1%); width: 3px; margin-left: -1.5px;
   background: var(--accent); cursor: ew-resize; touch-action: none;
@@ -862,7 +863,7 @@ kbd {
 }
 .dash-tag { transition: opacity 0.2s; }
 .dash-tag--before { left: 10px; opacity: var(--before-tag, 1); }
-.dash-tag--after { right: 10px; background: rgba(166, 25, 46, 0.9); opacity: var(--after-tag, 1); }
+.dash-tag--after { right: 10px; bottom: calc(5.3% + 8px); background: rgba(166, 25, 46, 0.9); opacity: var(--after-tag, 1); }
 .dash-tip {
   position: absolute; z-index: 5; pointer-events: none; display: flex; flex-direction: column; gap: 2px; max-width: 280px;
   padding: 8px 10px; border-radius: 8px; font-size: 13px; background: #fff; color: #15171C;

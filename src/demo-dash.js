@@ -40,71 +40,140 @@ function admissionsModel(D, sel) {
   const cur = c[sel.fall], before = prev ? c[prev] : [null, null, null];
   return {
     fall: D.falls[i].label, prevFall: prev ? D.falls[i - 1].label : '', fallCode: sel.fall, group: D.groups.find((g) => g.key === sel.group).label,
+    groupKey: sel.group, prevCode: prev, nextCode: i < D.falls.length - 1 ? D.falls[i + 1].code : null,
+    prevName: `Fall ${String(sel.fall - 100).slice(0, 4)}`, filtersOpen: !!sel.filtersOpen,
     cur, before,
     acc: ratio(cur[1], cur[0]), yld: ratio(cur[2], cur[1]),
     accPrev: ratio(before[1], before[0]), yldPrev: ratio(before[2], before[1]),
   };
 }
 
+// The redesign as the owner's v27 workbook lays it out (1400 × 900): red header with page buttons,
+// a fall stepper and filter summary with the filters behind one button, key figures with their change,
+// then the funnel and this fall against the one before. Tableau point sizes are drawn at 4/3 px.
+const PT = (n) => Math.round((n * 4) / 3);
+const STEP_OFF = '#d3d8da';
+const FUNNEL_FILL = ['#b9c2c6', '#d9848f', RED];
+const VS_FILL = { before: ['#dde2e4', '#f2d3d8', '#d26f7e'], sel: ['#b9c2c6', '#e3a3ac', RED] };
+const TYPE_NAME = { N: 'New FTF', T: 'Transfer', R: 'Readmit', I: 'International', A: 'Adult', Other: 'Other', grad: 'Graduate' };
+
+function admHeader(title, buttons, active) {
+  let s = R(0, 0, W, 84, RED);
+  s += R(8, 8, 123, 68, '#fff') + `<image href="${BASE}img/nicholls-n.webp" x="12" y="12" width="115" height="60" preserveAspectRatio="xMidYMid meet"/>`;
+  s += T(151, 58, title, { size: PT(32), weight: 700, fill: '#fff' });
+  [[699, 138], [861, 157], [1042, 119], [1185, 191]].forEach(([x, w], i) => {
+    const on = i === active;
+    s += R(x, 12, w, 60, on ? '#fff' : RED);
+    s += T(x + w / 2, 51, buttons[i], { anchor: 'middle', size: PT(20), weight: on ? 700 : 400, fill: on ? RED : '#fff' });
+  });
+  return s;
+}
+
+function filterSummary(m) {
+  const type = m.groupKey === 'all' || m.groupKey === 'ug' ? 'All student types' : TYPE_NAME[m.groupKey] || m.group;
+  const level = m.groupKey === 'ug' ? 'Undergraduate' : m.groupKey === 'grad' ? 'Graduate' : 'All levels';
+  return [type, level, 'All months', 'All departments'].join('   ·   ');
+}
+
+function filterPanel(m) {
+  // Hidden until the Filters button is pressed, as in the workbook.
+  let s = R(870, 134, 518, 302, '#fff', { stroke: FRAME });
+  const card = (x, y, title, value) => {
+    s += T(x + 4, y + 24, title, { size: PT(14), fill: INK });
+    s += R(x + 4, y + 36, 222, 30, '#fff', { stroke: '#c9cfd1' }) + T(x + 12, y + 57, value, { size: PT(12), fill: MUTED });
+    s += `<path d="M${x + 208} ${y + 47}l5 6 5-6" fill="none" stroke="${MUTED}" stroke-width="1.6"/>`;
+  };
+  const type = m.groupKey === 'all' || m.groupKey === 'ug' ? '(All)' : TYPE_NAME[m.groupKey] || m.group;
+  const level = m.groupKey === 'ug' ? 'Undergraduate' : m.groupKey === 'grad' ? 'Graduate' : '(All)';
+  card(886, 150, 'Fall term', m.fall);
+  card(886, 230, 'Student type', type); card(1136, 230, 'Level', level);
+  card(886, 310, 'Month applied', '(All)'); card(1136, 310, 'Department', '(All)');
+  return s;
+}
+
 function admissionsAfter(m) {
-  const [app, acc, enr] = m.cur.map((v) => v || 0);
   let s = R(0, 0, W, H, '#fff');
-  s += header('Admissions Funnel', ['Funnel', 'By Type', 'Trend', 'Departments'], 0);
-  s += filterBar([['Fall term', m.fall], ['Level', m.group === 'Graduate' ? 'Graduate' : m.group === 'Undergraduate' ? 'Undergraduate' : '(All)'], ['Month Applied', '(All)'], ['Student Pop', ['All students', 'Undergraduate', 'Graduate'].includes(m.group) ? '(All)' : m.group], ['Department', '(All)']]);
+  s += admHeader('Admissions Funnel', ['Funnel', 'By Type', 'Trend', 'Departments'], 0);
 
-  // Key figures table
-  s += tile(12, 172, 795, 150, '');
-  const cols = [250, 470, 688];
-  ['Applied', 'Accepted', 'Enrolled'].forEach((h, k) => { s += T(cols[k], 205, h, { anchor: 'middle', size: 22, weight: 700, fill: INK }); });
-  s += L(22, 220, 797, 220, '#d5dadd');
-  s += R(22, 274, 775, 40, BAR);
-  s += T(30, 255, 'Selected Fall', { size: 15, weight: 700, fill: INK }) + T(30, 300, 'VS Last Fall', { size: 15, weight: 700, fill: INK });
+  // Fall stepper: ◀ Fall 2026 ▶, an arrow greys out at the first or last fall.
+  const canPrev = !!m.prevCode, canNext = !!m.nextCode;
+  [[54, '◀', canPrev ? RED : STEP_OFF, canPrev ? 'prev' : ''], [157, m.fall, INK, ''], [260, '▶', canNext ? RED : STEP_OFF, canNext ? 'next' : '']].forEach(([x, t, fill, act]) => {
+    if (act) s += `<rect x="${x - 50}" y="90" width="100" height="37" fill="transparent" data-act="${act}" class="dash-act"><title>${act === 'prev' ? 'Previous fall' : 'Next fall'}</title></rect>`;
+    s += T(x, 116, t, { anchor: 'middle', size: PT(16), weight: 700, fill });
+  });
+  s += T(321, 114, filterSummary(m), { size: PT(12), fill: MUTED });
+  s += R(1258, 90, 130, 39, m.filtersOpen ? '#fff' : RED, { stroke: RED });
+  s += T(1323, 116, m.filtersOpen ? 'Filters ▴' : 'Filters ▾', { anchor: 'middle', size: PT(14), weight: 700, fill: m.filtersOpen ? RED : '#fff' });
+  s += `<rect x="1258" y="90" width="130" height="39" fill="transparent" data-act="filters" class="dash-act"><title>Show or hide the filters</title></rect>`;
+
+  // Key figures: Applied / Accepted / Enrolled for the fall, and the change on the fall before.
+  s += tile(7, 136, 798, 186, '');
+  const colX = (k, left) => left + ((795 - left) * (k + 0.5)) / 3;
+  ['Applied', 'Accepted', 'Enrolled'].forEach((h, k) => { s += T(colX(k, 127), 178, h, { anchor: 'middle', size: PT(16), weight: 700, fill: INK }); });
+  s += T(21, 230, m.fall, { size: PT(14), weight: 700, fill: INK }) + T(21, 289, `vs ${m.prevName}`, { size: PT(14), weight: 700, fill: INK });
   m.cur.forEach((v, k) => {
-    s += T(cols[k], 258, fmt(v), { anchor: 'middle', size: 30, fill: INK });
-    s += T(cols[k], 303, signedPct(change(v, m.before[k])), { anchor: 'middle', size: 28, fill: INK });
+    s += T(colX(k, 127), 232, fmt(v), { anchor: 'middle', size: PT(18), weight: 700, fill: INK });
+    s += T(colX(k, 133), 288, signedPct(change(v, m.before[k])), { anchor: 'middle', size: PT(12), fill: MUTED });
   });
-  [[823, 'Acceptance Rate', m.acc, m.accPrev], [1117, 'Yield', m.yld, m.yldPrev]].forEach(([x, t, v, p]) => {
-    s += R(x, 172, 278, 150, BAR, { stroke: FRAME, sw: 2 });
-    s += T(x + 139, 205, t, { anchor: 'middle', size: 22, weight: 700, fill: INK }) + L(x + 12, 220, x + 266, 220, '#d5dadd');
-    s += T(x + 139, 258, pct(v), { anchor: 'middle', size: 30, fill: INK });
-    s += T(x + 139, 303, signedPts(v != null && p != null ? (v - p) * 100 : null), { anchor: 'middle', size: 28, fill: INK });
+  [[819, 'Acceptance rate', m.acc, m.accPrev], [1113, 'Yield', m.yld, m.yldPrev]].forEach(([x, t, v, p]) => {
+    s += tile(x, 136, 280, 186, '');
+    s += T(x + 140, 178, t, { anchor: 'middle', size: PT(16), weight: 700, fill: INK });
+    s += T(x + 140, 232, pct(v), { anchor: 'middle', size: PT(18), weight: 700, fill: INK });
+    s += T(x + 140, 291, signedPts(v != null && p != null ? (v - p) * 100 : null), { anchor: 'middle', size: PT(18), weight: 700, fill: INK });
   });
 
-  // Funnel: width and height both follow the count, centered.
-  s += tile(12, 336, 684, 516, `Admissions funnel, ${m.fall}`);
-  const top = 390, maxW = 500, maxH = 170, cx = 354;
-  let y = top;
+  // Funnel: one stacked bar, each status as tall and as wide as its count, Applied at the base.
+  s += tile(7, 336, 686, 510, `Admissions funnel, ${m.fall}`);
+  const [app] = m.cur.map((v) => v || 0);
+  const tot = m.cur.reduce((a, v) => a + (v || 0), 0);
+  const yB = 832, yT = 382, top = ticks(tot || 1, 6).top, cx = 350, maxW = 460;
+  const sy = (v) => yB - ((yB - yT) * v) / top;
+  let acc = 0;
   ['Applied', 'Accepted', 'Enrolled'].forEach((st, k) => {
-    const v = m.cur[k] || 0, f = app ? v / app : 0;
-    const w = maxW * f, h = Math.max(maxH * f, 34);
-    const fill = ['#b9c2c6', '#d9848f', RED][k];
-    const ink = k === 2 ? '#fff' : INK;
-    const tip = `${st}, ${m.fall}: ${fmt(m.cur[k])} students · ${pct(f)} of applied`;
-    s += R(cx - w / 2, y, w, h, fill, { tip, tour: `adm-funnel-${k}` });
-    const mid = y + h / 2;
-    s += T(cx, mid - 14, st, { anchor: 'middle', size: 15, fill: ink }) + T(cx, mid + 4, `${pct(f)} of Applied`, { anchor: 'middle', size: 15, fill: ink }) + T(cx, mid + 22, `Total: ${fmt(m.cur[k])}`, { anchor: 'middle', size: 15, fill: ink });
-    y += h;
+    const v = m.cur[k] || 0, f = app ? v / app : 0, w = Math.max(maxW * f, 24);
+    const ya = sy(acc + v), yb = sy(acc);
+    const ofAcc = k && m.cur[1] ? `${pct(v / m.cur[1])} of Accepted\n` : '';
+    s += R(cx - w / 2, ya, w, yb - ya, FUNNEL_FILL[k], { tip: `${st}\n${pct(f)} of Applied\n${ofAcc}Total: ${fmt(m.cur[k])}`, tour: `adm-funnel-${k}` });
+    const ink = k === 2 ? '#fff' : INK, mid = (ya + yb) / 2;
+    s += T(cx, mid - 14, st, { anchor: 'middle', size: PT(12), weight: 700, fill: ink });
+    s += `<text x="${cx}" y="${mid + 6}" text-anchor="middle" font-size="${PT(12)}" fill="${ink}"><tspan font-weight="700">${pct(f)}</tspan> of Applied</text>`;
+    s += `<text x="${cx}" y="${mid + 26}" text-anchor="middle" font-size="${PT(12)}" fill="${ink}">Total: <tspan font-weight="700">${fmt(m.cur[k])}</tspan></text>`;
+    acc += v;
   });
 
-  // Selected fall vs fall before
-  s += tile(712, 336, 684, 516, `${m.fall} vs Previous Fall`);
-  const x0 = 900, x1 = 1330, { top: mx, step } = ticks(Math.max(app, ...(m.before.map((v) => v || 0)), 1), 6);
+  // This fall against the fall before: Status / Academic Period rows, six shades.
+  s += tile(707, 336, 686, 510, `${m.fall} vs ${m.prevName}`);
+  const rows = [];
+  ['Applied', 'Accepted', 'Enrolled'].forEach((st, k) => {
+    if (m.prevCode) rows.push({ st, k, lab: m.prevFall, v: m.before[k], fill: VS_FILL.before[k] });
+    rows.push({ st, k, lab: m.fall, v: m.cur[k], fill: VS_FILL.sel[k] });
+  });
+  const x0 = 905, x1 = 1330, rT = 372, rB = 792, band = (rB - rT) / rows.length;
+  const { top: mx, step } = ticks(Math.max(...rows.map((r) => r.v || 0), 1), 5);
   const sx = (v) => x0 + ((x1 - x0) * v) / mx;
-  for (let t = 0; t <= mx + 1e-9; t += step) { s += L(sx(t), 372, sx(t), 790, '#eceeef') + T(sx(t), 812, short(Math.round(t)), { anchor: 'middle', size: 14, fill: INK }); }
-  s += T((x0 + x1) / 2, 838, 'Students', { anchor: 'middle', size: 15, fill: INK });
-  ['Applied', 'Accepted', 'Enrolled'].forEach((st, k) => {
-    const gy = 378 + k * 138;
-    s += T(726, gy + 30, st, { size: 15, fill: INK });
-    [['Fall before', m.before[k]], ['Selected Fall', m.cur[k]]].forEach(([lab, v], j) => {
-      const by = gy + 6 + j * 64;
-      s += T(806, by + 30, lab, { size: 15, fill: INK });
-      s += R(x0, by + 8, sx(v || 0) - x0, 46, j ? GRAY : '#aab4b9', { tip: `${st}, ${j ? m.fall : m.prevFall}: ${fmt(v)} students` });
-      s += T(sx(v || 0) + 8, by + 37, fmt(v), { size: 15, fill: INK });
-    });
-    if (k < 2) s += L(722, gy + 136, 1386, gy + 136, '#e2e5e7');
+  for (let t = 0; t <= mx + 1e-9; t += step) s += L(sx(t), rT, sx(t), rB, '#eceeef') + T(sx(t), rB + 20, short(Math.round(t)), { anchor: 'middle', size: PT(11), fill: INK });
+  s += T((x0 + x1) / 2, rB + 44, 'Count', { anchor: 'middle', size: PT(11), weight: 700, fill: INK });
+  const per = m.prevCode ? 2 : 1;
+  rows.forEach((r, i) => {
+    const y = rT + i * band, bh = Math.min(band * 0.62, 50);
+    if (i % per === 0) {
+      s += T(723, y + (band * per) / 2 + 5, r.st, { size: PT(11), weight: 700, fill: INK });
+      if (i) s += L(717, y, 1383, y, '#d5dadd');
+    }
+    s += T(810, y + band / 2 + 5, r.lab, { size: PT(11), weight: 700, fill: INK });
+    s += R(x0, y + (band - bh) / 2, sx(r.v || 0) - x0, bh, r.fill, { tip: `${r.st}, ${r.lab}\nCount: ${fmt(r.v)}` });
+    s += T(sx(r.v || 0) + 6, y + band / 2 + 7, fmt(r.v), { size: PT(14), weight: 700, fill: INK });
   });
-  s += L(x0, 372, x0, 790, '#c9cfd1');
-  return s + footer();
+  s += L(x0, rT, x0, rB, '#c9cfd1');
+
+  // Footer band with the link out to the rest of the catalog.
+  s += R(0, 853, W, 47, RED);
+  s += T(19, 882, 'Nicholls State University   ·   Office of Institutional Research', { size: PT(12), weight: 600, fill: '#fff' });
+  s += R(1152, 859, 230, 35, '#fff', { stroke: '#fff' }) + T(1267, 882, 'More Nicholls Dashboards', { anchor: 'middle', size: PT(12), weight: 700, fill: RED });
+  s += `<a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener"><rect x="1152" y="859" width="230" height="35" fill="transparent" class="dash-act"><title>More Nicholls dashboards (opens a new tab)</title></rect></a>`;
+
+  if (m.filtersOpen) s += filterPanel(m);
+  return s;
 }
 
 function admissionsBefore(m) {
@@ -299,13 +368,13 @@ function ftfBefore(m) {
 const DASHES = {
   admissions: { label: 'Admissions', file: 'admissions.json', model: admissionsModel, before: admissionsBefore, after: admissionsAfter,
     beforeNote: 'Before: one funnel sized by count, default colors, raw field names, filters stacked down the side.',
-    afterNote: 'After: the three counts and their change first, rates beside them, then the funnel and this fall against last.' },
+    afterNote: 'After: step through falls with the arrows, the three counts and their change first, rates beside them, then the funnel and this fall against last; the filters wait behind one button.' },
   ftf: { label: 'First-Time Freshmen', file: 'ftf.json', model: ftfModel, before: ftfBefore, after: ftfAfter,
     beforeNote: 'Before: every race on one axis, so the smaller groups flatten against the bottom; term codes instead of names.',
     afterNote: 'After: the latest fall at a glance, then the trend; race split so each group is readable on its own scale.' },
 };
 
-const state = { dash: 'admissions', fall: null, group: 'all', split: 50, data: {} };
+const state = { dash: 'admissions', fall: null, group: 'all', split: 50, filtersOpen: false, data: {} };
 
 root.innerHTML = `${HERO ? '' : `
   <div class="demo__head">
@@ -450,6 +519,16 @@ root.querySelectorAll('[data-split]').forEach((b) => b.addEventListener('click',
 root.querySelectorAll('[data-dash]').forEach((b) => b.addEventListener('click', () => switchTo(b.dataset.dash)));
 fallSel.addEventListener('change', () => { state.fall = Number(fallSel.value); render(); });
 groupSel.addEventListener('change', () => { state.group = groupSel.value; render(); });
+// The redesign's own controls: the fall stepper arrows and the Filters button.
+svgAfter.addEventListener('click', (e) => {
+  const act = e.target.closest && e.target.closest('[data-act]');
+  if (!act || state.dash !== 'admissions') return;
+  const falls = state.data.admissions.falls.map((f) => f.code), i = falls.indexOf(state.fall);
+  if (act.dataset.act === 'filters') { state.filtersOpen = !state.filtersOpen; render({ animate: false }); return; }
+  const j = act.dataset.act === 'prev' ? i - 1 : i + 1;
+  if (j < 0 || j >= falls.length) return;
+  state.fall = falls[j]; fallSel.value = String(state.fall); render();
+});
 
 // Hover text for marks (whichever side of the seam is showing).
 function showTip(text, clientX, clientY) {
