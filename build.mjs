@@ -1,11 +1,43 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
-import { mkdir, writeFile, copyFile, rm, cp } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile, rm, cp, readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { projects } from './src/projects.mjs';
+import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
 const PREVIEW = process.env.PREVIEW === '1';
+// NOINDEX=1 asks search engines to leave the site out: a noindex tag on every page and a
+// robots.txt that turns crawlers away. Without it the site is indexable and has a sitemap.
+const NOINDEX = process.env.NOINDEX === '1';
+
+// A project whose data files are stand-ins (made to design the page before the
+// real analysis ran) is never published. A production build stops with an error,
+// so the live site keeps its last good version. HOLD_BACK=1 builds the rest of
+// the site without the project instead. PREVIEW=1 builds show it, under a banner.
+const isStandin = async (dataset) => {
+  const dir = `src/data/${dataset}`;
+  if (!existsSync(dir)) return true;
+  for (const f of (await readdir(dir)).filter((n) => n.endsWith('.json'))) {
+    if (JSON.parse(await readFile(`${dir}/${f}`, 'utf8')).standin) return true;
+  }
+  return false;
+};
+const projects = [];
+const heldBack = [];
+for (const p of allProjects) {
+  if (p.data && !PREVIEW && (await isStandin(p.data))) {
+    if (process.env.HOLD_BACK !== '1') {
+      console.error(`Not built: the data for "${p.title}" in src/data/${p.data} is stand-in or missing, and stand-in numbers must not be published.\nBring in the real files (node tools/sync-ewarn.mjs), or run HOLD_BACK=1 node build.mjs to build the site without this project.`);
+      process.exit(1);
+    }
+    console.warn(`Skipping "${p.title}": its data in src/data/${p.data} is still stand-in. It shows in PREVIEW=1 builds only.`);
+    heldBack.push(p.data);
+    continue;
+  }
+  // Links into a repo that is still private are left out everywhere (rail, palette) until
+  // the project's repoIsPublic switch in src/projects.mjs is set to true.
+  projects.push(p.repoIsPublic === false ? { ...p, links: p.links.filter((l) => !l.repo) } : p);
+}
 const u = (depth, target = '') => {
   if (!PREVIEW) return '/' + target;
   const [path, hash] = target.split('#');
@@ -37,25 +69,58 @@ const txt = (s = '') => DRAFT
   ? esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`)
   : esc(String(s).replace(/\s*\[[^\]]+\]/g, '').trim());
 
-const head = ({ title, description, path, depth = 0, fonts = '' }) => `<!doctype html>
+// The picture link previews show (Open Graph, Twitter card), the touch icon and favicon.ico
+// are made by tools/share-image.mjs.
+const SHARE_IMAGE = { src: 'img/og.png', w: 1200, h: 630 };
+
+// Who the site is about, for search engines (schema.org Person). The job, employer and degree
+// repeat the About block on the homepage: change them together.
+const personLd = () => `<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  url: `${SITE.url}/`,
+  ...(SITE.headshot ? { image: `${SITE.url}/img/headshot.webp` } : {}),
+  description: SITE.description,
+  jobTitle: 'Data Analyst',
+  worksFor: { '@type': 'CollegeOrUniversity', name: 'Nicholls State University' },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of Louisiana at Lafayette' },
+  email: `mailto:${SITE.email}`,
+  sameAs: SITE.links.filter((l) => l.href !== '#').map((l) => l.href),
+}).replace(/</g, '\\u003c')}</script>`;
+
+// Font files every page shows above the fold, fetched early so the first paint already has
+// them. A page can add more with `fonts`. The files and their @font-face rules: src/vendor/fonts, src/styles.css.
+const FONT_PRELOAD = ['geist-latin-wght-normal', 'instrument-serif-latin-400-normal'];
+// `noindex` is for a page that should never be listed (the 404 page); it also has no canonical URL.
+const head = ({ title, description, path, depth = 0, fonts = [], noindex = false, extra = '' }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${SITE.url}${path}">
+<meta name="description" content="${esc(description)}">${noindex || NOINDEX ? '\n<meta name="robots" content="noindex, nofollow">' : ''}${noindex ? '' : `
+<link rel="canonical" href="${SITE.url}${path}">`}
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="${SITE.url}${path}">
+<meta property="og:site_name" content="${SITE.name}">${noindex ? '' : `
+<meta property="og:url" content="${SITE.url}${path}">`}
+<meta property="og:image" content="${SITE.url}/${SHARE_IMAGE.src}">
+<meta property="og:image:width" content="${SHARE_IMAGE.w}">
+<meta property="og:image:height" content="${SHARE_IMAGE.h}">
+<meta property="og:image:alt" content="${esc(SITE.description)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(description)}">
+<meta name="twitter:image" content="${SITE.url}/${SHARE_IMAGE.src}">
 <meta name="theme-color" content="#F3EEE6">
 <script>(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light'})()</script>
+<link rel="icon" href="${u(depth, 'favicon.ico')}" sizes="32x32">
+<link rel="apple-touch-icon" href="${u(depth, 'img/apple-touch-icon.png')}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%230E2438'/%3E%3Crect x='16' width='16' height='32' fill='%23F3EEE6'/%3E%3Crect x='15' width='2' height='32' fill='%23C8553A'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1${fonts}&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="${u(depth, 'styles.css')}">
+${[...FONT_PRELOAD, ...fonts].map((f) => `<link rel="preload" href="${u(depth, `vendor/fonts/${f}.woff2`)}" as="font" type="font/woff2" crossorigin>`).join('\n')}
+<link rel="stylesheet" href="${u(depth, 'styles.css')}">${extra ? `\n${extra}` : ''}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>`;
@@ -130,21 +195,23 @@ const ph = (label, hint = '', cls = '') =>
 
 // Project picture for cards and rows: its own thumbnail, else its first screenshot.
 const pic = (p) => p.thumb || (p.gallery?.desktop?.[0]?.src ? p.gallery.desktop[0] : null);
-const picImg = (depth, p, cls) => {
+const picImg = (depth, p, cls, eager = false) => {
   const im = pic(p);
   return im
-    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}" loading="lazy" decoding="async">`
+    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}"${eager ? '' : ' loading="lazy"'} decoding="async">`
     : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
-// Featured order on the homepage; the rest go in "More work". All of them are on /work/.
-const FEATURED = ['tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
-const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug));
-const others = projects.filter((p) => !FEATURED.includes(p.slug));
+// Featured order on the homepage: the first three of these that are published. The rest go in
+// "More work". All of them are on /work/.
+const FEATURED = ['withdrawal-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
+const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug)).filter(Boolean).slice(0, 3);
+const others = projects.filter((p) => !featured.includes(p));
 
-const card = (depth, p) => `
+// `eager` is for cards at the top of a page: their pictures load with the page, not on scroll.
+const card = (depth, p, eager = false) => `
       <li><a class="card" href="${u(depth, `work/${p.slug}/`)}">
-        ${picImg(depth, p, 'card__img')}
+        ${picImg(depth, p, 'card__img', eager)}
         <span class="card__tools">${esc(p.tools)}</span>
         <span class="card__title">${esc(p.title)}</span>
         <span class="card__note">${txt(p.note)}</span>
@@ -158,7 +225,7 @@ const row = (depth, p) => `
         <span class="row__go" aria-hidden="true">→</span>
       </a></li>`;
 
-const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/' })}
+const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/', fonts: ['instrument-serif-latin-400-italic'], extra: personLd() })}
 ${nav()}
 <main id="main">
 <section class="hero" aria-label="Introduction">
@@ -214,12 +281,12 @@ ${nav()}
 ${footer()}`;
 
 // Every project, as cards.
-const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: SITE.description, path: '/work/', depth: 1 })}
+const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: `All ${projects.length} projects by ${SITE.name}, data analyst and web developer: ${projects.map((p) => p.title).join('; ')}.`, path: '/work/', depth: 1 })}
 ${nav(1)}
 <main id="main" class="work-all">
   <a class="back" href="${u(1)}">← Home</a>
   <h1>All work</h1>
-  <ul class="cards">${projects.map((p) => card(1, p)).join('')}
+  <ul class="cards">${projects.map((p, k) => card(1, p, k < 3)).join('')}
   </ul>
 </main>
 ${footer(1)}`;
@@ -232,12 +299,20 @@ const DEMOS = {
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
   dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>${CATALOG ? `
   <section class="demo cat" data-demo="catalog" data-base="${siteRoot(depth)}" aria-label="More redesigned dashboards"><p class="demo__noscript">The slideshow needs JavaScript.</p></section>` : ''}`,
+  // Five pieces for the withdrawal project, each filled from its own JSON file in data/ewarn/.
+  ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/"${allProjects.some((p) => p.demo === 'ewarn' && p.repoIsPublic) ? ' data-repo-links="on"' : ''}>
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="replay" id="replay" aria-label="Replay a term"><p class="demo__noscript">The term replay needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
+  </div>`,
 };
 // The dashboards slideshow appears once all six of its data files are in src/data/dashboards
 // (written by scripts/export_catalog.py in the dashboards repo).
 const CATALOG = ['enrollment', 'graduates', 'retention12', 'retention13', 'grad4', 'grad6']
   .every((k) => existsSync(`src/data/dashboards/${k}.json`));
-const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])] };
+const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])], ewarn: ['demo-ewarn.js'] };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -271,7 +346,7 @@ const showcase = (p, depth) => {
           ${g.desktop.map((img, k) => `<div class="browser__pane" data-view="${k}"${k ? ' hidden' : ''}>${view(depth, img, k === 0)}</div>`).join('\n          ')}
         </div>
       </figure>
-      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
+      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { eager: true, sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
     </div>
     <p class="showcase__caption" data-caption>${txt(first.caption)}</p>
     ${g.desktop.length > 1 ? `<div class="thumbs" role="group" aria-label="Choose a view">
@@ -309,7 +384,7 @@ const projectPage = (p, i) => {
     ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
   ];
   const links = p.links.filter((l) => l.href !== '#');
-  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2, fonts: p.demo === 'scanner' ? '&family=Caveat:wght@500;600' : '' })}
+  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2 })}
 ${nav(2)}
 <main id="main" class="proj">
   <div class="proj__grid">
@@ -370,7 +445,9 @@ await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
 await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
 await copyFile('src/demo-catalog.js', 'dist/demo-catalog.js');
 await copyFile('src/dash-kit.js', 'dist/dash-kit.js');
-if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true });
+await copyFile('src/demo-ewarn.js', 'dist/demo-ewarn.js');
+await copyFile('src/ewarn-read.js', 'dist/ewarn-read.js');
+if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
 if (SITE.resume === 'resume.pdf') {
@@ -387,8 +464,20 @@ ${nav(1)}
 </main>
 ${footer(1)}`);
 }
-await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: SITE.description, path: '/404' })}
+await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: `This page is not on ${SITE.name}'s site.`, path: '/404', noindex: true })}
 ${nav()}
 <main id="main" class="proj"><h1 style="margin-top:48px">Nothing here.</h1><p class="proj__outcome"><a href="${u(0)}">Back to the homepage</a></p></main>
 ${footer()}`);
-console.log(`Built ${projects.length} project pages + homepage into dist/`);
+if (existsSync('src/favicon.ico')) await copyFile('src/favicon.ico', 'dist/favicon.ico');
+// For search engines: every page in a sitemap and an open robots.txt, or with NOINDEX=1 a
+// robots.txt that turns all crawlers away (and no sitemap).
+if (!NOINDEX) {
+  const pages = ['/', '/work/', ...projects.map((p) => `/work/${p.slug}/`)];
+  await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pages.map((p) => `  <url><loc>${SITE.url}${p}</loc></url>`).join('\n')}
+</urlset>
+`);
+}
+await writeFile('dist/robots.txt', NOINDEX ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${SITE.url}/sitemap.xml\n`);
+console.log(`Built ${projects.length} project pages + homepage into dist/${NOINDEX ? ' (NOINDEX: search engines are asked to stay out)' : ''}`);

@@ -6,6 +6,37 @@
 
 export const projects = [
   {
+    slug: "withdrawal-early-warning",
+    thumb: { src: "thumb-ewarn", w: 960, h: 600, alt: "" },
+    demo: "ewarn",
+    data: "ewarn",
+    lane: "build",
+    title: "Who's About to Withdraw?",
+    kind: "Analysis · public data",
+    tools: "Python · pandas · scikit-learn · statsmodels",
+    note: "The bar was set before the data was opened. The model missed it, and the page shows it.",
+    outcome: "An early-warning model for course withdrawal, built on about 32,600 real registrations and judged against a plan committed before any results were seen. Scored once on a term it never saw, it missed its own bar: an AUC of 0.616 against a declared 0.75.",
+    role: "Solo: analysis, modelling, write-up",
+    timeline: "September – October 2026",
+    // The analysis repo is private for now, so links into it would be dead for visitors.
+    // Set repoIsPublic to true once the repo is public: the two links below then appear in
+    // the rail and the command palette, and the commit IDs in the plan piece become links.
+    repoIsPublic: false,
+    links: [
+      { label: "Code & notebooks", href: "https://github.com/Kobi-Lipari/withdrawal-early-warning", repo: true },
+      { label: "Analysis plan", href: "https://github.com/Kobi-Lipari/withdrawal-early-warning/blob/main/ANALYSIS_PLAN.md", repo: true }
+    ],
+    pipeline: ["Plan committed first", "Fifteen data checks", "Week-4 features", "Train on 2013, test on 2014", "Fairness audit & model card"],
+    sections: {
+      problem: "Colleges want to reach students who are about to withdraw while there's still time to help, and the usual tool is a risk score. A risk score is only worth using if it works on a term it has never seen, if its percentages mean what they say, and if it doesn't miss some groups of students far more than others. This project builds one in the open and checks all three.",
+      data: "The Open University Learning Analytics Dataset: about 32,600 course registrations across seven modules and four terms in 2013 and 2014, with demographics, daily clicks in the online classroom, assessment submissions and final results. Public, anonymised, and licensed CC BY 4.0 (Kuzilek, Hlosta and Zdrahal, 2017). Fifteen data checks ran before any modelling and eleven of them changed the analysis; the case files above show what they found.",
+      approach: "The plan was committed before any outcome data was opened. The model sees only what a college would know at the end of week 4: registration details, online activity and whether early work was handed in. Assessment scores are left out because the data doesn't say when they were returned. Gender, age, disability and area deprivation are never inputs; they're used only to audit the model. A logistic regression is compared with gradient-boosted trees, and the simpler model wins unless the other is clearly better. By that rule, written down before any model was fitted, the trees were chosen.",
+      validation: "Trained on 2013, chosen and calibrated on February 2014, and scored once on October 2014, a term the model never saw: 9,219 students still enrolled at day 28, of whom 19.4% withdrew later. The model, its calibration and its cut points were frozen in a commit before that term was opened. Every headline figure carries a 95% bootstrap interval from 2,000 resamples of students. A bar is judged on the estimate, and where the interval reaches across the bar the page draws it. Differences between students who stay and students who leave were tested with Mann–Whitney U and chi-square and reported by effect size, with Holm correction: the week-4 differences are small, a rank-biserial r of 0.12 for clicks and 0.13 for active days.",
+      result: "The model missed the bar I set for it. On the test term its ROC AUC is 0.616 (95% interval 0.600 to 0.630) against a declared 0.75: take one student who later withdrew and one who stayed, and the model scores the right one higher about 62% of the time, where a coin gets 50%. By the plan's own definition the score is not useful. Its High-risk list flagged 1,122 students and 40.0% of them withdrew, but the list held only 25.2% of the withdrawals that followed, and 48.7% came from students it rated Low. The calibration bar was met on the estimate, a slope of 1.187 inside the 0.8 to 1.2 band, with an interval of 1.042 to 1.324 that reaches past it. The fairness limits were crossed too. The share of later withdrawals the list caught differs between groups by 5.7 points for gender, 7.0 for age band, 7.3 for disability and 18.7 across eleven deprivation groups (ten bands and one with no band recorded; a range over that many groups overstates the true spread), against a limit of 5. Students with a declared disability had a mean score of 20.8% where 27.4% withdrew. In all, 7 of the plan's 20 promises were missed, and all 20 are shown above. For anyone handed a score like this one: in this data, four weeks of clicks, early hand-ins and registration details ranked later withdrawals only a little better than chance. A warning list built on it misses most of the students it is meant to find, and misses some groups more than others, so it should never be the only way a student at risk is found, and never used for anything but offering support.",
+      reflection: "I would not change the verdict. The earlier term had already shown an AUC of 0.615, and I opened the test term anyway with the model untouched, because a bar that moves after the result is not a bar. What I would change is in the plan's own change log. Write a tighter plan: the log runs to 22 dated entries, and many are definitions the plan should have carried from the start, such as which score the calibration bar applies to, what counts as within the noise, and the model settings. Build the generator for this page's data before opening the test term, not after; it was written once the results were known, and the log says so. And lean less on the model choice: the trees replaced the logistic regression on a margin that came from one module, and on the test term the two differ by 0.016 in AUC, both far below the bar."
+    }
+  },
+  {
     slug: "scoresheet-scanner",
     thumb: { src: "thumb-scanner", w: 960, h: 600, alt: "" },
     demo: "scanner",
