@@ -328,7 +328,7 @@ function init(host) {
       </div>
       <div class="sqlpad__out">
         <div class="viz-host" data-chart hidden></div>
-        <div class="sqlpad__table" data-table></div>
+        <div class="sqlpad__table" data-table tabindex="0" role="region" aria-label="Query results"></div>
       </div>
     </div>`;
 

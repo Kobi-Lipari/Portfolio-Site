@@ -7,6 +7,7 @@ Portfolio site for Kobi Lipari: plain HTML, CSS and JavaScript, no dependencies.
 - **Projects:** `src/projects.mjs`. Each project has a `lane` (`"build"` or `"design"`), a short `note` for the homepage list, and case-study `sections`.
 - **Homepage, nav, footer, about:** `build.mjs` (search for the text you want to change). Contact links are in the `SITE` object at the top.
 - **Styles:** `src/styles.css`. Colors live as variables at the top.
+- **Fonts:** served from the site, not from Google: `src/vendor/fonts` (Geist, Geist Mono, Instrument Serif and Caveat; Latin subsets from the Fontsource npm packages, SIL Open Font License, licences alongside). The `@font-face` rules are at the top of `src/styles.css`; the build preloads the faces every page shows first (`FONT_PRELOAD` in `build.mjs`).
 - **Hero:** the Admissions before/after from the dashboards project (`src/demo-dash.js` with `data-mode="hero"`).
 
 Anything in `[square brackets]` is a placeholder. The live build leaves placeholders out (and drops a case-study section or timeline that is only a placeholder); `DRAFT=1 node build.mjs` shows them with a dashed orange underline so they're easy to find.
@@ -17,6 +18,7 @@ Anything in `[square brackets]` is a placeholder. The live build leaves placehol
 - **Command palette** (`Ctrl/⌘ K` or `/`): jump to any project, section or live site, copy the email address. Its entries are built per page by `siteIndex()` in `build.mjs`.
 - **Dark theme:** follows the system setting until the visitor picks one with the moon/sun button. Colors are the variables under "Dark theme" in `src/styles.css`.
 - **Scanner decoder demo** (scanner project page): the real decoder from the LCA site, running in the browser on a noisy transcription of the Opera Game. `src/demo-scanner.js` and `src/demo-worker.js`; the decoder itself is in `src/vendor/decoder/`.
+- **Withdrawal project page** (hidden for now with `hidden: true` in `src/projects.mjs`, while the dropout early-warning study takes its place; the pieces below are kept for that project): five pieces, each filled from its own JSON file in `src/data/ewarn/`: the plan against the result, a replayed term, a guessing game against the model, an advising simulator and the data-check case files. `src/demo-ewarn.js` (and `src/ewarn-read.js`, which reads the declared bars out of the plan's wording), styles under "Withdrawal project" in `src/styles.css`. See "Refreshing the withdrawal page's data" below.
 - **SQL playground** (retention project page): SQLite in the browser (sql.js, `src/vendor/sqljs/`, MIT) over synthetic cohort data. `src/demo-sql.js`. Chart colors were checked for colorblind separation and contrast on the light, dark and blueprint backgrounds.
 
 A project gets a demo by setting `demo: "scanner"` or `demo: "sql"` in `src/projects.mjs`.
@@ -30,6 +32,24 @@ git clone --branch v1.4.0 --depth 1 https://github.com/jhlywa/chess.js.git /tmp/
 node tools/vendor-decoder.mjs ../lca-website /tmp/chess.js
 ```
 
+### Refreshing the withdrawal page's data
+
+The five pieces on the withdrawal project page read five small JSON files in `src/data/ewarn/`, written by the analysis repo (`ewarn/showcase.py` there describes them). When the analysis changes, bring them in again (needs Node 22):
+
+```
+node tools/sync-ewarn.mjs ../withdrawal-early-warning
+```
+
+The path is a checkout of the analysis repo (the files are read from `reports/showcase/` inside it); that path is also the default. The tool checks every file against the shape the page reads before it copies anything, copies nothing if one of them fails, and prints what changed. Add `--dry-run` to check without copying.
+
+Stand-in files (made to design the page before the analysis ran, marked `"standin": true`) are refused unless you pass `--allow-standin`. Stand-in numbers are never published: if one of the files in `src/data/ewarn/` is a stand-in, `node build.mjs` stops with an error and writes nothing, so a deploy fails and the live site keeps its last good version. To publish the rest of the site without the project (no page, no card, no palette entry, no data files), run `HOLD_BACK=1 node build.mjs`. `PREVIEW=1` builds always show the project, under a "Stand-in data" banner.
+
+The page's links into the analysis repo (code, plan, commits) are off while that repo is private: commit IDs show as plain text. Set `repoIsPublic: true` on the project in `src/projects.mjs` once it is public.
+
+The homepage card's picture is made from the page's replay chart: `TOOLS_DIR=<folder with playwright and sharp installed> node tools/thumb-ewarn.mjs` after a build.
+
+`node --test` runs the tool's tests, and checks that the committed files match the contract.
+
 ## Build
 
 Requires Node 18 or newer (no `npm install` needed).
@@ -37,9 +57,32 @@ Requires Node 18 or newer (no `npm install` needed).
 ```
 node build.mjs            # writes the site into dist/
 PREVIEW=1 node build.mjs  # relative links, for opening files locally or preview hosts
+NOINDEX=1 node build.mjs  # the same site, hidden from search engines (see below)
 ```
 
 To view locally: `npx serve dist` or `python -m http.server --directory dist`, then open http://localhost:8000. The two demos need this (browsers block their scripts on `file://` pages).
+
+## Sharing and search
+
+- Every page has its own title and description, a canonical URL, and Open Graph and Twitter card tags. The homepage also carries a schema.org `Person` block (`personLd()` in `build.mjs`); its job, employer and degree repeat the About block, so change them together.
+- The picture that link previews show (`src/img/og.png`), the touch icon and `src/favicon.ico` are made by `tools/share-image.mjs` from the homepage headline, the site's fonts and its colours. Re-run it after the headline, the role line or the headshot changes (Playwright is not a dependency; install it anywhere and point `TOOLS_DIR` at that folder):
+
+```
+node build.mjs
+TOOLS_DIR=/path/to/folder-with-playwright node tools/share-image.mjs
+```
+
+- The build writes `sitemap.xml` (every page) and `robots.txt`.
+
+### Hiding the site from search engines
+
+The default build can be indexed. When the job hunt is over, build with `NOINDEX=1`:
+
+```
+NOINDEX=1 node build.mjs
+```
+
+That adds `<meta name="robots" content="noindex, nofollow">` to every page, writes a `robots.txt` that disallows everything, and leaves out the sitemap. On Cloudflare, either change the build command to `NOINDEX=1 node build.mjs` or add a build variable `NOINDEX` with the value `1`; remove it to be findable again. Pages a search engine already has can take a few weeks to drop out. Because `robots.txt` stops crawlers from re-reading the pages, a result can linger as a bare link; Google Search Console's removal tool clears those sooner.
 
 ## Deploy on Cloudflare
 
