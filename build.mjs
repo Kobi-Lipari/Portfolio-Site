@@ -1,11 +1,40 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
-import { mkdir, writeFile, copyFile, rm, cp } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile, rm, cp, readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { projects } from './src/projects.mjs';
+import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
 const PREVIEW = process.env.PREVIEW === '1';
+
+// A project whose data files are stand-ins (made to design the page before the
+// real analysis ran) is never published. A production build stops with an error,
+// so the live site keeps its last good version. HOLD_BACK=1 builds the rest of
+// the site without the project instead. PREVIEW=1 builds show it, under a banner.
+const isStandin = async (dataset) => {
+  const dir = `src/data/${dataset}`;
+  if (!existsSync(dir)) return true;
+  for (const f of (await readdir(dir)).filter((n) => n.endsWith('.json'))) {
+    if (JSON.parse(await readFile(`${dir}/${f}`, 'utf8')).standin) return true;
+  }
+  return false;
+};
+const projects = [];
+const heldBack = [];
+for (const p of allProjects) {
+  if (p.data && !PREVIEW && (await isStandin(p.data))) {
+    if (process.env.HOLD_BACK !== '1') {
+      console.error(`Not built: the data for "${p.title}" in src/data/${p.data} is stand-in or missing, and stand-in numbers must not be published.\nBring in the real files (node tools/sync-ewarn.mjs), or run HOLD_BACK=1 node build.mjs to build the site without this project.`);
+      process.exit(1);
+    }
+    console.warn(`Skipping "${p.title}": its data in src/data/${p.data} is still stand-in. It shows in PREVIEW=1 builds only.`);
+    heldBack.push(p.data);
+    continue;
+  }
+  // Links into a repo that is still private are left out everywhere (rail, palette) until
+  // the project's repoIsPublic switch in src/projects.mjs is set to true.
+  projects.push(p.repoIsPublic === false ? { ...p, links: p.links.filter((l) => !l.repo) } : p);
+}
 const u = (depth, target = '') => {
   if (!PREVIEW) return '/' + target;
   const [path, hash] = target.split('#');
@@ -137,10 +166,11 @@ const picImg = (depth, p, cls) => {
     : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
-// Featured order on the homepage; the rest go in "More work". All of them are on /work/.
-const FEATURED = ['tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
-const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug));
-const others = projects.filter((p) => !FEATURED.includes(p.slug));
+// Featured order on the homepage: the first three of these that are published. The rest go in
+// "More work". All of them are on /work/.
+const FEATURED = ['withdrawal-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
+const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug)).filter(Boolean).slice(0, 3);
+const others = projects.filter((p) => !featured.includes(p));
 
 const card = (depth, p) => `
       <li><a class="card" href="${u(depth, `work/${p.slug}/`)}">
@@ -232,12 +262,20 @@ const DEMOS = {
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
   dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>${CATALOG ? `
   <section class="demo cat" data-demo="catalog" data-base="${siteRoot(depth)}" aria-label="More redesigned dashboards"><p class="demo__noscript">The slideshow needs JavaScript.</p></section>` : ''}`,
+  // Five pieces for the withdrawal project, each filled from its own JSON file in data/ewarn/.
+  ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/"${allProjects.some((p) => p.demo === 'ewarn' && p.repoIsPublic) ? ' data-repo-links="on"' : ''}>
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="replay" id="replay" aria-label="Replay a term"><p class="demo__noscript">The term replay needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
+  </div>`,
 };
 // The dashboards slideshow appears once all six of its data files are in src/data/dashboards
 // (written by scripts/export_catalog.py in the dashboards repo).
 const CATALOG = ['enrollment', 'graduates', 'retention12', 'retention13', 'grad4', 'grad6']
   .every((k) => existsSync(`src/data/dashboards/${k}.json`));
-const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])] };
+const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])], ewarn: ['demo-ewarn.js'] };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -370,7 +408,9 @@ await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
 await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
 await copyFile('src/demo-catalog.js', 'dist/demo-catalog.js');
 await copyFile('src/dash-kit.js', 'dist/dash-kit.js');
-if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true });
+await copyFile('src/demo-ewarn.js', 'dist/demo-ewarn.js');
+await copyFile('src/ewarn-read.js', 'dist/ewarn-read.js');
+if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
 if (SITE.resume === 'resume.pdf') {
