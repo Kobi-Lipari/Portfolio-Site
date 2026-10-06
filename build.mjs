@@ -25,6 +25,9 @@ const isStandin = async (dataset) => {
 const projects = [];
 const heldBack = [];
 for (const p of allProjects) {
+  // A project marked hidden is left out of every build: no page, no card, no palette entry,
+  // no sitemap line, and its data files are not copied. Its files stay in the repo for reuse.
+  if (p.hidden) { if (p.data) heldBack.push(p.data); continue; }
   if (p.data && !PREVIEW && (await isStandin(p.data))) {
     if (process.env.HOLD_BACK !== '1') {
       console.error(`Not built: the data for "${p.title}" in src/data/${p.data} is stand-in or missing, and stand-in numbers must not be published.\nBring in the real files (node tools/sync-ewarn.mjs), or run HOLD_BACK=1 node build.mjs to build the site without this project.`);

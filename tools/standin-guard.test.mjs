@@ -1,5 +1,7 @@
 // What the build does with the withdrawal project: published with real data,
-// never with stand-in data, and with no links into a private repo.
+// never with stand-in data, with no links into a private repo, and left out
+// entirely while it is marked hidden. The guard tests un-hide the project in
+// their throwaway copy so they keep checking the stand-in rules.
 // Each test builds a throwaway copy of the site. Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,11 +16,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SLUG = 'withdrawal-early-warning';
 const REPO = 'github.com/Kobi-Lipari/withdrawal-early-warning';
 
-async function siteCopy(t, { standin = false, edit } = {}) {
+async function siteCopy(t, { standin = false, hidden = false, edit } = {}) {
   const dir = await mkdtemp(path.join(tmpdir(), 'site-build-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   await cp(path.join(ROOT, 'build.mjs'), path.join(dir, 'build.mjs'));
   await cp(path.join(ROOT, 'src'), path.join(dir, 'src'), { recursive: true });
+  if (!hidden) {
+    const projects = path.join(dir, 'src', 'projects.mjs');
+    await writeFile(projects, (await readFile(projects, 'utf8')).replace('hidden: true,', 'hidden: false,'));
+  }
   if (standin) {
     const file = path.join(dir, 'src', 'data', 'ewarn', 'beat.json');
     await writeFile(file, JSON.stringify({ ...JSON.parse(await readFile(file, 'utf8')), standin: true }));
@@ -86,6 +92,16 @@ test('HOLD_BACK=1 builds the rest of the site with no trace of the project', asy
   const home = await read(dir, 'index.html');
   const featured = home.slice(home.indexOf('class="featured"'), home.indexOf('class="more"'));
   assert.deepEqual([...featured.matchAll(/href="\/work\/([^/]+)\/"/g)].map((m) => m[1]), ['tableau-dashboards', 'lca-website', 'scoresheet-scanner']);
+});
+
+test('a hidden project is left out of the production build, data files included', async (t) => {
+  const dir = await siteCopy(t, { hidden: true });
+  const { code, out } = await build(dir);
+  assert.equal(code, 0, out);
+  assert.equal(existsSync(path.join(dir, 'dist', 'work', SLUG)), false);
+  assert.equal(existsSync(path.join(dir, 'dist', 'data', 'ewarn')), false);
+  for (const html of await pages(dir)) assert.equal(html.includes(SLUG), false, 'no page links to the project or lists it in the palette');
+  assert.doesNotMatch(await read(dir, 'sitemap.xml'), new RegExp(SLUG));
 });
 
 test('a preview build shows the project even with stand-in data', async (t) => {

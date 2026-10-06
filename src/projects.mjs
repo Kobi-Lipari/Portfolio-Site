@@ -3,10 +3,14 @@
 // Anything in [square brackets] is a placeholder to replace with real details.
 //
 // lane: "build" puts it in the Built column, "design" in the Designed column.
+// hidden: true keeps a project out of the built site entirely while its files stay for reuse.
 
 export const projects = [
   {
     slug: "withdrawal-early-warning",
+    // Hidden while the dropout early-warning study replaces it. The page's pieces
+    // (src/demo-ewarn.js, tools/sync-ewarn.mjs, the stand-in guard) are reused by that project.
+    hidden: true,
     thumb: { src: "thumb-ewarn", w: 960, h: 600, alt: "" },
     demo: "ewarn",
     data: "ewarn",
