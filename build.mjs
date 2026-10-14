@@ -227,7 +227,8 @@ const lensResume = (file) => {
 // A lens is one version of the homepage: every string the hero, chips, featured order, About
 // and footer read comes from here. `featured` lists slugs in order; the first three that are
 // published are the cards, the rest go in "More work". All of them are on /work/. A lens
-// reorders and reframes; it never changes a fact. TOOLS is one set, reordered per lens.
+// reorders and reframes; it never changes a fact. TOOLS is one set, reordered per lens; the
+// dev lens also names TypeScript and React, the stack its title promises.
 const LENSES = {
   root: {
     key: 'root', path: '/', depth: 0, dir: null,
@@ -249,8 +250,8 @@ const LENSES = {
       'withdrawal-early-warning', // B11 retires this entry.
       'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner',
     ],
-    tools: 'SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare',
-    openTo: 'Data analyst, BI and full-stack roles · New Orleans or relocating',
+    tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare',
+    openTo: 'Data analyst, BI and full-stack roles · New Orleans, or anywhere the work is a step up',
     resume: SITE.resume, banner: null,
   },
   analyst: {
@@ -271,8 +272,8 @@ const LENSES = {
     ],
     doors: false,
     featured: ['predictive-retention', 'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'],
-    tools: 'SQL · Tableau · Python · Access · Excel · Git · JavaScript · HTML/CSS · Cloudflare',
-    openTo: 'Data analyst and BI roles · New Orleans or relocating',
+    tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · Git · JavaScript · HTML/CSS · Cloudflare',
+    openTo: 'Data analyst and BI roles · New Orleans, or anywhere the work is a step up',
     resume: lensResume('resume-analyst.pdf'),
     banner: { who: 'someone hiring an analyst', others: [['developers', 'dev/'], ['everyone', '']] },
   },
@@ -293,8 +294,8 @@ const LENSES = {
     ],
     doors: false,
     featured: ['lca-website', 'scoresheet-scanner', 'tableau-dashboards', 'dropout-early-warning'],
-    tools: 'JavaScript · HTML/CSS · Cloudflare · Git · SQL · Python · Tableau · Access · Excel',
-    openTo: 'Full-stack and front-end roles · New Orleans or relocating',
+    tools: 'TypeScript · React · Cloudflare · JavaScript · HTML/CSS · Git · SQL · Python · pandas · R · Tableau · Power BI · Access · Excel',
+    openTo: 'Full-stack and front-end roles · New Orleans, or anywhere the work is a step up',
     resume: lensResume('resume-dev.pdf'),
     banner: { who: 'someone hiring a developer', others: [['analysts', 'analyst/'], ['everyone', '']] },
   },
@@ -388,7 +389,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
         <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer &amp; IT Support, Healingly</dd>
-        <dt>DEGREE</dt><dd>${txt('BS Computer Science, University of Louisiana at Lafayette [, degree year]')}</dd>
+        <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette, 2024</dd>
         <dt>TOOLS</dt><dd>${esc(lens.tools)}</dd>
       </dl>
     </div>
