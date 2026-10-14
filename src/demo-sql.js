@@ -166,15 +166,27 @@ function loadDb(base) {
 // Which columns to draw: the _pct ones when there are any (so a count
 // column never shares an axis with a percentage), otherwise every numeric
 // column. At most three series; colours follow the column, not its rank.
+// Some results are a table and not a figure, and get no chart: a list of
+// records (the first column is an id), columns that only hold 0/1 flags or
+// one repeated value, and more categories than a bar chart can name.
+const MAX_BARS = 12;
 function chartSpec(columns, rows) {
   if (rows.length < 2 || columns.length < 2) return null;
+  if (/(^|_)id$/i.test(columns[0])) return null;
   const numeric = columns.map((_, j) => rows.every((r) => r[j] === null || typeof r[j] === 'number'));
-  let series = columns.map((c, j) => j).filter((j) => j > 0 && numeric[j]);
+  const drawable = (j) => {
+    const vals = rows.map((r) => r[j]).filter((v) => v !== null);
+    if (vals.length < 2) return false;
+    if (vals.every((v) => v === 0 || v === 1)) return false;
+    return vals.some((v) => v !== vals[0]);
+  };
+  let series = columns.map((c, j) => j).filter((j) => j > 0 && numeric[j] && drawable(j));
   const pct = series.filter((j) => /_pct$/.test(columns[j]));
   if (pct.length) series = pct;
   series = series.slice(0, 3);
   if (!series.length) return null;
   const xIsYear = numeric[0] && rows.every((r) => Number.isInteger(r[0]) && r[0] > 1900 && r[0] < 2100);
+  if (!xIsYear && rows.length > MAX_BARS) return null;
   return { series, kind: xIsYear ? 'line' : 'bar', isPct: pct.length > 0 };
 }
 
@@ -375,6 +387,7 @@ function init(host) {
         </details>
       </div>
       <div class="sqlpad__out">
+        <p class="sqlpad__empty" data-empty>Pick a question or run your own SQL. The chart and the rows appear here.</p>
         <div class="viz-host" data-chart hidden></div>
         <div class="sqlpad__table" data-table tabindex="0" role="region" aria-label="Query results"></div>
       </div>
@@ -385,6 +398,7 @@ function init(host) {
   const meta = host.querySelector('[data-meta]');
   const chartHost = host.querySelector('[data-chart]');
   const tableHost = host.querySelector('[data-table]');
+  const empty = host.querySelector('[data-empty]');
   const note = host.querySelector('[data-note]');
   const tip = document.createElement('div');
   tip.className = 'viz__tip';
@@ -422,13 +436,16 @@ function init(host) {
     }
     const ms = (performance.now() - t0).toFixed(1);
     const last = result[result.length - 1];
+    empty.hidden = true;
     if (!last) { meta.textContent = `Done in ${ms} ms, no rows returned.`; tableHost.replaceChildren(); lastDraw = null; drawChart(chartHost, tip, [], [], null); return; }
     const { columns, values } = last;
     meta.textContent = `${values.length} ${values.length === 1 ? 'row' : 'rows'} · ${ms} ms`;
     lastDraw = [columns, values, chartSpec(columns, values)];
     drawChart(chartHost, tip, ...lastDraw);
     const shown = values.slice(0, 50);
-    tableHost.innerHTML = `<table><thead><tr>${columns.map((c) => `<th scope="col">${c.replace(/</g, '&lt;')}</th>`).join('')}</tr></thead><tbody>${shown.map((r) => `<tr>${r.map((v) => `<td class="${typeof v === 'number' ? 'num' : ''}">${v === null ? '<span class="null">NULL</span>' : String(v).replace(/</g, '&lt;')}</td>`).join('')}</tr>`).join('')}</tbody></table>${values.length > shown.length ? `<p class="sqlpad__more">Showing the first ${shown.length} of ${values.length} rows.</p>` : ''}`;
+    // Number columns are right-aligned, headers included, so the digits line up under their name.
+    const num = columns.map((_, j) => values.some((r) => typeof r[j] === 'number') && values.every((r) => r[j] === null || typeof r[j] === 'number'));
+    tableHost.innerHTML = `<table><thead><tr>${columns.map((c, j) => `<th scope="col"${num[j] ? ' class="num"' : ''}>${c.replace(/</g, '&lt;')}</th>`).join('')}</tr></thead><tbody>${shown.map((r) => `<tr>${r.map((v) => `<td class="${typeof v === 'number' ? 'num' : ''}">${v === null ? '<span class="null">NULL</span>' : String(v).replace(/</g, '&lt;')}</td>`).join('')}</tr>`).join('')}</tbody></table>${values.length > shown.length ? `<p class="sqlpad__more">Showing the first ${shown.length} of ${values.length} rows.</p>` : ''}`;
   }
 
   // The 0.6 MB engine is fetched only once the visitor acts: the first focus or tap on the

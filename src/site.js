@@ -14,10 +14,13 @@
 
   // Local storage can throw (private windows, blocked site data); the site
   // works the same without it, it just won't remember the choice.
-  const store = {
-    get(key) { try { return localStorage.getItem(key); } catch { return null; } },
-    set(key, value) { try { localStorage.setItem(key, value); } catch { /* not remembered */ } },
-  };
+  const storage = (which) => ({
+    get(key) { try { return window[which].getItem(key); } catch { return null; } },
+    set(key, value) { try { window[which].setItem(key, value); } catch { /* not remembered */ } },
+    remove(key) { try { window[which].removeItem(key); } catch { /* nothing to forget */ } },
+  });
+  const store = storage('localStorage');
+  const session = storage('sessionStorage');
 
   // ── Theme ─────────────────────────────────────────────────────────
   // The initial theme is set by a one-line script in <head> before the
@@ -38,10 +41,12 @@
   if (themeButton) setTheme(currentTheme());
 
   // ── Lens memory ───────────────────────────────────────────────────
-  // A lens page (/analyst/, /dev/) is remembered, so the name in the nav on a project page
-  // goes back to it. Its audience note can be hidden once, for every lens page.
+  // A lens page (/analyst/, /dev/) is remembered for this visit, so the name in the nav on a
+  // project page goes back to it; the root homepage (the "everyone" view) forgets it again.
+  // Its audience note can be hidden once, for every lens page, and that one is kept for good.
   const lensName = document.body.dataset.lens;
-  if (lensName) store.set('lens', lensName);
+  if (lensName) session.set('lens', lensName);
+  else if (document.querySelector('.doors')) session.remove('lens');
   const banner = document.querySelector('[data-lens-banner]');
   if (banner) {
     if (store.get('lensBannerHidden') === '1') banner.hidden = true;
@@ -51,7 +56,7 @@
       setTimeout(() => { banner.hidden = true; }, parseFloat(getComputedStyle(root).getPropertyValue('--dur-base')) || 0);
     });
   }
-  const stored = store.get('lens');
+  const stored = session.get('lens');
   const nameLink = document.querySelector('.nav__name');
   if (!lensName && stored && nameLink && document.querySelector('main.proj, main.work-all') && nameLink.getAttribute('href') === '/') nameLink.setAttribute('href', `/${stored}/`);
 

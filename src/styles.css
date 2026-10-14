@@ -159,6 +159,7 @@ a:hover { color: var(--accent-ink); }
 .hero h1 {
   margin: 0; font-family: var(--serif); font-weight: 400;
   font-size: clamp(50px, 5.6vw, 88px); line-height: 0.95; letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 .hero__pitch { margin: 0; font-size: clamp(17px, 1.45vw, 21px); line-height: 1.55; color: var(--ink-2); max-width: 32em; }
 .hero__actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -173,7 +174,12 @@ a:hover { color: var(--accent-ink); }
 /* Phones get a different first screen: the recruiter line and Email me instead of the pitch and
    See the work, and a still poster of the redesigned dashboard instead of the live seam. The
    headline keeps its big desktop size above 600 px. */
-@media (min-width: 601px) { .only-sm { display: none !important; } }
+@media (min-width: 601px) {
+  .only-sm { display: none !important; }
+  /* The lens headlines run a few words longer than the root one; a step down keeps "one way to
+     read them." on one line beside the demo at every width, with no word left alone on a line. */
+  :root[data-lens] .hero h1 { font-size: clamp(46px, 4.9vw, 76px); }
+}
 @media (max-width: 600px) {
   .not-sm { display: none !important; }
   .hero h1 { font-size: clamp(34px, 9vw, 54px); }
@@ -227,23 +233,30 @@ a:hover { color: var(--accent-ink); }
 .proof a:hover { text-decoration: underline dotted; }
 .proof b { display: block; margin: 0 0 6px; font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 3.2vw, 44px); line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
 /* A chip in words sits on the same line as the other chips' labels. */
-.proof__text a { padding-top: calc(clamp(34px, 3.2vw, 44px) + 6px); }
-.proof__link a { padding-top: 6px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent-ink); }
+.proof__text a, .proof__link a { padding-top: calc(clamp(34px, 3.2vw, 44px) + 6px); }
+.proof__link a { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent-ink); }
 @media (max-width: 900px) { .proof { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 20px; } }
-@media (max-width: 600px) { .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* A fifth chip would sit alone in a half-width cell: the link closes the row across both columns instead. */
+  .proof__link:last-child { grid-column: 1 / -1; }
+  .proof__link:last-child a { padding-top: 2px; }
+}
 /* The analyst lens lays the chips out as a numbered ledger: one row per fact, numeral at the end. */
-.proof--ledger { grid-template-columns: 1fr; gap: 0; border-top: 1px solid var(--ink); }
+.proof--ledger { grid-template-columns: 1fr; gap: 0; }
 .proof--ledger li { padding: 10px 0; }
-.proof--ledger li:first-child { border-top: 0; }
+.proof--ledger li:first-child { border-top-color: var(--ink); }
 .proof--ledger a { display: grid; grid-template-columns: 4ch minmax(0, 1fr) auto; align-items: baseline; gap: 16px; }
 .proof--ledger a::before { content: counter(fact, decimal-leading-zero); counter-increment: fact; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--ink-3); }
 .proof--ledger b { order: 3; margin: 0; font-size: clamp(22px, 2vw, 28px); justify-self: end; }
-.proof--ledger li:not(.proof__link) a > span { order: 2; }
+.proof--ledger li:not(.proof__link) a > span { order: 2; display: flex; align-items: baseline; gap: 12px; }
+.proof--ledger li:not(.proof__link) a > span::after { content: ''; flex: 1 1 24px; min-width: 24px; border-bottom: 1px dotted var(--ink-3); transform: translateY(-0.3em); }
 .proof--ledger .proof__text a, .proof--ledger .proof__link a { padding-top: 0; }
 .proof--ledger .proof__link a { grid-template-columns: 4ch minmax(0, 1fr); }
+@media (max-width: 600px) { .proof--ledger .proof__link:last-child { grid-column: auto; } }
 /* The developer lens counts in mono. */
 :root[data-lens="dev"] .proof b { font-family: var(--mono); font-weight: 500; font-size: clamp(30px, 2.8vw, 40px); }
-:root[data-lens="dev"] .proof__text a { padding-top: calc(clamp(30px, 2.8vw, 40px) + 6px); }
+:root[data-lens="dev"] .proof__text a, :root[data-lens="dev"] .proof__link a { padding-top: calc(clamp(30px, 2.8vw, 40px) + 6px); }
 
 /* ---------- Lens furniture: the doors on the root page, the audience note on a lens page ---------- */
 .doors { display: flex; flex-wrap: wrap; gap: 8px 32px; padding: 0 var(--side); margin-top: 18px; font-size: 14px; color: var(--ink-2); }
@@ -451,25 +464,28 @@ a:hover { color: var(--accent-ink); }
   display: flex; align-items: center; justify-content: center;
   font-family: var(--mono); font-size: 13px; color: var(--ink-3); text-align: center; padding: 16px;
 }
+/* The pipeline sits on the page's own paper with a hairline: the SQL surface is the one dark
+   surface on a project page, and --bp is Blueprint mode's alone. */
 .pipeline {
-  margin: 40px 0; background: var(--bp); color: var(--bp-text); border-radius: var(--radius);
-  padding: clamp(20px, 3vw, 32px);
-  background-image:
-    repeating-linear-gradient(0deg, rgba(127,182,240,0.10) 0 1px, transparent 1px 28px),
-    repeating-linear-gradient(90deg, rgba(127,182,240,0.10) 0 1px, transparent 1px 28px);
+  margin: 40px 0; background: var(--card); color: var(--ink); border-radius: var(--radius);
+  border: 1px solid var(--line-2); padding: clamp(20px, 3vw, 32px);
 }
-.pipeline h2 { margin: 0 0 16px; font-family: var(--mono); font-weight: 400; font-size: 12px; letter-spacing: 0.1em; color: var(--bp-stroke); }
-.steps {
-  list-style: none; margin: 0; padding: 0; display: grid; gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-}
+.pipeline h2 { margin: 0 0 16px; font-family: var(--mono); font-weight: 400; font-size: 12px; letter-spacing: 0.1em; color: var(--accent-ink); }
+/* Every step on one row: four or five columns to match the list, a numbered list on phones. */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(var(--steps-half, 3), minmax(0, 1fr)); }
+@media (min-width: 1200px) { .steps { grid-template-columns: repeat(var(--steps, 5), minmax(0, 1fr)); } }
 .steps li {
   position: relative; display: flex; flex-direction: column; gap: 10px;
-  border: 1.5px dashed var(--bp-stroke); border-radius: var(--r-2); padding: 14px 16px 16px;
-  background: rgba(14, 36, 56, 0.6);
+  border: 1px dashed var(--line-2); border-radius: var(--r-2); padding: 14px 16px 16px;
+  background: var(--paper);
 }
-.steps__n { font-family: var(--mono); font-size: 12px; color: var(--bp-stroke); }
-.steps__label { font-size: 16px; line-height: 1.35; color: var(--bp-text); }
+.steps__n { font-family: var(--mono); font-size: 12px; color: var(--accent-ink); }
+.steps__label { font-size: 16px; line-height: 1.35; color: var(--ink); }
+@media (max-width: 600px) {
+  .steps { grid-template-columns: 1fr; gap: 8px; }
+  .steps li { flex-direction: row; align-items: baseline; gap: 14px; padding: 10px 14px; }
+  .steps__label { font-size: 15px; }
+}
 .sections { display: flex; flex-direction: column; }
 .section {
   display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px;
@@ -610,7 +626,9 @@ a:hover { color: var(--accent-ink); }
 /* Dark is re-stepped, not inverted: display type steps down in colour and tracking (Instrument
    Serif has one weight), the H1's italic takes the accent, the footer sits a step below the
    page, and hovers and stage edges lean on shadow and --line-2 rather than light. */
-:root[data-theme="dark"] .hero h1, :root[data-theme="dark"] .sec-head h2, :root[data-theme="dark"] .about h2, :root[data-theme="dark"] .demo__title { color: #E4DED5; letter-spacing: 0; }
+:root[data-theme="dark"] .hero h1, :root[data-theme="dark"] .sec-head h2, :root[data-theme="dark"] .about h2, :root[data-theme="dark"] .demo__title { color: #E4DED5; }
+/* The H1 keeps its tracking: the same copy must wrap the same way in both themes. */
+:root[data-theme="dark"] .sec-head h2, :root[data-theme="dark"] .about h2, :root[data-theme="dark"] .demo__title { letter-spacing: 0; }
 :root[data-theme="dark"] .hero h1 i { color: var(--accent-ink); }
 :root[data-theme="dark"] .footer { background: #0B0D10; border-top-color: var(--line-2); }
 :root[data-theme="dark"] .card:hover { box-shadow: 0 14px 30px -20px rgba(0, 0, 0, 0.85); }
@@ -889,9 +907,14 @@ kbd {
 .sqlpad__note { margin: 12px 0 16px; color: var(--ink-2); font-size: 15px; }
 .sqlpad__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
 @media (max-width: 900px) { .sqlpad__grid { grid-template-columns: minmax(0, 1fr); } }
-/* Reserved before the first query, so the page below holds still: an empty editor's height, measured with tools/measure.mjs (345 px at 900, 376 px at 430 to 600). */
-.sqlpad__out { min-height: 345px; }
-@media (max-width: 600px) { .sqlpad__out { min-height: 376px; } }
+/* Reserved before the first query, so the page below holds still: an empty editor's height, measured with tools/measure.mjs (345 px at 900, 376 px at 430 to 600). The placeholder fills the reservation until the first result replaces it. */
+.sqlpad__out, .sqlpad__empty { min-height: 345px; }
+@media (max-width: 600px) { .sqlpad__out, .sqlpad__empty { min-height: 376px; } }
+.sqlpad__empty {
+  display: flex; align-items: center; justify-content: center; margin: 0; padding: 24px; text-align: center;
+  border: 1px dashed var(--line-2); border-radius: var(--r-2); color: var(--ink-3); font-size: 14px; line-height: 1.5; max-width: none;
+}
+.sqlpad__empty[hidden] { display: none; }
 .sqlpad__editor textarea {
   width: 100%; min-height: 250px; resize: vertical; padding: 14px 16px; border-radius: var(--r-2);
   font-family: var(--mono); font-size: 13px; line-height: 1.6; tab-size: 2;
@@ -910,14 +933,29 @@ kbd {
   margin: 8px 0 0; padding: 12px; border-radius: var(--r-2); overflow-x: auto;
   font-family: var(--mono); font-size: 12px; line-height: 1.5; background: var(--code-surface); color: var(--code-text); border: 1px solid var(--code-edge);
 }
-.sqlpad__table { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--card); }
+/* The results scroll inside a box as tall as the header and ten whole rows (35 + 10 × 33 px, plus the
+   border); a shadow on any edge with more behind it says so (the covers scroll with the rows, the
+   shadows stay on the box). */
+.sqlpad__table {
+  --scroll-shade: rgba(21, 23, 28, 0.16);
+  max-height: 369px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r-2);
+  background:
+    linear-gradient(to right, var(--card) 40%, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--card) 40%, transparent) right / 32px 100% no-repeat local,
+    linear-gradient(to bottom, var(--card) 40%, transparent) bottom / 100% 32px no-repeat local,
+    linear-gradient(to right, var(--scroll-shade), transparent) left / 14px 100% no-repeat scroll,
+    linear-gradient(to left, var(--scroll-shade), transparent) right / 14px 100% no-repeat scroll,
+    linear-gradient(to top, var(--scroll-shade), transparent) bottom / 100% 14px no-repeat scroll,
+    var(--card);
+}
+:root[data-theme="dark"] .sqlpad__table, :root.bp-mode .sqlpad__table { --scroll-shade: rgba(0, 0, 0, 0.5); }
 .sqlpad__table table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .sqlpad__table th {
   position: sticky; top: 0; background: var(--paper-2); text-align: left; font-family: var(--mono); font-weight: 500;
   font-size: 12px; color: var(--ink-2); padding: 8px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap;
 }
 .sqlpad__table td { padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.sqlpad__table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.sqlpad__table th.num, .sqlpad__table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .sqlpad__table .null { color: var(--ink-3); font-family: var(--mono); font-size: 11px; }
 .sqlpad__more { margin: 0; padding: 8px 10px; font-size: 12px; color: var(--ink-3); }
 
@@ -931,7 +969,7 @@ kbd {
 .viz__fig { margin: 0 0 2px 4px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .viz__source { margin: 6px 4px 2px; font-size: 12px; color: var(--ink-3); }
 .viz__values { margin: 6px 4px 0; font-size: 14px; }
-.viz__values summary { cursor: pointer; color: var(--ink-2); min-height: 32px; display: flex; align-items: center; }
+.viz__values summary { cursor: pointer; color: var(--ink-2); min-height: 24px; padding: 4px 0; }
 .viz__values p { margin: 0 0 6px; color: var(--ink-2); }
 .viz__grid { stroke: var(--line); stroke-width: 1; }
 .viz__tick, .viz__cat, .viz__val, .viz__direct { font-family: var(--sans); fill: var(--ink-3); font-size: 12px; }

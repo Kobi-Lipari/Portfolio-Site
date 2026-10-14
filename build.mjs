@@ -533,7 +533,7 @@ ${nav(2)}
     ${p.demo || hasShots(p) ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${hasShots(p) ? showcase(p, 2) : ''}</div>` : ''}
     ${p.process ? processSteps(p) : `<section class="pipeline" id="how" aria-label="How it's built">
       <h2>HOW IT'S BUILT</h2>
-      <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
+      <ol class="steps" style="--steps: ${p.pipeline.length}; --steps-half: ${Math.ceil(p.pipeline.length / 2)}">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
     </section>
     <div class="sections">
       ${sections.map(([k, label]) => `<section class="section" id="s-${k}"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n      ')}
