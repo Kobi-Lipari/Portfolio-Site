@@ -104,8 +104,15 @@ a:hover { color: var(--accent-ink); }
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px;
   border: 1px solid var(--ink); border-radius: 999px; text-decoration: none;
 }
+/* Phone: the name, Work / About / Contact, the theme button and Résumé fit 390 px inside the
+   16 px gutters; the palette button goes (Ctrl/⌘ K still opens it). */
 @media (max-width: 560px) {
-  .nav__links .hide-sm { display: none; }
+  .nav { gap: 10px; }
+  .nav__name { font-size: 16px; white-space: nowrap; }
+  .nav__links { gap: 8px; font-size: 12.5px; }
+  .nav__links [data-palette-open] { display: none; }
+  .nav__links .pill { padding: 0 12px; min-height: 38px; font-size: 13px; }
+  .icon-btn { min-width: 38px; }
 }
 
 /* ---------- Hero ---------- */
@@ -138,7 +145,7 @@ a:hover { color: var(--accent-ink); }
   border: 1px solid var(--line-2); border-radius: 14px; overflow: hidden; background: var(--card);
   box-shadow: 0 18px 40px -26px rgba(21, 23, 28, 0.55);
 }
-.dash-chrome { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line-2); background: var(--paper-2); }
+.dash-chrome { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border-bottom: 1px solid var(--line-2); background: var(--paper-2); }
 .dash-chrome__dots { display: flex; gap: 5px; }
 .dash-chrome__dots i { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); }
 .dash-chrome__tabs { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -148,10 +155,8 @@ a:hover { color: var(--accent-ink); }
 }
 .dash-chrome__tabs button[aria-selected="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
 .dash-live { margin-left: auto; display: flex; gap: 6px; align-items: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--accent-ink); }
-.dash-live__dot { width: 8px; height: 8px; border-radius: 50%; background: #E0503A; animation: live-blink 1.4s ease-in-out infinite; }
-@keyframes live-blink { 50% { opacity: 0.25; } }
 .dash--hero .dash-stage { border: 0; border-radius: 0; box-shadow: none; }
-.dash-under { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.dash-under { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; margin-top: 12px; flex-wrap: wrap; }
 .dash--hero .dash-snaps { margin: 0; }
 .dash--hero .dash-credit { margin-top: 10px; }
 @media (max-width: 600px) {
@@ -162,7 +167,6 @@ a:hover { color: var(--accent-ink); }
   .dash-under .dash-snaps button { flex: 1; border: 0; }
   .dash-snaps__half { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .dash-live__dot { animation: none; } }
 
 .snaps { display: flex; justify-content: center; gap: 8px; margin: 16px 0 0; flex-wrap: wrap; }
 .snaps button {
@@ -552,11 +556,12 @@ kbd {
 :root[data-theme="dark"] .i-moon { display: none; }
 @media (max-width: 560px) {
   .nav { padding-top: 16px; padding-bottom: 16px; }
-  .nav__links { gap: 6px; }
   .nav__tools { gap: 0; }
-  .icon-btn { min-width: 40px; padding: 0 8px; }
+  .icon-btn { padding: 0 8px; }
   .pill { padding: 0 14px; }
 }
+/* Blueprint mode is a keyboard and mouse feature: no button for it on touch screens. */
+@media (hover: none) { .nav__tools [data-bp-toggle] { display: none; } }
 
 /* ================================================================
    Blueprint mode: the page as its own build drawing

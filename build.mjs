@@ -62,6 +62,7 @@ const SITE = {
   resume: existsSync('src/resume.pdf') ? 'resume.pdf' : 'resume/',
   headshot: existsSync('src/img/headshot.webp') ? 'headshot' : null,
 };
+for (const l of SITE.links) if (l.href === '#') console.warn(`No URL yet for ${l.label}: its link is left out until SITE.links has one.`);
 
 // Escape text. [Placeholders] are left out of the live site; DRAFT=1 shows them highlighted
 // so they're easy to find and replace.
@@ -132,9 +133,9 @@ const nav = (depth = 0) => `
 <header class="nav">
   <a class="nav__name" href="${u(depth)}">${SITE.name}</a>
   <nav class="nav__links" aria-label="Main">
-    <a class="hide-sm" href="${u(depth, '#work')}">Work</a>
-    <a class="hide-sm" href="${u(depth, '#about')}">About</a>
-    <a class="hide-sm" href="${u(depth, '#contact')}">Contact</a>
+    <a href="${u(depth, '#work')}">Work</a>
+    <a href="${u(depth, '#about')}">About</a>
+    <a href="${u(depth, '#contact')}">Contact</a>
     <span class="nav__tools">
       <button type="button" class="icon-btn icon-btn--wide hide-sm" data-palette-open aria-label="Jump to a page or action" title="Jump to (Ctrl/⌘ K)">
         ${ICON.search}<kbd><span data-shortcut-mod>⌘</span>K</kbd>
@@ -272,8 +273,8 @@ ${nav()}
       <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk.</p>
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
-        <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer and IT Support, Healingly</dd>
-        <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette</dd>
+        <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer &amp; IT Support, Healingly</dd>
+        <dt>DEGREE</dt><dd>${txt('BS Computer Science, University of Louisiana at Lafayette [, degree year]')}</dd>
         <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
       </dl>
     </div>
@@ -378,12 +379,15 @@ const processSteps = (p) => `
       </ol>
     </section>`;
 
+// A gallery only shows once at least one desktop screenshot is in src/img; until then the
+// page has no Screens block (no placeholder frames on the live site).
+const hasShots = (p) => !!p.gallery?.desktop?.some((v) => v.src);
 const projectPage = (p, i) => {
   const prev = projects[(i - 1 + projects.length) % projects.length];
   const next = projects[(i + 1) % projects.length];
   const sections = SECTION_ORDER.filter(([k]) => p.sections && txt(p.sections[k]));
   const toc = [
-    ...(p.demo || p.gallery ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
+    ...(p.demo || hasShots(p) ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
     ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
   ];
   const links = p.links.filter((l) => l.href !== '#');
@@ -410,7 +414,7 @@ ${nav(2)}
     </details>
   </aside>
   <div class="proj__body">
-    ${p.demo || p.gallery ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${p.gallery ? showcase(p, 2) : ''}</div>` : ''}
+    ${p.demo || hasShots(p) ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${hasShots(p) ? showcase(p, 2) : ''}</div>` : ''}
     ${p.process ? processSteps(p) : `<section class="pipeline" id="how" aria-label="How it's built">
       <h2>HOW IT'S BUILT</h2>
       <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
@@ -425,7 +429,7 @@ ${nav(2)}
   </div>
   </div>
 </main>
-${p.gallery ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
+${hasShots(p) ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
 ${p.demo ? DEMO_SCRIPTS[p.demo].map((f) => `<script type="module" src="${u(2, f)}"></script>`).join('\n') : ''}
 ${footer(2)}`;
 };

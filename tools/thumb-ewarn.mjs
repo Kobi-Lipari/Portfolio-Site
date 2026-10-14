@@ -6,14 +6,15 @@
 //
 // Writes src/img/thumb-ewarn.webp (960 x 600) and thumb-ewarn-sm.webp (480 x 300).
 // Playwright and sharp are not dependencies of this site; install them anywhere
-// (npm i playwright sharp) and point TOOLS_DIR at that folder. Re-run after the
-// data in src/data/ewarn changes.
+// (npm i playwright sharp) and point TOOLS_DIR at that folder (see tools/browser.mjs).
+// Re-run after the data in src/data/ewarn changes.
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { launch } from './browser.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -23,7 +24,6 @@ if (!existsSync(path.join(DIST, PAGE, 'index.html'))) {
   process.exit(1);
 }
 const require = createRequire(path.join(path.resolve(process.env.TOOLS_DIR || ROOT), 'noop.js'));
-const { chromium } = require('playwright');
 const sharp = require('sharp');
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp' };
@@ -41,7 +41,11 @@ const server = http.createServer(async (req, res) => {
 });
 await new Promise((done) => server.listen(0, '127.0.0.1', done));
 
-const browser = await chromium.launch();
+const browser = await launch();
+if (!browser) {
+  console.error('thumb-ewarn needs playwright (or playwright-core) and sharp in TOOLS_DIR.');
+  process.exit(1);
+}
 try {
   // Reduced motion: the replay draws each state at once instead of animating to it.
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2, colorScheme: 'light', reducedMotion: 'reduce' });

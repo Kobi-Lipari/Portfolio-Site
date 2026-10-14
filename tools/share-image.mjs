@@ -7,13 +7,13 @@
 //
 // Writes src/img/og.png (1200 x 630), src/img/apple-touch-icon.png (180 x 180) and
 // src/favicon.ico (32 x 32). Playwright is not a dependency of this site; install it anywhere
-// (npm i playwright) and point TOOLS_DIR at that folder. Re-run after the headline, the
-// role line or the headshot changes.
+// (npm i playwright) and point TOOLS_DIR at that folder (see tools/browser.mjs). Re-run after
+// the headline, the role line or the headshot changes.
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { launch } from './browser.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const home = path.join(ROOT, 'dist/index.html');
@@ -21,9 +21,6 @@ if (!existsSync(home)) {
   console.error('dist/index.html is missing. Run `node build.mjs` first.');
   process.exit(1);
 }
-const require = createRequire(path.join(path.resolve(process.env.TOOLS_DIR || ROOT), 'noop.js'));
-const { chromium } = require('playwright');
-
 // The words come from the built homepage, so the picture never disagrees with the site.
 const html = await readFile(home, 'utf8');
 const pick = (re) => (html.match(re) || [])[1] || '';
@@ -69,7 +66,11 @@ h1 { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 124px;
 </div>
 <div class="seam"></div>`;
 
-const browser = await chromium.launch();
+const browser = await launch();
+if (!browser) {
+  console.error('share-image needs playwright (or playwright-core) in TOOLS_DIR.');
+  process.exit(1);
+}
 const shoot = async (content, width, height) => {
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
   await page.setContent(content);

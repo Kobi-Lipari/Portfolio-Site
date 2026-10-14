@@ -62,6 +62,10 @@ NOINDEX=1 node build.mjs  # the same site, hidden from search engines (see below
 
 To view locally: `npx serve dist` or `python -m http.server --directory dist`, then open http://localhost:8000. The two demos need this (browsers block their scripts on `file://` pages).
 
+### Screenshots and measurements
+
+`TOOLS_DIR=/path/to/folder-with-playwright node tools/shoot.mjs dist shots` photographs every page in the sitemap, plus the 404 page, at 1440 and 390 px wide in the light, dark and Blueprint looks, into `shots/` (not committed), and writes `shots/report.json` with one row per shot: the page's status, its scroll width, whether it scrolls sideways and any script errors. It exits 1 when a row has a problem. Animations are off unless you add `--motion`; `--pages=/,/work/` limits the run to those pages. The tools folder needs Playwright (`npm i playwright sharp` in a folder of its own; no bundled browser is downloaded) and the site's tools use the system Chromium at `/usr/bin/chromium`, or `CHROMIUM=<path>`. Without Playwright, Chromium takes the light shots on its own and the report says `fallback: true`. `TOOLS_DIR=/path/to/folder-with-playwright node tools/measure.mjs dist / [390]` prints where a page's main blocks land (nav, hero, demos, footer), for checking that nothing moves while the demos load.
+
 ## Sharing and search
 
 - Every page has its own title and description, a canonical URL, and Open Graph and Twitter card tags. The homepage also carries a schema.org `Person` block (`personLd()` in `build.mjs`); its job, employer and degree repeat the About block, so change them together.

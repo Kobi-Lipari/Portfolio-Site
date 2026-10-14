@@ -153,7 +153,11 @@ function loadDb(base) {
       insert('INSERT INTO enrollments VALUES (?, ?)', enrollments);
       insert('INSERT INTO completions VALUES (?, ?)', completions);
       db.run('COMMIT');
-      return db;
+      // The playground is read-only: each query runs on a fresh copy of this snapshot, so a
+      // DELETE or DROP typed into the editor never changes what the next query sees.
+      const snapshot = db.export();
+      db.close();
+      return { SQL, snapshot };
     });
   return dbPromise;
 }
@@ -346,11 +350,14 @@ function init(host) {
   new ResizeObserver(() => { if (lastDraw) drawChart(chartHost, tip, ...lastDraw); }).observe(chartHost.parentElement);
 
   async function run() {
+    // Writes could never stick (see loadDb); this just says so in plain words.
+    if (!/^\s*(select|with)\b/i.test(input.value)) { meta.textContent = 'This playground is read-only. Try a SELECT.'; meta.classList.add('is-error'); return; }
     meta.textContent = 'Loading SQLite…';
     meta.classList.remove('is-error');
-    let db;
-    try { db = await loadDb(base); } catch (err) { meta.textContent = err.message; meta.classList.add('is-error'); return; }
-    const started = performance.now();
+    let engine;
+    try { engine = await loadDb(base); } catch (err) { meta.textContent = err.message; meta.classList.add('is-error'); return; }
+    const db = new engine.SQL.Database(engine.snapshot);
+    const t0 = performance.now();
     let result;
     try {
       result = db.exec(input.value);
@@ -358,8 +365,10 @@ function init(host) {
       meta.textContent = String(err.message || err);
       meta.classList.add('is-error');
       return;
+    } finally {
+      db.close();
     }
-    const ms = (performance.now() - started).toFixed(1);
+    const ms = (performance.now() - t0).toFixed(1);
     const last = result[result.length - 1];
     if (!last) { meta.textContent = `Done in ${ms} ms, no rows returned.`; tableHost.replaceChildren(); lastDraw = null; drawChart(chartHost, tip, [], [], null); return; }
     const { columns, values } = last;
@@ -370,24 +379,27 @@ function init(host) {
     tableHost.innerHTML = `<table><thead><tr>${columns.map((c) => `<th scope="col">${c.replace(/</g, '&lt;')}</th>`).join('')}</tr></thead><tbody>${shown.map((r) => `<tr>${r.map((v) => `<td class="${typeof v === 'number' ? 'num' : ''}">${v === null ? '<span class="null">NULL</span>' : String(v).replace(/</g, '&lt;')}</td>`).join('')}</tr>`).join('')}</tbody></table>${values.length > shown.length ? `<p class="sqlpad__more">Showing the first ${shown.length} of ${values.length} rows.</p>` : ''}`;
   }
 
+  // The 0.6 MB engine is fetched only once the visitor acts: the first focus or tap on the
+  // editor runs the question in it; a preset or Run does the same.
+  let started = false;
+  const first = () => { if (!started) { started = true; run(); } };
+
   host.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
     const p = PRESETS[Number(b.dataset.preset)];
     host.querySelectorAll('[data-preset]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
     input.value = p.sql;
     note.textContent = p.note;
+    started = true;
     run();
   }));
-  host.querySelector('[data-run]').addEventListener('click', run);
+  host.querySelector('[data-run]').addEventListener('click', () => { started = true; run(); });
   input.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); run(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); started = true; run(); }
   });
 
-  // Load and run the first question once the playground is near the screen,
-  // so the 0.6 MB engine is only fetched by visitors who scroll to it.
-  const io = new IntersectionObserver((entries) => {
-    if (entries.some((en) => en.isIntersecting)) { io.disconnect(); run(); }
-  }, { rootMargin: '300px' });
-  io.observe(host);
+  input.addEventListener('focus', first);
+  input.addEventListener('pointerdown', first);
+  meta.textContent = 'Run a question to load the SQL engine (0.6 MB).';
 }
 
 if (root) init(root);

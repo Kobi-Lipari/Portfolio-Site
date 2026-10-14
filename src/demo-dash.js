@@ -426,7 +426,7 @@ root.innerHTML = `${HERO ? '' : `
     <div class="dash-chrome__tabs" role="tablist" aria-label="Dashboard">
       ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
     </div>
-    <span class="dash-live"><span class="dash-live__dot" aria-hidden="true"></span>LIVE</span>
+    <span class="dash-live">INTERACTIVE · published figures</span>
   </div>` : ''}
   <div class="dash-stage" data-dash-stage>
     <svg class="dash-svg dash-svg--before" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Original dashboard"></svg>
@@ -450,7 +450,7 @@ root.innerHTML = `${HERO ? '' : `
   </div>${HERO ? `
   </div>` : ''}
   <p class="dash-note" data-note${HERO ? ' hidden' : ''}></p>
-  ${HERO ? `<p class="dash-credit">One of the dashboards I redesigned for Nicholls State's Office of Institutional Research, drawn from its published figures · <a href="${BASE}work/tableau-dashboards/">See the full before and after, and six more →</a></p>` : `<p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>`}
+  ${HERO ? `<p class="dash-credit">One of the dashboards I redesigned for Nicholls State's Office of Institutional Research, drawn from its published figures · <a href="${BASE}work/tableau-dashboards/">See the full before and after →</a></p>` : `<p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>`}
   <div class="dash-cursor" aria-hidden="true" hidden><svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2l14 9-6 1.5 3.5 7-3 1.5-3.5-7L4 18z" fill="#15171C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
 
 const $ = (s) => root.querySelector(s);

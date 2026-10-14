@@ -46,7 +46,7 @@ export const projects = [
     demo: "scanner",
     lane: "build",
     title: "Chess Scoresheet Scanner",
-    kind: "Tool · Louisiana Chess Association",
+    kind: "Correction engine · vision model + beam search over legal moves",
     tools: "TypeScript · React · Cloudflare",
     note: "Handwriting read verbatim, then corrected by the rules of chess.",
     outcome: "Players photograph a handwritten scoresheet and get a playable game, with unsure moves flagged for a one-tap fix and a Lichess analysis link.",
@@ -80,7 +80,7 @@ export const projects = [
     lane: "build",
     title: "LCA Website Platform",
     kind: "Full-stack · Louisiana Chess Association",
-    tools: "React · Cloudflare",
+    tools: "React · TypeScript · Cloudflare D1 · Stripe",
     note: "Built from scratch to replace Google Sites and a third-party registration site.",
     outcome: "The Louisiana Chess Association's full platform, built from scratch: tournaments, registration and payments, clubs, membership and news in one place.",
     role: "Web manager, then designer & developer",
@@ -116,7 +116,7 @@ export const projects = [
     tools: "SQL · Access",
     note: "Cohort pipelines across a decade of term extracts.",
     outcome: "A repeatable pipeline that answers who comes back for year two, who finishes, and when. Rebuilt here on synthetic data.",
-    role: "Analyst",
+    role: "Data analyst, Office of Institutional Research, Nicholls State University",
     timeline: "[month year]",
     links: [{ label: "Dashboard", href: "#" }],
     gallery: {
@@ -145,7 +145,7 @@ export const projects = [
     tools: "WordPress · Kadence",
     note: "Designed and built from scratch for a direct-pay telehealth practice.",
     outcome: "A public site that explains an unfamiliar care model, shows pricing up front, and moves visitors into booking and the patient portal.",
-    role: "Web developer & IT manager",
+    role: "Web Developer & IT Support",
     timeline: "December 2025 – present",
     links: [{ label: "healingly.net", href: "https://healingly.net" }],
     gallery: {
@@ -204,6 +204,7 @@ export const projects = [
   },
   {
     slug: "maritime-proposal",
+    hidden: true, // Hidden until its screenshots exist.
     lane: "design",
     title: "Maritime Program Proposal",
     kind: "Data story · market analysis",
