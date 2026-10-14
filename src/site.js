@@ -37,6 +37,24 @@
   themeButton?.addEventListener('click', toggleTheme);
   if (themeButton) setTheme(currentTheme());
 
+  // ── Lens memory ───────────────────────────────────────────────────
+  // A lens page (/analyst/, /dev/) is remembered, so the name in the nav on a project page
+  // goes back to it. Its audience note can be hidden once, for every lens page.
+  const lensName = document.body.dataset.lens;
+  if (lensName) store.set('lens', lensName);
+  const banner = document.querySelector('[data-lens-banner]');
+  if (banner) {
+    if (store.get('lensBannerHidden') === '1') banner.hidden = true;
+    banner.querySelector('button').addEventListener('click', () => {
+      store.set('lensBannerHidden', '1');
+      banner.classList.add('is-closing');
+      setTimeout(() => { banner.hidden = true; }, parseFloat(getComputedStyle(root).getPropertyValue('--dur-base')) || 0);
+    });
+  }
+  const stored = store.get('lens');
+  const nameLink = document.querySelector('.nav__name');
+  if (!lensName && stored && nameLink && document.querySelector('main.proj, main.work-all') && nameLink.getAttribute('href') === '/') nameLink.setAttribute('href', `/${stored}/`);
+
   // ── Blueprint mode ────────────────────────────────────────────────
   const bpButton = document.querySelector('[data-bp-toggle]');
   let overlay = null;

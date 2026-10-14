@@ -97,8 +97,8 @@ const personLd = () => `<script type="application/ld+json">${JSON.stringify({
 // them. A page can add more with `fonts`. The files and their @font-face rules: src/vendor/fonts, src/styles.css.
 const FONT_PRELOAD = ['geist-latin-wght-normal', 'instrument-serif-latin-400-normal'];
 // `noindex` is for a page that should never be listed (the 404 page); it also has no canonical URL.
-const head = ({ title, description, path, depth = 0, fonts = [], noindex = false, extra = '' }) => `<!doctype html>
-<html lang="en">
+const head = ({ title, description, path, depth = 0, fonts = [], noindex = false, extra = '', lens = null }) => `<!doctype html>
+<html lang="en"${lens && lens.key !== 'root' ? ` data-lens="${lens.key}"` : ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -126,16 +126,18 @@ const head = ({ title, description, path, depth = 0, fonts = [], noindex = false
 ${[...FONT_PRELOAD, ...fonts].map((f) => `<link rel="preload" href="${u(depth, `vendor/fonts/${f}.woff2`)}" as="font" type="font/woff2" crossorigin>`).join('\n')}
 <link rel="stylesheet" href="${u(depth, 'styles.css')}">${extra ? `\n${extra}` : ''}
 </head>
-<body>
+<body${lens && lens.key !== 'root' ? ` data-lens="${lens.key}"` : ''}>
 <a class="skip" href="#main">Skip to content</a>`;
 
-const nav = (depth = 0) => `
+// `home` is where the name and the Work / About / Contact links go: the site root, or on a lens
+// page the lens itself, so its anchors stay on that page.
+const nav = (depth = 0, home = u(depth), resume = SITE.resume) => `
 <header class="nav">
-  <a class="nav__name" href="${u(depth)}">${SITE.name}</a>
+  <a class="nav__name" href="${home}">${SITE.name}</a>
   <nav class="nav__links" aria-label="Main">
-    <a href="${u(depth, '#work')}">Work</a>
-    <a href="${u(depth, '#about')}">About</a>
-    <a href="${u(depth, '#contact')}">Contact</a>
+    <a href="${home}#work">Work</a>
+    <a href="${home}#about">About</a>
+    <a href="${home}#contact">Contact</a>
     <span class="nav__tools">
       <button type="button" class="icon-btn icon-btn--wide hide-sm" data-palette-open aria-label="Jump to a page or action" title="Jump to (Ctrl/⌘ K)">
         ${ICON.search}<kbd><span data-shortcut-mod>⌘</span>K</kbd>
@@ -143,7 +145,7 @@ const nav = (depth = 0) => `
       <button type="button" class="icon-btn" data-bp-toggle aria-pressed="false" aria-label="Blueprint mode" title="Blueprint mode (B)">${ICON.ruler}</button>
       <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme" title="Theme">${ICON.moon}${ICON.sun}</button>
     </span>
-    <a class="pill" href="${u(depth, SITE.resume)}">Résumé</a>
+    <a class="pill" href="${u(depth, resume)}">Résumé</a>
   </nav>
 </header>`;
 
@@ -156,6 +158,9 @@ const siteIndex = (depth) => {
     { group: 'On this site', title: 'All work', keywords: 'projects list engineering design', href: u(depth, 'work/') },
     { group: 'On this site', title: 'About Kobi', keywords: 'bio experience', href: u(depth, '#about') },
     { group: 'On this site', title: 'Résumé', keywords: 'cv pdf', href: u(depth, SITE.resume) },
+    { group: 'View as', title: 'Everyone', keywords: 'home root', href: u(depth) },
+    { group: 'View as', title: 'Someone hiring an analyst', keywords: 'analyst bi tableau lens', href: u(depth, 'analyst/') },
+    { group: 'View as', title: 'Someone hiring a developer', keywords: 'developer full-stack react lens', href: u(depth, 'dev/') },
     ...projects.flatMap((p) => p.links.filter((l) => l.href.startsWith('http')).map((l) => ({
       group: 'Live work', title: `${p.title}: ${l.label}`, hint: '↗', keywords: 'live site open', href: l.href, external: true,
     }))),
@@ -209,10 +214,20 @@ const picImg = (depth, p, cls, eager = false) => {
 // A link into a project page, resolved at build: the page's URL (with `hash`) when the project is
 // published, else `fallback`. Chips keep working while the page they point at is still hidden.
 const linkTo = (depth, slug, hash = '', fallback = null) => projects.some((p) => p.slug === slug) ? u(depth, `work/${slug}/${hash}`) : fallback;
+// One of SITE.links by label, or null while it still has no URL.
+const linkUrl = (label) => { const { href } = SITE.links.find((l) => l.label === label); return href === '#' ? null : href; };
+
+// A lens's own résumé PDF, when it has been added; until then the lens shares the site's one.
+const lensResume = (file) => {
+  if (existsSync(`src/${file}`)) return file;
+  console.warn(`No src/${file} yet; the lens Résumé link falls back to ${SITE.resume}.`);
+  return SITE.resume;
+};
 
 // A lens is one version of the homepage: every string the hero, chips, featured order, About
 // and footer read comes from here. `featured` lists slugs in order; the first three that are
-// published are the cards, the rest go in "More work". All of them are on /work/.
+// published are the cards, the rest go in "More work". All of them are on /work/. A lens
+// reorders and reframes; it never changes a fact. TOOLS is one set, reordered per lens.
 const LENSES = {
   root: {
     key: 'root', path: '/', depth: 0, dir: null,
@@ -229,7 +244,7 @@ const LENSES = {
       { n: '3', label: 'live sites', href: u(d, 'work/') },
       { n: '4,424', label: 'students, plan committed first', href: linkTo(d, 'dropout-early-warning', '#plan') },
     ],
-    doors: false,
+    doors: true,
     featured: [
       'withdrawal-early-warning', // B11 retires this entry.
       'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner',
@@ -237,6 +252,51 @@ const LENSES = {
     tools: 'SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare',
     openTo: 'Data analyst, BI and full-stack roles · New Orleans or relocating',
     resume: SITE.resume, banner: null,
+  },
+  analyst: {
+    key: 'analyst', path: '/analyst/', depth: 1, dir: 'analyst',
+    title: 'Kobi Lipari — Data Analyst · BI Developer (Tableau, SQL, Python)',
+    description: 'Data analyst and BI developer: 30+ Tableau dashboards on one spec, a retention model in use at a university, and one analysis pre-registered on public data.',
+    role: 'Data Analyst · BI Developer',
+    h1: ['Thirty dashboards,', 'one way to read them.'],
+    pitch: 'Dashboards built on one written spec, a retention model in weekly use, and one analysis run in the open.',
+    recruiter: 'data analyst and BI roles · New Orleans',
+    // The third and fourth chips have no fallback: they wait for their own pages.
+    chips: (d) => [
+      { n: '30+', label: 'Tableau dashboards', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources in one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { label: 'Retention model checked year over year', href: linkTo(d, 'predictive-retention', '#s-validation') },
+      { n: '4,424', label: 'students, plan committed first', href: linkTo(d, 'dropout-early-warning', '#plan') },
+      { link: true, label: 'Tableau Public ↗', href: linkUrl('Tableau Public') },
+    ],
+    doors: false,
+    featured: ['predictive-retention', 'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'],
+    tools: 'SQL · Tableau · Python · Access · Excel · Git · JavaScript · HTML/CSS · Cloudflare',
+    openTo: 'Data analyst and BI roles · New Orleans or relocating',
+    resume: lensResume('resume-analyst.pdf'),
+    banner: { who: 'someone hiring an analyst', others: [['developers', 'dev/'], ['everyone', '']] },
+  },
+  dev: {
+    key: 'dev', path: '/dev/', depth: 1, dir: 'dev',
+    title: 'Kobi Lipari — Full-Stack Developer (TypeScript, React, Cloudflare)',
+    description: 'Full-stack developer: three live sites, 112 tests behind a payments platform, and a decoder made 8–16× faster. Also the analyst who models the data.',
+    role: 'Full-Stack Developer · TypeScript/React',
+    h1: ['Three live sites and the data behind them,', 'built by one person.'],
+    pitch: 'React and TypeScript on Cloudflare, with the tests to prove it, plus the SQL and models behind the numbers those sites show.',
+    recruiter: 'full-stack and front-end roles · New Orleans',
+    chips: (d) => [
+      { n: '112', label: 'automated tests', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '3', label: 'live sites', href: u(d, 'work/') },
+      { n: '8–16×', label: 'faster decoder', href: linkTo(d, 'scoresheet-scanner', '#s-approach') },
+      { label: 'This site: one build file, no dependencies', href: 'https://github.com/Kobi-Lipari/Portfolio-Site' }, // The repo is public.
+      { link: true, label: 'GitHub ↗', href: linkUrl('GitHub') },
+    ],
+    doors: false,
+    featured: ['lca-website', 'scoresheet-scanner', 'tableau-dashboards', 'dropout-early-warning'],
+    tools: 'JavaScript · HTML/CSS · Cloudflare · Git · SQL · Python · Tableau · Access · Excel',
+    openTo: 'Full-stack and front-end roles · New Orleans or relocating',
+    resume: lensResume('resume-dev.pdf'),
+    banner: { who: 'someone hiring a developer', others: [['analysts', 'analyst/'], ['everyone', '']] },
   },
 };
 const featuredFor = (lens) => lens.featured.map((s) => projects.find((p) => p.slug === s)).filter(Boolean).slice(0, 3);
@@ -278,9 +338,10 @@ const row = (depth, p) => `
 // and the <h1>, so those keep their shape.
 const home = (lens = LENSES.root) => {
   const d = lens.depth;
-  return `${head({ title: lens.title, description: lens.description, path: lens.path, depth: d, fonts: ['instrument-serif-latin-400-italic'], extra: personLd() })}
-${nav(d)}
-<main id="main">
+  return `${head({ title: lens.title, description: lens.description, path: lens.path, depth: d, fonts: ['instrument-serif-latin-400-italic'], extra: personLd(), lens })}
+${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens.resume)}
+<main id="main">${lens.banner ? `
+<div class="lens-banner" role="note" data-lens-banner><p><span class="not-sm">Assumed audience: ${esc(lens.banner.who)}. Also for: ${lens.banner.others.map(([l, t]) => `<a href="${u(d, t)}">${esc(l)}</a>`).join(' · ')}.</span><span class="only-sm">For: ${esc(lens.banner.who)} · <a href="${u(d, lens.banner.others[0][1])}">switch</a></span></p><button type="button" class="lens-banner__close" aria-label="Hide this note">×</button></div>` : ''}
 <section class="hero" aria-label="Introduction">
   <div class="hero__intro">
     <div class="hero__me">
@@ -298,9 +359,10 @@ ${nav(d)}
     <section class="demo dash dash--hero not-sm" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
   </div>
 </section>
-<ul class="proof" aria-label="In numbers">
+<ul class="proof${lens.key === 'analyst' ? ' proof--ledger' : ''}" aria-label="In numbers">
   ${chipsFor(lens, d).map(chip).join('\n  ')}
-</ul>
+</ul>${lens.doors ? `
+<nav class="doors" aria-label="Views for hiring managers"><span>Hiring an analyst? <a href="${u(d, 'analyst/')}">Read the analyst view →</a></span><span>Hiring a developer? <a href="${u(d, 'dev/')}">Read the developer view →</a></span></nav>` : ''}
 
 <section class="featured" id="work" aria-labelledby="featured-h">
   <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(d, 'work/')}">All work →</a></div>
@@ -490,6 +552,10 @@ ${footer(2)}`;
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 await writeFile('dist/index.html', home(LENSES.root));
+for (const lens of [LENSES.analyst, LENSES.dev]) {
+  await mkdir(`dist/${lens.dir}`, { recursive: true });
+  await writeFile(`dist/${lens.dir}/index.html`, home(lens));
+}
 await mkdir('dist/work', { recursive: true });
 await writeFile('dist/work/index.html', workIndex());
 for (const [i, p] of projects.entries()) {
@@ -512,6 +578,7 @@ await copyFile('src/dom.js', 'dist/dom.js');
 if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
+for (const file of ['resume-analyst.pdf', 'resume-dev.pdf']) if (existsSync(`src/${file}`)) await copyFile(`src/${file}`, `dist/${file}`);
 if (SITE.resume === 'resume.pdf') {
   await copyFile('src/resume.pdf', 'dist/resume.pdf');
 } else {
@@ -534,7 +601,7 @@ if (existsSync('src/favicon.ico')) await copyFile('src/favicon.ico', 'dist/favic
 // For search engines: every page in a sitemap and an open robots.txt, or with NOINDEX=1 a
 // robots.txt that turns all crawlers away (and no sitemap).
 if (!NOINDEX) {
-  const pages = ['/', '/work/', ...projects.map((p) => `/work/${p.slug}/`)];
+  const pages = ['/', '/analyst/', '/dev/', '/work/', ...projects.map((p) => `/work/${p.slug}/`)];
   await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages.map((p) => `  <url><loc>${SITE.url}${p}</loc></url>`).join('\n')}
@@ -542,4 +609,4 @@ ${pages.map((p) => `  <url><loc>${SITE.url}${p}</loc></url>`).join('\n')}
 `);
 }
 await writeFile('dist/robots.txt', NOINDEX ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${SITE.url}/sitemap.xml\n`);
-console.log(`Built ${projects.length} project pages + homepage into dist/${NOINDEX ? ' (NOINDEX: search engines are asked to stay out)' : ''}`);
+console.log(`Built ${projects.length} project pages + homepage + 2 lens pages (/analyst/, /dev/) into dist/${NOINDEX ? ' (NOINDEX: search engines are asked to stay out)' : ''}`);

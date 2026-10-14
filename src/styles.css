@@ -84,6 +84,10 @@
   --r-3: 14px;
   --r-pill: 999px;
 }
+/* The developer lens (/dev/) swaps the accent for navy. #1B4F86 on paper is 7.25:1 for links
+   and hover text; white on #0E2438 is 15.81:1 for .btn:hover, .demo__go and .process__n.
+   (Not chart-2 #2E6FB8: 4.45:1 on paper.) */
+:root[data-lens="dev"] { --accent: #1B4F86; --accent-ink: #1B4F86; --accent-fill: #0E2438; --on-accent: #FFFFFF; --soft-fill: #E3EEF9; }
 @supports (transition-timing-function: linear(0, 1)) {
   :root { --ease-spring: linear(0, 0.42 14%, 0.86 28%, 1.04 44%, 0.99 62%, 1); }
 }
@@ -227,6 +231,30 @@ a:hover { color: var(--accent-ink); }
 .proof__link a { padding-top: 6px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent-ink); }
 @media (max-width: 900px) { .proof { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 20px; } }
 @media (max-width: 600px) { .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* The analyst lens lays the chips out as a numbered ledger: one row per fact, numeral at the end. */
+.proof--ledger { grid-template-columns: 1fr; gap: 0; border-top: 1px solid var(--ink); }
+.proof--ledger li { padding: 10px 0; }
+.proof--ledger li:first-child { border-top: 0; }
+.proof--ledger a { display: grid; grid-template-columns: 4ch minmax(0, 1fr) auto; align-items: baseline; gap: 16px; }
+.proof--ledger a::before { content: counter(fact, decimal-leading-zero); counter-increment: fact; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--ink-3); }
+.proof--ledger b { order: 3; margin: 0; font-size: clamp(22px, 2vw, 28px); justify-self: end; }
+.proof--ledger li:not(.proof__link) a > span { order: 2; }
+.proof--ledger .proof__text a, .proof--ledger .proof__link a { padding-top: 0; }
+.proof--ledger .proof__link a { grid-template-columns: 4ch minmax(0, 1fr); }
+/* The developer lens counts in mono. */
+:root[data-lens="dev"] .proof b { font-family: var(--mono); font-weight: 500; font-size: clamp(30px, 2.8vw, 40px); }
+:root[data-lens="dev"] .proof__text a { padding-top: calc(clamp(30px, 2.8vw, 40px) + 6px); }
+
+/* ---------- Lens furniture: the doors on the root page, the audience note on a lens page ---------- */
+.doors { display: flex; flex-wrap: wrap; gap: 8px 32px; padding: 0 var(--side); margin-top: 18px; font-size: 14px; color: var(--ink-2); }
+.doors a { color: var(--ink); }
+@media (max-width: 600px) { .doors { display: none; } }
+.lens-banner { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center; gap: 8px; margin: 0 var(--side) 8px; padding: 4px 0 4px 14px; border: 1px dashed var(--accent); border-radius: var(--r-2); font-size: 14px; color: var(--ink-2); transition: opacity var(--dur-base) var(--ease-out); }
+.lens-banner p { margin: 0; }
+.lens-banner a { color: var(--ink); }
+.lens-banner__close { width: 44px; height: 44px; border: 0; background: none; font: inherit; font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink-2); }
+.lens-banner.is-closing { opacity: 0; }
+.lens-banner[hidden] { display: none; }
 
 /* ---------- Featured work and more work ---------- */
 .featured, .more { padding: 0 var(--side); }
@@ -587,6 +615,9 @@ a:hover { color: var(--accent-ink); }
 :root[data-theme="dark"] .footer { background: #0B0D10; border-top-color: var(--line-2); }
 :root[data-theme="dark"] .card:hover { box-shadow: 0 14px 30px -20px rgba(0, 0, 0, 0.85); }
 :root[data-theme="dark"] .dash-stage, :root[data-theme="dark"] .cat-stage { border-color: var(--line-2); }
+/* The developer lens in the dark looks: #7FB6F0 on #111418 is 8.66:1 (7.59:1 on card), #9CC4F2
+   10.19:1, and #111418 on a #7FB6F0 fill 8.66:1. */
+:root[data-theme="dark"][data-lens="dev"], :root.bp-mode[data-lens="dev"] { --accent: #7FB6F0; --accent-ink: #9CC4F2; --accent-fill: #7FB6F0; --on-accent: #111418; --soft-fill: #262C34; }
 :root { transition: none; }
 body { transition: background-color var(--dur-slow) ease, color var(--dur-slow) ease; }
 
