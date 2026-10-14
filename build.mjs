@@ -51,7 +51,7 @@ const u = (depth, target = '') => {
 const SITE = {
   name: 'Kobi Lipari',
   url: 'https://kobilipari.com',
-  description: 'Data analyst and web developer in New Orleans: the pipelines and models an institutional research office relies on, and the sites people use every day.',
+  description: 'I\'m a data analyst and web developer in New Orleans. I build the pipelines and models a university research office runs on, and the websites people use every day.',
   email: 'KobiLipari@gmail.com',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/kobi-lipari-2a8b24327/' },
@@ -159,8 +159,8 @@ const siteIndex = (depth) => {
     { group: 'On this site', title: 'About Kobi', keywords: 'bio experience', href: u(depth, '#about') },
     { group: 'On this site', title: 'Résumé', keywords: 'cv pdf', href: u(depth, SITE.resume) },
     { group: 'View as', title: 'Everyone', keywords: 'home root', href: u(depth) },
-    { group: 'View as', title: 'Someone hiring an analyst', keywords: 'analyst bi tableau lens', href: u(depth, 'analyst/') },
-    { group: 'View as', title: 'Someone hiring a developer', keywords: 'developer full-stack react lens', href: u(depth, 'dev/') },
+    { group: 'View as', title: 'If you\'re hiring an analyst', keywords: 'analyst bi tableau lens', href: u(depth, 'analyst/') },
+    { group: 'View as', title: 'If you\'re hiring a developer', keywords: 'developer full-stack react lens', href: u(depth, 'dev/') },
     ...projects.flatMap((p) => p.links.filter((l) => l.href.startsWith('http')).map((l) => ({
       group: 'Live work', title: `${p.title}: ${l.label}`, hint: '↗', keywords: 'live site open', href: l.href, external: true,
     }))),
@@ -232,18 +232,18 @@ const lensResume = (file) => {
 const LENSES = {
   root: {
     key: 'root', path: '/', depth: 0, dir: null,
-    title: `${SITE.name} — Data analyst & web developer`,
+    title: `${SITE.name} — data analyst and web developer`,
     description: SITE.description,
     role: 'Data analyst · Web developer',
     h1: ['Fifteen data sources,', 'one call list.'],
-    pitch: 'I build the data pipelines and models an office relies on, and the sites people use every day.',
-    recruiter: 'data analyst, BI and full-stack roles · New Orleans',
+    pitch: 'By day I turn a university\'s scattered data into pipelines, models and dashboards its advisers act on. By night I build websites for a chess association and a telehealth clinic.',
+    recruiter: 'Data, BI and full-stack work · New Orleans',
     chips: (d) => [
-      { n: '30+', label: 'Tableau dashboards', href: linkTo(d, 'tableau-dashboards', '#see-it') },
-      { n: '15+', label: 'data sources in one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
-      { n: '112', label: 'automated tests', href: linkTo(d, 'lca-website', '#s-validation') },
-      { n: '3', label: 'live sites', href: u(d, 'work/') },
-      { n: '4,424', label: 'students, plan committed first', href: linkTo(d, 'dropout-early-warning', '#plan') },
+      { n: '30+', label: 'dashboards I keep running', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources feeding one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { n: '112', label: 'tests behind a site that takes payments', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '3', label: 'sites in daily use', href: u(d, 'work/') },
+      { n: '4,424', label: 'students in a study I planned before I looked', href: linkTo(d, 'dropout-early-warning', '#plan') },
     ],
     doors: true,
     featured: [
@@ -256,18 +256,18 @@ const LENSES = {
   },
   analyst: {
     key: 'analyst', path: '/analyst/', depth: 1, dir: 'analyst',
-    title: 'Kobi Lipari — Data Analyst · BI Developer (Tableau, SQL, Python)',
-    description: 'Data analyst and BI developer: 30+ Tableau dashboards on one spec, a retention model in use at a university, and one analysis pre-registered on public data.',
-    role: 'Data Analyst · BI Developer',
+    title: 'Kobi Lipari — data analyst and BI developer',
+    description: 'I keep thirty Tableau dashboards on one written spec, run a retention model a university\'s advisers use each week, and did one analysis in the open, plan first.',
+    role: 'Data analyst · BI developer',
     h1: ['Thirty dashboards,', 'one way to read them.'],
-    pitch: 'Dashboards built on one written spec, a retention model in weekly use, and one analysis run in the open.',
-    recruiter: 'data analyst and BI roles · New Orleans',
+    pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from each week, and did one analysis in the open, plan committed before I saw the data.',
+    recruiter: 'Data and BI work · New Orleans',
     // The third and fourth chips have no fallback: they wait for their own pages.
     chips: (d) => [
-      { n: '30+', label: 'Tableau dashboards', href: linkTo(d, 'tableau-dashboards', '#see-it') },
-      { n: '15+', label: 'data sources in one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
-      { label: 'Retention model checked year over year', href: linkTo(d, 'predictive-retention', '#s-validation') },
-      { n: '4,424', label: 'students, plan committed first', href: linkTo(d, 'dropout-early-warning', '#plan') },
+      { n: '30+', label: 'dashboards on one written spec', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources feeding one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { label: 'the retention model, checked year over year', href: linkTo(d, 'predictive-retention', '#s-validation') },
+      { n: '4,424', label: 'students in a study I planned before I looked', href: linkTo(d, 'dropout-early-warning', '#plan') },
       { link: true, label: 'Tableau Public ↗', href: linkUrl('Tableau Public') },
     ],
     doors: false,
@@ -275,21 +275,21 @@ const LENSES = {
     tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · Git · JavaScript · HTML/CSS · Cloudflare',
     openTo: 'Data analyst and BI roles · New Orleans, or anywhere the work is a step up',
     resume: lensResume('resume-analyst.pdf'),
-    banner: { who: 'someone hiring an analyst', others: [['developers', 'dev/'], ['everyone', '']] },
+    banner: { who: 'someone hiring an analyst', others: [['developers', 'dev/'], ['everyone else', '']] },
   },
   dev: {
     key: 'dev', path: '/dev/', depth: 1, dir: 'dev',
-    title: 'Kobi Lipari — Full-Stack Developer (TypeScript, React, Cloudflare)',
-    description: 'Full-stack developer: three live sites, 112 tests behind a payments platform, and a decoder made 8–16× faster. Also the analyst who models the data.',
-    role: 'Full-Stack Developer · TypeScript/React',
-    h1: ['Three live sites and the data behind them,', 'built by one person.'],
-    pitch: 'React and TypeScript on Cloudflare, with the tests to prove it, plus the SQL and models behind the numbers those sites show.',
-    recruiter: 'full-stack and front-end roles · New Orleans',
+    title: 'Kobi Lipari — full-stack developer',
+    description: 'I build React and TypeScript sites on Cloudflare, with the tests to match: a chess association\'s platform with payments, a scoresheet scanner, and the data work behind them.',
+    role: 'Full-stack developer · TypeScript/React',
+    h1: ['Three sites people use,', 'and the data under them.'],
+    pitch: 'I build in React and TypeScript on Cloudflare, write the tests before I trust a deploy, and do the SQL and modelling behind the numbers those sites show.',
+    recruiter: 'Full-stack and front-end work · New Orleans',
     chips: (d) => [
-      { n: '112', label: 'automated tests', href: linkTo(d, 'lca-website', '#s-validation') },
-      { n: '3', label: 'live sites', href: u(d, 'work/') },
-      { n: '8–16×', label: 'faster decoder', href: linkTo(d, 'scoresheet-scanner', '#s-approach') },
-      { label: 'This site: one build file, no dependencies', href: 'https://github.com/Kobi-Lipari/Portfolio-Site' }, // The repo is public.
+      { n: '112', label: 'tests behind a site that takes payments', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '3', label: 'sites in daily use', href: u(d, 'work/') },
+      { n: '8–16×', label: 'faster decoder, after profiling', href: linkTo(d, 'scoresheet-scanner', '#s-approach') },
+      { label: 'and this site: one build file, no dependencies', href: 'https://github.com/Kobi-Lipari/Portfolio-Site' }, // The repo is public.
       { link: true, label: 'GitHub ↗', href: linkUrl('GitHub') },
     ],
     doors: false,
@@ -297,7 +297,7 @@ const LENSES = {
     tools: 'TypeScript · React · Cloudflare · JavaScript · HTML/CSS · Git · SQL · Python · pandas · R · Tableau · Power BI · Access · Excel',
     openTo: 'Full-stack and front-end roles · New Orleans, or anywhere the work is a step up',
     resume: lensResume('resume-dev.pdf'),
-    banner: { who: 'someone hiring a developer', others: [['analysts', 'analyst/'], ['everyone', '']] },
+    banner: { who: 'someone hiring a developer', others: [['analysts', 'analyst/'], ['everyone else', '']] },
   },
 };
 const featuredFor = (lens) => lens.featured.map((s) => projects.find((p) => p.slug === s)).filter(Boolean).slice(0, 3);
@@ -342,7 +342,7 @@ const home = (lens = LENSES.root) => {
   return `${head({ title: lens.title, description: lens.description, path: lens.path, depth: d, fonts: ['instrument-serif-latin-400-italic'], extra: personLd(), lens })}
 ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens.resume)}
 <main id="main">${lens.banner ? `
-<div class="lens-banner" role="note" data-lens-banner><p><span class="not-sm">Assumed audience: ${esc(lens.banner.who)}. Also for: ${lens.banner.others.map(([l, t]) => `<a href="${u(d, t)}">${esc(l)}</a>`).join(' · ')}.</span><span class="only-sm">For: ${esc(lens.banner.who)} · <a href="${u(d, lens.banner.others[0][1])}">switch</a></span></p><button type="button" class="lens-banner__close" aria-label="Hide this note">×</button></div>` : ''}
+<div class="lens-banner" role="note" data-lens-banner><p><span class="not-sm">I wrote this version for ${esc(lens.banner.who)}. There is also one for ${lens.banner.others.map(([l, t]) => `<a href="${u(d, t)}">${esc(l)}</a>`).join(' · ')}.</span><span class="only-sm">Written for ${esc(lens.banner.who)} · <a href="${u(d, lens.banner.others[0][1])}">switch</a></span></p><button type="button" class="lens-banner__close" aria-label="Hide this note">×</button></div>` : ''}
 <section class="hero" aria-label="Introduction">
   <div class="hero__intro">
     <div class="hero__me">
@@ -363,7 +363,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
 <ul class="proof${lens.key === 'analyst' ? ' proof--ledger' : ''}" aria-label="In numbers">
   ${chipsFor(lens, d).map(chip).join('\n  ')}
 </ul>${lens.doors ? `
-<nav class="doors" aria-label="Views for hiring managers"><span>Hiring an analyst? <a href="${u(d, 'analyst/')}">Read the analyst view →</a></span><span>Hiring a developer? <a href="${u(d, 'dev/')}">Read the developer view →</a></span></nav>` : ''}
+<nav class="doors" aria-label="Views for hiring managers"><span>If you're hiring an analyst, <a href="${u(d, 'analyst/')}">start here →</a></span><span>If you're hiring a developer, <a href="${u(d, 'dev/')}">start here →</a></span></nav>` : ''}
 
 <section class="featured" id="work" aria-labelledby="featured-h">
   <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(d, 'work/')}">All work →</a></div>
@@ -385,7 +385,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
     <div>
       <h2 id="about-h">About</h2>
       <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. Part time, I build full-stack web platforms that members and patients use every day.</p>
-      <p>${txt('Two things I am proudest of this year: finding that a Stripe webhook [name the chess association here?] accepted unsigned calls and fixing it before launch, with a test that fails if the check is ever removed; and building the first predictive model advisers at Nicholls have used, validated year over year before anyone saw a score.')}</p>
+      <p>${txt('Two things from this year I would tell you about over coffee. A payment webhook on a volunteer-run site [the chess association\'s] accepted unsigned calls until I noticed; I fixed it before launch and wrote the test that fails if anyone removes the check. And the retention model at Nicholls, the first its advisers have worked from, which I validated year over year before anyone saw a score.')}</p>
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
         <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer &amp; IT Support, Healingly</dd>
@@ -594,7 +594,7 @@ ${nav(1)}
 </main>
 ${footer(1)}`);
 }
-await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: `This page is not on ${SITE.name}'s site.`, path: '/404', noindex: true })}
+await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: 'Nothing lives at this address on my site.', path: '/404', noindex: true })}
 ${nav()}
 <main id="main" class="proj"><h1 style="margin-top:48px">Nothing here.</h1><p class="proj__outcome"><a href="${u(0)}">Back to the homepage</a></p></main>
 ${footer()}`);
