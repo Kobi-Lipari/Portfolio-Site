@@ -6,7 +6,7 @@
 //   - Theme toggle: light / dark, remembered per browser.
 (() => {
   const root = document.documentElement;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  root.classList.add('js');
   const index = JSON.parse(document.getElementById('site-index')?.textContent || '{"items":[]}');
 
   const isTyping = (el) =>
@@ -233,7 +233,7 @@
       toast.querySelector('button').addEventListener('click', () => setBlueprint(false));
       document.body.append(toast);
       // Wait for the colour and seam transitions before measuring.
-      setTimeout(drawOverlay, reduceMotion ? 0 : 450);
+      setTimeout(drawOverlay, parseFloat(getComputedStyle(root).getPropertyValue('--dur-slow')) + 40);
       window.addEventListener('resize', relayout);
       document.addEventListener('pointermove', onPointerMove);
     } else {
@@ -382,6 +382,8 @@
 
   // ── Keyboard ──────────────────────────────────────────────────────
   document.addEventListener('keydown', (e) => {
+    // The first Tab marks a keyboard visitor: panels then open without their enter animation.
+    if (e.key === 'Tab') root.classList.add('is-keyboard');
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (palette) closePalette(); else openPalette();

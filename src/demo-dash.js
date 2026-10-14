@@ -6,10 +6,10 @@ import {
   BAR, FONT, FRAME, GRAY, H, INK, L, MUTED, R, RACE_AFTER, RACE_SHORT, RED, T, TAB10, W, change, dot, esc, filterBar, fmt, footer, niceMax, path, pct, ratio, short, signedPct, signedPts, ticks, tile,
   header as kitHeader,
 } from './dash-kit.js';
+import { motion } from './motion.js';
 
 const root = document.querySelector('[data-demo="dash"]');
 const BASE = root.dataset.base || '/';
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // On the homepage the demo is the hero: Admissions only, no tabs or tour, one seam sweep.
 const HERO = root.dataset.mode === 'hero';
 
@@ -477,11 +477,11 @@ function render({ animate = true } = {}) {
   const target = d.model(D, state);
   const from = shown && shown.__dash === state.dash ? shown : null;
   cancelAnimationFrame(anim);
-  if (!from || !animate || reduceMotion) { shown = Object.assign(target, { __dash: state.dash }); draw(target); return; }
+  if (!from || !animate || motion.reduce) { shown = Object.assign(target, { __dash: state.dash }); draw(target); return; }
   const keys = ['cur', 'before', 'acc', 'yld', 'accPrev', 'yldPrev', 'total', 'totalPrev', 'fg', 'fgPrev', 'gender'];
-  const t0 = performance.now();
+  const t0 = performance.now(), dur = motion.ms('--dur-slow') || 1;
   const step = (now) => {
-    const t = Math.min(1, (now - t0) / 450), e = 1 - Math.pow(1 - t, 3);
+    const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
     const mid = { ...target };
     for (const k of keys) if (k in target) mid[k] = lerp(from[k], target[k], e);
     for (const k of ['cur', 'before', 'fg', 'fgPrev', 'gender']) if (mid[k]) mid[k] = mid[k].map((v, i) => (target[k][i] == null ? null : Math.round(v)));
@@ -510,7 +510,7 @@ function updateNote() {
 
 function setSplit(v, { animate = false } = {}) {
   state.split = Math.max(0, Math.min(100, v));
-  stage.classList.toggle('is-animating', animate && !reduceMotion);
+  stage.classList.toggle('is-animating', animate && !motion.reduce);
   stage.style.setProperty('--split', state.split);
   stage.style.setProperty('--before-tag', state.split > 12 ? 1 : 0);
   stage.style.setProperty('--after-tag', state.split < 88 ? 1 : 0);
@@ -592,6 +592,7 @@ async function dragSeam(to, run, ms = 1400) {
   const from = state.split, t0 = performance.now();
   stage.classList.remove('is-animating');
   while (run === tourRun) {
+    if (motion.reduce) { setSplit(to); break; }
     const t = Math.min(1, (performance.now() - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     setSplit(from + (to - from) * e);
     cursorTo(handle);
@@ -667,7 +668,7 @@ if (HERO) {
   }, { passive: true }));
   let onScreen = false;
   new IntersectionObserver((entries) => { onScreen = entries.some((en) => en.isIntersecting); }, { threshold: 0.3 }).observe(stage);
-  if (!reduceMotion) {
+  if (!motion.reduce) {
     const run = ++tourRun;
     await wait(900);
     sweep: while (run === tourRun) {
@@ -679,7 +680,7 @@ if (HERO) {
       }
     }
   }
-} else if (!reduceMotion) {
+} else if (!motion.reduce) {
   const io = new IntersectionObserver((entries) => {
     if (entries.some((en) => en.isIntersecting)) { io.disconnect(); if (!touring) startTour(); }
   }, { threshold: 0.5 });

@@ -7,10 +7,10 @@ import {
   BAR, FONT, FRAME, GRAY, H, INK, L, MUTED, R, RED, T, W, dot, esc, filterBar, fmt, footer, path, pct, short,
   signedPct, signedPts, ticks, tile, header as kitHeader,
 } from './dash-kit.js';
+import { motion } from './motion.js';
 
 const root = document.querySelector('[data-demo="catalog"]');
 const BASE = root.dataset.base || '/';
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const header = (title, buttons, active = 0) => kitHeader(title, buttons, active, BASE);
 const SECONDS = 8;
 
@@ -409,4 +409,4 @@ new IntersectionObserver((entries) => {
   visible = entries.some((en) => en.isIntersecting);
   restart();
 }, { threshold: 0.4 }).observe(stage);
-if (!reduceMotion) setPlaying(true);
+if (!motion.reduce) setPlaying(true);

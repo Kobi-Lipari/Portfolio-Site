@@ -6,6 +6,7 @@
 // zeros, and move 14 never written down. The decoder is the real one from
 // louisianachess.org/scanner, copied in by tools/vendor-decoder.mjs.
 import { Chess } from './vendor/decoder/chess.js';
+import { motion } from './motion.js';
 
 const cell = (raw, confidence = 'high') => ({ raw, confidence });
 const SHEET = {
@@ -32,7 +33,6 @@ const SHEET = {
 };
 const REAL_GAME_END = 'Rd8#';
 const NEEDS_LOOK = new Set(['flagged', 'guessed']);
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ── Decoding (Web Worker, main-thread fallback) ─────────────────────
 let worker = null;
@@ -233,7 +233,7 @@ function init(el) {
       game = await decode(forcedSans);
       steps = replay(game);
       const ms = Math.round(performance.now() - started);
-      if (!forcedSans && !reduceMotion) {
+      if (!forcedSans && !motion.reduce) {
         // Play the moves in, so the corrections land one by one.
         for (let ply = 1; ply <= game.moves.length; ply++) {
           renderMoves(ply);

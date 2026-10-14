@@ -454,6 +454,8 @@ await copyFile('src/demo-catalog.js', 'dist/demo-catalog.js');
 await copyFile('src/dash-kit.js', 'dist/dash-kit.js');
 await copyFile('src/demo-ewarn.js', 'dist/demo-ewarn.js');
 await copyFile('src/ewarn-read.js', 'dist/ewarn-read.js');
+await copyFile('src/motion.js', 'dist/motion.js');
+await copyFile('src/dom.js', 'dist/dom.js');
 if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });

@@ -11,16 +11,18 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CHROMIUM = process.env.CHROMIUM || '/usr/bin/chromium';
+export const TOOLS_DIR = path.resolve(process.env.TOOLS_DIR || ROOT);
+// Loads a package installed in TOOLS_DIR (playwright, sharp); throws when it is not there.
+export const requireTool = createRequire(path.join(TOOLS_DIR, 'noop.js'));
 
 // Playwright's chromium, launched headless on the system browser; null when neither
 // playwright nor playwright-core is installed in TOOLS_DIR (the caller falls back or stops).
 export async function launch() {
-  const require = createRequire(path.join(path.resolve(process.env.TOOLS_DIR || ROOT), 'noop.js'));
   let chromium;
   try {
-    ({ chromium } = require('playwright'));
+    ({ chromium } = requireTool('playwright'));
   } catch {
-    try { ({ chromium } = require('playwright-core')); } catch { return null; }
+    try { ({ chromium } = requireTool('playwright-core')); } catch { return null; }
   }
   return chromium.launch({ executablePath: CHROMIUM, headless: true });
 }

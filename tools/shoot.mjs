@@ -2,13 +2,16 @@
 // visitor would notice: a page that is not 200, sideways scrolling, script errors.
 //
 //   node build.mjs
-//   TOOLS_DIR=~/node-tools node tools/shoot.mjs dist shots [--motion] [--pages=/,/work/]
+//   TOOLS_DIR=~/node-tools node tools/shoot.mjs dist shots [--motion] [--pages=/,/work/] [--diff=<dir>]
 //
 // Pages: every <loc> in dist/sitemap.xml plus /404.html, or the --pages list. Widths: 1440 x 900
 // and 390 x 844 (the phone width is emulated with touch). Looks: light, dark and bp (Blueprint
 // mode). Animations are off (reduced motion) unless --motion. Writes shots/<page>-<width>[-dark|-bp].png
 // and shots/report.json, one row per page, width and look, and exits 1 when any row has a status
-// other than 200, scrolls sideways or logged an error.
+// other than 200, scrolls sideways or logged an error. --diff=<dir> compares each new picture with
+// the same-named one in <dir> (an earlier run) pixel by pixel with sharp and reports the share
+// that changed as diff (a number, or a note when the sizes differ or the old picture is missing);
+// nothing fails on it.
 // Without playwright in TOOLS_DIR the system Chromium takes the light shots itself: no dark or bp
 // looks and no status, scroll or error checks; those rows say fallback: true.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -16,7 +19,7 @@ import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
-import { launch, serve, CHROMIUM } from './browser.mjs';
+import { launch, serve, requireTool, CHROMIUM } from './browser.mjs';
 
 const args = process.argv.slice(2);
 const flags = Object.fromEntries(args.filter((a) => a.startsWith('--')).map((a) => { const [k, v] = a.slice(2).split('='); return [k, v ?? true]; }));
@@ -41,6 +44,23 @@ if (flags.pages) {
   }
   pages = [...(await readFile(sitemap, 'utf8')).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
   pages.push('/404.html');
+}
+const DIFF = flags.diff ? path.resolve(String(flags.diff)) : null;
+let sharp = null;
+if (DIFF) {
+  try { sharp = requireTool('sharp'); } catch { console.error('--diff needs sharp in TOOLS_DIR.'); process.exit(1); }
+  if (!existsSync(DIFF)) { console.error(`${flags.diff} is missing.`); process.exit(1); }
+}
+// Share of pixels (0 to 100) that differ between two pictures of the same size; a note otherwise.
+async function pixelDiff(a, b) {
+  if (!existsSync(b)) return 'no earlier picture';
+  const [x, y] = await Promise.all([a, b].map((f) => sharp(f).ensureAlpha().raw().toBuffer({ resolveWithObject: true })));
+  if (x.info.width !== y.info.width || x.info.height !== y.info.height) return `size ${x.info.width}x${x.info.height} vs ${y.info.width}x${y.info.height}`;
+  let changed = 0;
+  for (let i = 0; i < x.data.length; i += 4) {
+    if (x.data[i] !== y.data[i] || x.data[i + 1] !== y.data[i + 1] || x.data[i + 2] !== y.data[i + 2] || x.data[i + 3] !== y.data[i + 3]) changed++;
+  }
+  return Number(((100 * changed) / (x.data.length / 4)).toFixed(2));
 }
 const slug = (p) => (p === '/' ? 'home' : p.replace(/^\/|\/$/g, '').replace(/\//g, '-'));
 const file = (p, width, look) => path.join(OUT, `${slug(p)}-${width}${look === 'light' ? '' : `-${look}`}.png`);
@@ -83,7 +103,12 @@ try {
       await page.setViewportSize({ width, height: Math.min(scrollHeight, 8000) });
       await page.waitForTimeout(150);
       await page.screenshot({ path: out });
-      report.push({ page: p, width, look, status, scrollWidth, sideways: scrollWidth > width, errors, file: path.relative(process.cwd(), out) });
+      const row = { page: p, width, look, status, scrollWidth, sideways: scrollWidth > width, errors, file: path.relative(process.cwd(), out) };
+      if (DIFF) {
+        row.diff = await pixelDiff(out, path.join(DIFF, path.basename(out)));
+        console.log(`${p} ${width} ${look}: ${typeof row.diff === 'number' ? `${row.diff}% of pixels changed` : row.diff}`);
+      }
+      report.push(row);
       await context.close();
     }
   } else {

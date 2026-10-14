@@ -10,13 +10,14 @@
 //   casefiles  the data checks: expected, found, decided
 
 import { readBar, readInterval, judge, barText } from './ewarn-read.js';
+import { h, svgEl } from './dom.js';
+import { motion } from './motion.js';
 
 const host = document.querySelector('[data-ewarn]');
 const BASE = host?.dataset.base || '';
 // Links into the analysis repo are shown only once it is public (repoIsPublic in src/projects.mjs).
 const REPO_LINKS = host?.dataset.repoLinks === 'on';
 const root = document.documentElement;
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ── Small helpers ───────────────────────────────────────────────────
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
@@ -24,25 +25,6 @@ const pct = (x, digits = 0) => `${(100 * x).toFixed(digits)}%`;
 // A cut point as a percentage, with a decimal only when it has one: 27.7%, 43%.
 const cutPct = (p) => `${Number((100 * p).toFixed(1))}%`;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-
-function h(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v === false || v == null) continue;
-    if (k === 'class') node.className = v;
-    else if (k === 'text') node.textContent = v;
-    else if (k === 'html') node.innerHTML = v;
-    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-    else node.setAttribute(k, v === true ? '' : v);
-  }
-  for (const c of children.flat()) if (c != null && c !== false) node.append(c.nodeType ? c : document.createTextNode(c));
-  return node;
-}
-const svgEl = (tag, attrs = {}) => {
-  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
-  return node;
-};
 
 // Seeded shuffle so a visitor's order is random but repeatable within a visit.
 function shuffled(n, seed = Date.now() % 2147483647) {
@@ -352,7 +334,7 @@ function renderReplay(sec, d) {
 
   function moveTo(day, animate) {
     targets(day);
-    if (!animate || reduceMotion) {
+    if (!animate || motion.reduce) {
       xs.set(tx); ys.set(ty); alpha.set(ta); animating = false; draw(); return;
     }
     fx.set(xs); fy.set(ys); fa.set(alpha);
@@ -530,7 +512,7 @@ function renderReplay(sec, d) {
   update(start, false);
 
   // Start playing once, the first time the replay is mostly on screen.
-  if (!reduceMotion) {
+  if (!motion.reduce) {
     const io = new IntersectionObserver((entries) => {
       if (entries.some((en) => en.isIntersecting)) { io.disconnect(); if (day === start) setPlaying(true); }
     }, { threshold: 0.55 });
