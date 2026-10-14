@@ -1,7 +1,8 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
 import { mkdir, writeFile, copyFile, rm, cp, readFile, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { basename } from 'node:path';
 import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
@@ -433,6 +434,51 @@ const CATALOG = ['enrollment', 'graduates', 'retention12', 'retention13', 'grad4
   .every((k) => existsSync(`src/data/dashboards/${k}.json`));
 const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])], ewarn: ['demo-ewarn.js'] };
 
+// The catalog of all thirty remodelled dashboards (src/data/dashboards/catalog.json, from the
+// kit prepared 2026-10-14). Public ones link to Nicholls' Tableau Public profile; the internal
+// ones are descriptions only, with no link and no numbers; the office's Dashboard Catalog shows
+// its screenshot and no link (its buttons lead to internal dashboards).
+const DASH_CATALOG = existsSync('src/data/dashboards/catalog.json')
+  ? JSON.parse(readFileSync('src/data/dashboards/catalog.json', 'utf8')).dashboards : null;
+const THUMB = { w: 560, h: 360 };
+const WORDS = { 12: 'Twelve', 13: 'Thirteen', 14: 'Fourteen', 15: 'Fifteen', 16: 'Sixteen', 17: 'Seventeen', 18: 'Eighteen', 19: 'Nineteen' };
+const catalogCard = (d, depth) => {
+  const isCatalog = d.slug === 'dashboard-catalog';
+  const internal = d.show_as === 'sample copy';
+  const liveNew = !internal && !isCatalog && d.live?.design_live_now === 'new' && existsSync(`src/img/dashboards/${d.slug}/thumb.webp`);
+  const first = d.screenshots?.[0]?.file ? basename(d.screenshots[0].file) : '';
+  const picture = isCatalog && first
+    ? `<img class="catalog__shot" src="${u(depth, `img/dashboards/${d.slug}/${first}`)}" alt="${esc(d.title)}, the office's catalog page with every area and its dashboards" width="1400" height="900" loading="lazy" decoding="async">`
+    : liveNew
+      ? `<img class="catalog__thumb" src="${u(depth, `img/dashboards/${d.slug}/thumb.webp`)}" alt="${esc(d.title)}, first page in the new design" width="${THUMB.w}" height="${THUMB.h}" loading="lazy" decoding="async">`
+      : `<div class="catalog__tile${internal ? ' catalog__tile--internal' : ''}"><span class="catalog__tile-area">${esc(d.area)}</span><span class="catalog__tile-note">${internal ? 'Internal · sample data only' : 'Previous design still public'}</span></div>`;
+  const link = !internal && !isCatalog && d.live?.profile_url
+    ? `<a class="catalog__link" href="${esc(d.live.profile_url)}" target="_blank" rel="noopener">Open on Tableau Public ↗</a>` : '';
+  return `<li class="card card--catalog" data-dash="${esc(d.slug)}">
+          ${picture}
+          <p class="card__tools">${esc(d.area)}${internal ? ' · sample data' : ''}</p>
+          <h4 class="card__title">${esc(d.title)}</h4>
+          <p class="card__note">${esc(d.pitch)}</p>
+          ${link}
+        </li>`;
+};
+const catalogSection = (depth) => {
+  if (!DASH_CATALOG) return '';
+  const live = DASH_CATALOG.filter((d) => d.live?.design_live_now === 'new').length;
+  const tiers = ['Flagship', 'Strong', 'Supporting'].map((t) => [t, DASH_CATALOG.filter((d) => d.tier === t)]).filter(([, l]) => l.length);
+  return `
+    <section class="catalog" id="catalog" aria-labelledby="catalog-h">
+      <h2 id="catalog-h">The catalog</h2>
+      <p class="catalog__lede">I remodelled thirty dashboards onto one written design system, 104 pages and 649 worksheets in all. ${WORDS[live] || live} are already republished in the new design on Nicholls' Tableau Public profile; the rest follow as they are published. The internal ones appear here only as descriptions: their numbers stay inside the office.</p>
+      ${tiers.map(([t, list]) => `<div class="catalog__tier">
+        <h3 class="catalog__tier-h"><span>${t}</span><small>${list.length}</small></h3>
+        <ul class="cards catalog__grid">
+          ${list.map((d) => catalogCard(d, depth)).join('\n          ')}
+        </ul>
+      </div>`).join('\n      ')}
+    </section>`;
+};
+
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
   ['validation', 'Validation'], ['result', 'Result'], ['reflection', 'Next time'],
@@ -503,6 +549,7 @@ const projectPage = (p, i) => {
   const sections = SECTION_ORDER.filter(([k]) => p.sections && txt(p.sections[k]));
   const toc = [
     ...(p.demo || hasShots(p) ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
+    ...(p.slug === 'tableau-dashboards' && DASH_CATALOG ? [['catalog', 'The catalog']] : []),
     ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
   ];
   const links = p.links.filter((l) => l.href !== '#');
@@ -530,6 +577,7 @@ ${nav(2)}
   </aside>
   <div class="proj__body">
     ${p.demo || hasShots(p) ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${hasShots(p) ? showcase(p, 2) : ''}</div>` : ''}
+    ${p.slug === 'tableau-dashboards' ? catalogSection(2) : ''}
     ${p.process ? processSteps(p) : `<section class="pipeline" id="how" aria-label="How it's built">
       <h2>HOW IT'S BUILT</h2>
       <ol class="steps" style="--steps: ${p.pipeline.length}; --steps-half: ${Math.ceil(p.pipeline.length / 2)}">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
@@ -577,7 +625,9 @@ await copyFile('src/motion.js', 'dist/motion.js');
 await copyFile('src/dom.js', 'dist/dom.js');
 if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
-await cp('src/img', 'dist/img', { recursive: true });
+// Of the dashboard screenshots only the card thumbnail and the first page go out.
+const firstPages = new Set((DASH_CATALOG || []).map((d) => d.screenshots?.[0]?.file && `src/img/dashboards/${d.slug}/${basename(d.screenshots[0].file)}`).filter(Boolean));
+await cp('src/img', 'dist/img', { recursive: true, filter: (f) => !/^src\/img\/dashboards\/[^/]+\/.+\.webp$/.test(f) || f.endsWith('/thumb.webp') || firstPages.has(f) });
 for (const file of ['resume-analyst.pdf', 'resume-dev.pdf']) if (existsSync(`src/${file}`)) await copyFile(`src/${file}`, `dist/${file}`);
 if (SITE.resume === 'resume.pdf') {
   await copyFile('src/resume.pdf', 'dist/resume.pdf');
