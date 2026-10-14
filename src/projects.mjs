@@ -190,7 +190,7 @@ export const projects = [
       { label: "Present", title: "Took them where decisions get made", visual: "Reports and presentations for task forces",
         text: "I bring the dashboards to university task forces, senior leadership and department heads as written reports and presentations: what the numbers show, what they don't, and the options they point to." },
       { label: "Remodel", title: "Remodeled and rebranded the catalog", visual: "One brand, applied to every workbook by script",
-        text: "One written brand and design system: Nicholls red and gray, fixed type sizes, a red header with navigation, a fall stepper, and the filters behind one button. Python scripts apply it by rewriting each workbook's XML and check its structure before it ships. Eight dashboards are on it so far." }
+        text: "One written brand and design system: Nicholls red and gray, fixed type sizes, a red header with navigation, a fall stepper, and the filters behind one button. Python scripts apply it by rewriting each workbook's XML and check its structure before it ships. Thirty dashboards are remodelled onto it; twelve are live in the new design on Tableau Public, and the rest follow as they are published." }
     ],
     pipeline: ["Audit the old workbooks", "Write the design spec", "Python rewrites the .twb XML", "Structure check", "Open in Tableau & publish"],
     sections: {

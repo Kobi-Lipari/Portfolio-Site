@@ -1,0 +1,1815 @@
+{
+ "kit": "Dashboards for KobiLipari.com",
+ "made": "2026-10-14",
+ "by": "Kobi Lipari",
+ "about": "Every dashboard of the Nicholls State Institutional Research remodel, ranked by polish and impact. Public ones are embedded live from Tableau Public; internal ones are shown only through sample-data copies; the Dashboard Catalog as screenshots. See README.md.",
+ "counts": {
+  "dashboards": 30,
+  "live_embeds": 19,
+  "sample_copies": 10,
+  "screenshots_only": 1,
+  "pages": 104,
+  "worksheets": 649
+ },
+ "scores": {
+  "polish": "How finished it is: K's final pass done, nothing cut off, consistent with the rest (1-5).",
+  "impact": "How much it shows off: the problem it solves, the interaction, how it looks (1-5)."
+ },
+ "tiers": {
+  "Flagship": "ranks 1-7",
+  "Strong": "ranks 8-19",
+  "Supporting": "ranks 20-30"
+ },
+ "embed": {
+  "script": "https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js",
+  "width": 1400,
+  "height": 900,
+  "toolbar_height": 27,
+  "example": "<tableau-viz src=\"https://public.tableau.com/views/MarketAnalysis_17331615341080/Overview\" width=\"1400\" height=\"927\" toolbar=\"bottom\" hide-tabs></tableau-viz>"
+ },
+ "dashboards": [
+  {
+   "rank": 1,
+   "tier": "Flagship",
+   "slug": "market-analysis",
+   "title": "Market Analysis",
+   "version": 15,
+   "workbook": "Market Analysis",
+   "area": "Prospects",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 5
+   },
+   "pitch": "Every Louisiana parish's college-bound freshmen on one map, with Nicholls' share and how it moved against last year.",
+   "what_it_shows": "Where first-time freshmen from each Louisiana parish go to college and in what program, with trends by system and school.",
+   "what_changed": [
+    "Rebuilt from mockups: parish pies on a Louisiana map at the left; at the right two at-a-glance lists (the state, then the 8-parish region) with green and red arrows for the change from last year.",
+    "Click a parish, or any slice of its pie, and a program (CIP) list opens in place of the figures, focused on that parish; Close brings the figures back.",
+    "Each school is a shade of its system's color, biggest school darkest; the 8-parish service region in grey on the map.",
+    "Four pages under one header (Overview, CIP Detail, System Trend, School Trend), with an academic-year stepper on each. Counts under 5 read \"<5\"."
+   ],
+   "techniques": [
+    "Map with pie marks per parish",
+    "Parameter actions",
+    "Dynamic zone visibility (a panel that swaps in)",
+    "Year-over-year figures with colored arrows",
+    "Stepper controls (◀ year ▶)",
+    "Small-count suppression"
+   ],
+   "pages": [
+    "Overview",
+    "CIP Detail",
+    "System Trend",
+    "School Trend"
+   ],
+   "opens_on": "Overview",
+   "worksheets": 28,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/MarketAnalysis_17331615341080/Overview",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/MarketAnalysis_17331615341080/Overview",
+    "pages": {
+     "Overview": "https://public.tableau.com/views/MarketAnalysis_17331615341080/Overview",
+     "CIP Detail": "https://public.tableau.com/views/MarketAnalysis_17331615341080/CIPDetail",
+     "System Trend": "https://public.tableau.com/views/MarketAnalysis_17331615341080/SystemTrend",
+     "School Trend": "https://public.tableau.com/views/MarketAnalysis_17331615341080/SchoolTrend"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Market Analysis.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/MarketAnalysisold/Overview",
+    "embed_url": "https://public.tableau.com/views/MarketAnalysisold/Overview",
+    "screenshot": "screenshots/market-analysis/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Overview",
+     "file": "screenshots/market-analysis/01-overview.webp"
+    },
+    {
+     "page": "CIP Detail",
+     "file": "screenshots/market-analysis/02-cip-detail.webp"
+    },
+    {
+     "page": "System Trend",
+     "file": "screenshots/market-analysis/03-system-trend.webp"
+    },
+    {
+     "page": "School Trend",
+     "file": "screenshots/market-analysis/04-school-trend.webp"
+    }
+   ]
+  },
+  {
+   "rank": 2,
+   "tier": "Flagship",
+   "slug": "registration-trend",
+   "title": "Registration Trend",
+   "version": 16,
+   "workbook": "Registration Trend",
+   "area": "Enrollment",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 5
+   },
+   "pitch": "Are we ahead of last year? Registration day by day against last year's pace, for the whole university or one class, group or college.",
+   "what_it_shows": "Day-by-day registration leading up to the stat day, against the same point last year, by student group and college.",
+   "what_changed": [
+    "Two columns on every page: an at-a-glance list (registered so far, the same point last year, the change, the share of last year's stat-day total) beside the year comparison.",
+    "Dots on stems under each comparison show how far ahead (blue) or behind (orange) last year each weekday was; K chose this from a set of mockups.",
+    "Steppers for year, term, college and student group; the selected year red, last year grey.",
+    "Five pages: Overall, Class, Group, College, Compare."
+   ],
+   "techniques": [
+    "Steppers for four dimensions",
+    "Weekday-aligned year-over-year comparison",
+    "Carry-forward table calculations",
+    "Dual axes",
+    "Legends drawn as sheets"
+   ],
+   "pages": [
+    "Registration Trends",
+    "By Student Classification",
+    "By Group",
+    "By College",
+    "College Comparisons"
+   ],
+   "opens_on": "Registration Trends",
+   "worksheets": 43,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/RegistrationTrend_17331620890340/FallRegistrationTrends",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/RegistrationTrend_17331620890340/FallRegistrationTrends",
+    "pages": {
+     "Registration Trends": "https://public.tableau.com/views/RegistrationTrend_17331620890340/FallRegistrationTrends",
+     "By Student Classification": "https://public.tableau.com/views/RegistrationTrend_17331620890340/ByStudentClassification",
+     "By Group": "https://public.tableau.com/views/RegistrationTrend_17331620890340/ByGroup",
+     "By College": "https://public.tableau.com/views/RegistrationTrend_17331620890340/ByCollege",
+     "College Comparisons": "https://public.tableau.com/views/RegistrationTrend_17331620890340/CollegeComparisons"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Registration Trend.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/RegistrationTrendold/RegistrationTrends",
+    "embed_url": "https://public.tableau.com/views/RegistrationTrendold/RegistrationTrends",
+    "screenshot": "screenshots/registration-trend/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Registration Trends",
+     "file": "screenshots/registration-trend/01-registration-trends.webp"
+    },
+    {
+     "page": "By Student Classification",
+     "file": "screenshots/registration-trend/02-by-student-classification.webp"
+    },
+    {
+     "page": "By Group",
+     "file": "screenshots/registration-trend/03-by-group.webp"
+    },
+    {
+     "page": "By College",
+     "file": "screenshots/registration-trend/04-by-college.webp"
+    },
+    {
+     "page": "College Comparisons",
+     "file": "screenshots/registration-trend/05-college-comparisons.webp"
+    }
+   ]
+  },
+  {
+   "rank": 3,
+   "tier": "Flagship",
+   "slug": "admissions-dashboard",
+   "title": "Admissions Dashboard",
+   "version": 32,
+   "workbook": "Admissions Dashboard",
+   "area": "Admissions",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 4
+   },
+   "pitch": "The admissions funnel at a glance: applied, accepted and enrolled, each fall measured against the one before.",
+   "what_it_shows": "How many students apply, are accepted and enroll, term by term and by student population.",
+   "what_changed": [
+    "Key figures named by the fall (\"Fall 2026\", \"vs Fall 2025\") with signed changes; the pattern every other dashboard took up.",
+    "Funnel stages in brand colors; admissions by student type on a true dual axis; a trend page.",
+    "New Departments page with full department names.",
+    "Filters moved off the page into a Filters box, with one line under the header saying what the page is filtered to."
+   ],
+   "techniques": [
+    "Key-figures table with signed changes",
+    "Funnel",
+    "Dual axis",
+    "Filters box (show/hide)",
+    "Fall stepper"
+   ],
+   "pages": [
+    "Admissions Funnel",
+    "Admissions by Student Type",
+    "Trend of Admissions",
+    "Admissions by Department"
+   ],
+   "opens_on": "Admissions Funnel",
+   "worksheets": 24,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/AdmissionsDashboard_17331498088920/AdmissionsFunnel",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/AdmissionsDashboard_17331498088920/AdmissionsFunnel",
+    "pages": {
+     "Admissions Funnel": "https://public.tableau.com/views/AdmissionsDashboard_17331498088920/AdmissionsFunnel",
+     "Admissions by Student Type": "https://public.tableau.com/views/AdmissionsDashboard_17331498088920/AdmissionsbyStudentType",
+     "Trend of Admissions": "https://public.tableau.com/views/AdmissionsDashboard_17331498088920/TrendofAdmissions",
+     "Admissions by Department": "https://public.tableau.com/views/AdmissionsDashboard_17331498088920/AdmissionsbyDepartment"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Admissions Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/AdmissionsDashboardold/AdmissionsFunnel",
+    "embed_url": "https://public.tableau.com/views/AdmissionsDashboardold/AdmissionsFunnel",
+    "screenshot": "screenshots/admissions-dashboard/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Admissions Funnel",
+     "file": "screenshots/admissions-dashboard/01-admissions-funnel.webp"
+    },
+    {
+     "page": "Admissions by Student Type",
+     "file": "screenshots/admissions-dashboard/02-admissions-by-student-type.webp"
+    },
+    {
+     "page": "Trend of Admissions",
+     "file": "screenshots/admissions-dashboard/03-trend-of-admissions.webp"
+    },
+    {
+     "page": "Admissions by Department",
+     "file": "screenshots/admissions-dashboard/04-admissions-by-department.webp"
+    }
+   ]
+  },
+  {
+   "rank": 4,
+   "tier": "Flagship",
+   "slug": "overall-enrollment",
+   "title": "Overall Enrollment",
+   "version": 19,
+   "workbook": "Overall Enrollment Dashboard",
+   "area": "Enrollment",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 4
+   },
+   "pitch": "The whole student body on one screen: eight breakdowns, each with last year's figure and the change in its tooltip.",
+   "what_it_shows": "The student body at the start of each term: classification, level, college, department, program, race, gender, residency and delivery, with term-by-term trends.",
+   "what_changed": [
+    "Breakdown page as an even grid of tiles; pies became labeled bars; a new dual-enrollment chart.",
+    "Every tooltip compares with the same term a year earlier (\"vs Fall 2025: +56 (+4.5%)\").",
+    "By Program: at-a-glance figures, the six biggest gains and drops, and every program code shown with its full name (341 codes from 25 years of curriculum lists).",
+    "Its college colors became the standard for every dashboard (race and gender follow the same standard)."
+   ],
+   "techniques": [
+    "Year-over-year tooltips (LOD expressions)",
+    "Program names as aliases",
+    "Year and term steppers",
+    "Tile grid layout"
+   ],
+   "pages": [
+    "Enrollment Breakdown",
+    "Enrollment By Program",
+    "Enrollment Trend",
+    "Enrollment Visual"
+   ],
+   "opens_on": "Enrollment Breakdown",
+   "worksheets": 32,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/OverallEnrollmentDashboard_17331619400350/EnrollmentBreakdown",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/OverallEnrollmentDashboard_17331619400350/EnrollmentBreakdown",
+    "pages": {
+     "Enrollment Breakdown": "https://public.tableau.com/views/OverallEnrollmentDashboard_17331619400350/EnrollmentBreakdown",
+     "Enrollment By Program": "https://public.tableau.com/views/OverallEnrollmentDashboard_17331619400350/EnrollmentByProgram",
+     "Enrollment Trend": "https://public.tableau.com/views/OverallEnrollmentDashboard_17331619400350/EnrollmentTrend",
+     "Enrollment Visual": "https://public.tableau.com/views/OverallEnrollmentDashboard_17331619400350/EnrollmentVisual"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Overall Enrollment Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/OverallEnrollmentDashboardold/EnrollmentBreakdown",
+    "embed_url": "https://public.tableau.com/views/OverallEnrollmentDashboardold/EnrollmentBreakdown",
+    "screenshot": "screenshots/overall-enrollment/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Enrollment Breakdown",
+     "file": "screenshots/overall-enrollment/01-enrollment-breakdown.webp"
+    },
+    {
+     "page": "Enrollment By Program",
+     "file": "screenshots/overall-enrollment/02-enrollment-by-program.webp"
+    },
+    {
+     "page": "Enrollment Trend",
+     "file": "screenshots/overall-enrollment/03-enrollment-trend.webp"
+    },
+    {
+     "page": "Enrollment Visual",
+     "file": "screenshots/overall-enrollment/04-enrollment-visual.webp"
+    }
+   ]
+  },
+  {
+   "rank": 5,
+   "tier": "Flagship",
+   "slug": "advancement-through-nicholls",
+   "title": "Advancement Through Nicholls",
+   "version": 14,
+   "workbook": "Advancement Through Nicholls",
+   "area": "Student Progress",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 4
+   },
+   "pitch": "Follows each entering class year by year, as a flow: who advanced, who did not, who graduated and who left.",
+   "what_it_shows": "Follows each entering group (new freshmen, transfers, readmits, adults) to see who moved up a class level, who didn't, and who left.",
+   "what_changed": [
+    "Colors that tell the story: graduated in Nicholls red, advanced light red, did not advance grey, left light grey.",
+    "A heading over each column (\"Entered as\", \"Started\", \"After 1 year\" ... \"After 4 years\") and readable labels on the bars.",
+    "New Outcomes page: the entering class at a glance, where it stood after each year, and every class side by side.",
+    "Steppers for the entering class and the student type."
+   ],
+   "techniques": [
+    "Flow (Sankey-style) diagram from table calculations",
+    "Steppers",
+    "Outcome color encoding"
+   ],
+   "pages": [
+    "Advancement Through Nicholls",
+    "Outcomes"
+   ],
+   "opens_on": "Advancement Through Nicholls",
+   "worksheets": 25,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/AdvancementThroughNicholls_17337780703990/AdvancementThroughNicholls",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/AdvancementThroughNicholls_17337780703990/AdvancementThroughNicholls",
+    "pages": {
+     "Advancement Through Nicholls": "https://public.tableau.com/views/AdvancementThroughNicholls_17337780703990/AdvancementThroughNicholls",
+     "Outcomes": "https://public.tableau.com/views/AdvancementThroughNicholls_17337780703990/Outcomes"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Advancement Through Nicholls.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/AdvancementThroughNichollsold/AdvancementThroughNicholls",
+    "embed_url": "https://public.tableau.com/views/AdvancementThroughNichollsold/AdvancementThroughNicholls",
+    "screenshot": "screenshots/advancement-through-nicholls/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Advancement Through Nicholls",
+     "file": "screenshots/advancement-through-nicholls/01-advancement-through-nicholls.webp"
+    },
+    {
+     "page": "Outcomes",
+     "file": "screenshots/advancement-through-nicholls/02-outcomes.webp"
+    }
+   ]
+  },
+  {
+   "rank": 6,
+   "tier": "Flagship",
+   "slug": "dashboard-catalog",
+   "title": "Dashboard Catalog",
+   "version": 12,
+   "workbook": "Dashboard Catalog",
+   "area": "Every area",
+   "audience": "Internal office catalog: shown here as screenshots",
+   "show_as": "screenshots",
+   "scores": {
+    "polish": 4,
+    "impact": 5
+   },
+   "pitch": "One front door to 35 dashboards: pick an area, see its dashboards as cards, open one in a click.",
+   "what_it_shows": "The office's catalog of its 35 dashboards: nine areas, each with the question it answers and its dashboards as cards, plus an A-to-Z list of what each one shows and where it lives.",
+   "what_changed": [
+    "A tangled relationship diagram became a catalog designed from mockups: areas with icons on the left; cards, or an A-to-Z table, on the right.",
+    "An audience stepper (All, Public on Tableau, On the IR website, Internal only) and a Find box; cards the choice leaves out stay in place, greyed.",
+    "K's own icons for each dashboard and new area icons, drawn into the workbook; the list itself is a spreadsheet the office edits (name, area, description, order)."
+   ],
+   "techniques": [
+    "Custom shapes",
+    "Parameter actions",
+    "URL actions",
+    "Text-mark navigation list",
+    "Data-driven layout (cards from a spreadsheet)"
+   ],
+   "pages": [
+    "Dashboard Catalog"
+   ],
+   "opens_on": "Dashboard Catalog",
+   "worksheets": 14,
+   "note": "Not embedded: on Tableau Public the catalog's Open buttons lead to the office's internal dashboards. Shown as screenshots. Names and descriptions in the catalog are fine to show.",
+   "screenshots": [
+    {
+     "page": "Dashboard Catalog: All Dashboards",
+     "file": "screenshots/dashboard-catalog/01-all-dashboards.webp"
+    },
+    {
+     "page": "Dashboard Catalog: Enrollment",
+     "file": "screenshots/dashboard-catalog/02-enrollment.webp"
+    },
+    {
+     "page": "Dashboard Catalog: Prospects",
+     "file": "screenshots/dashboard-catalog/03-prospects.webp"
+    },
+    {
+     "page": "Dashboard Catalog: Retention and Graduation",
+     "file": "screenshots/dashboard-catalog/04-retention-and-graduation.webp"
+    }
+   ]
+  },
+  {
+   "rank": 7,
+   "tier": "Flagship",
+   "slug": "ftf-high-school-dashboard",
+   "title": "FTF High Schools",
+   "version": 11,
+   "workbook": "FTF High School Dashboard",
+   "area": "Prospects",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 5
+   },
+   "pitch": "Where Nicholls' freshmen come from, from the whole world down to the ZIP code, and which high schools send the most.",
+   "what_it_shows": "World, state and zip code maps of where first-time freshmen come from; region, parish and high school trends; an athletes list.",
+   "what_changed": [
+    "Eight pages under one header with a second row of page buttons (World, States, ZIP Codes, Regions, Public vs Private, By Parish, LA Schools, Athletes).",
+    "Maps redrawn: solid fills on a log-scaled light red ramp, so a state with a few students still shows beside Louisiana; smaller slate points so clusters read as clusters.",
+    "Fall, athlete and honors steppers; at-a-glance figures and the top sending high schools."
+   ],
+   "techniques": [
+    "Filled and point maps at three levels",
+    "Log-scaled color",
+    "Steppers",
+    "Legends as sheets"
+   ],
+   "pages": [
+    "Global Map",
+    "State Map",
+    "ZIP Code Map",
+    "Region Trend",
+    "8-Parish Trends (Public vs Private)",
+    "Parish Trends by Institution",
+    "LA Institution Trends",
+    "International Athlete List"
+   ],
+   "opens_on": "Global Map",
+   "worksheets": 33,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/FTFHighSchoolDashboard/GlobalMap",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FTFHighSchoolDashboard/GlobalMap",
+    "pages": {
+     "Global Map": "https://public.tableau.com/views/FTFHighSchoolDashboard/GlobalMap",
+     "State Map": "https://public.tableau.com/views/FTFHighSchoolDashboard/StateMap",
+     "ZIP Code Map": "https://public.tableau.com/views/FTFHighSchoolDashboard/ZIPCodeMap",
+     "Region Trend": "https://public.tableau.com/views/FTFHighSchoolDashboard/RegionTrend",
+     "8-Parish Trends (Public vs Private)": "https://public.tableau.com/views/FTFHighSchoolDashboard/8-ParishTrendsPublicvsPrivate",
+     "Parish Trends by Institution": "https://public.tableau.com/views/FTFHighSchoolDashboard/ParishTrendsbyInstitution",
+     "LA Institution Trends": "https://public.tableau.com/views/FTFHighSchoolDashboard/LAInstitutionTrends",
+     "International Athlete List": "https://public.tableau.com/views/FTFHighSchoolDashboard/InternationalAthleteList"
+    },
+    "last_published": "2026-09-15",
+    "design_live_now": "old",
+    "to_do": "K publishes \"FTF High School Dashboard 11.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/FTF High School Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FTFHighSchoolDashboardold/GlobalMap",
+    "embed_url": "https://public.tableau.com/views/FTFHighSchoolDashboardold/GlobalMap",
+    "screenshot": "screenshots/ftf-high-school-dashboard/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 8,
+   "tier": "Strong",
+   "slug": "faculty-load-breakdown",
+   "title": "Faculty Load Breakdown",
+   "version": 16,
+   "workbook": "Faculty Load Breakdown",
+   "area": "Classes and Faculty Time",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 4
+   },
+   "pitch": "Teaching load for every instructor and course in a term, with student-to-faculty ratios by delivery, course level, subject and course.",
+   "what_it_shows": "Each faculty member's adjusted credits, credit hours, sections and CRNs in a term, with student/faculty ratios and the online share.",
+   "what_changed": [
+    "Six pages under one header; side panels of 11 to 13 filters became a Filters box and a one-line summary.",
+    "Ratio page rebuilt from a mockup: the term at a glance with the change from a year earlier, ratios by delivery and course level, then full-height lists by subject, course and instructor.",
+    "Faculty rank blended in from a second source (a text-versus-number term mismatch had kept every rank blank).",
+    "A term stepper; \"Data as of\" at the right of the title row."
+   ],
+   "techniques": [
+    "Blending across three sources",
+    "LOD expressions",
+    "Term stepper",
+    "Ratios shown as \"21 : 1\""
+   ],
+   "pages": [
+    "Faculty ATC",
+    "Course ATC",
+    "Student Faculty Ratio",
+    "Student Faculty Ratio by Semester",
+    "Table",
+    "Percentages"
+   ],
+   "opens_on": "Faculty ATC",
+   "worksheets": 48,
+   "sample_copy": {
+    "name": "Faculty Load Breakdown - Sample Data",
+    "built_from": "Faculty Load Breakdown 16",
+    "twbx": "sample-copies/faculty-load-breakdown/Faculty Load Breakdown - Sample Data.twbx",
+    "twb": "sample-copies/faculty-load-breakdown/Faculty Load Breakdown - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/faculty-load-breakdown/data/Course Names with Core or Not.csv",
+      "data_source": "Course Names with Core or Not (Course Name Split - with core) (2)",
+      "rows": 6000,
+      "columns": 8
+     },
+     {
+      "file": "sample-copies/faculty-load-breakdown/data/BOR Nov 22 Faculty Rank.csv",
+      "data_source": "BOR Nov 22 Faculty Rank (BOR Fall 22 Full Time Faculty)",
+      "rows": 6000,
+      "columns": 33
+     },
+     {
+      "file": "sample-copies/faculty-load-breakdown/data/Faculty Load Union with CRN.csv",
+      "data_source": "Faculty Load Union with CRN (Faculty Load and Enrollment)",
+      "rows": 6000,
+      "columns": 24
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 9,
+   "tier": "Strong",
+   "slug": "graduate-market-analysis",
+   "title": "Graduate Market Analysis",
+   "version": 11,
+   "workbook": "Graduate Market Analysis",
+   "area": "Prospects",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 4
+   },
+   "pitch": "Louisiana's graduate-student market by program area: where students come from and where Nicholls stands.",
+   "what_it_shows": "Where Louisiana's graduate students are, the top parishes, states and countries in each program area, and five-year trends.",
+   "what_changed": [
+    "Region pies became bars; an at-a-glance list with green and red arrows, as on Market Analysis.",
+    "Click a parish to focus the program breakdown on it; the 8-parish region in grey on the map.",
+    "Market Analysis' system colors; the number of students in the selection in the line under the header; counts under 5 read \"<5\"."
+   ],
+   "techniques": [
+    "Map with pies",
+    "Parameter actions",
+    "Figures with colored arrows",
+    "Small-count suppression"
+   ],
+   "pages": [
+    "Graduate Market Analysis",
+    "Breakdown by CIP and Degree Type",
+    "Top Parishes, States, and Countries"
+   ],
+   "opens_on": "Graduate Market Analysis",
+   "worksheets": 23,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/GraduateMarketAnalysis_17331616005410/GraduateMarketAnalysis",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/GraduateMarketAnalysis_17331616005410/GraduateMarketAnalysis",
+    "pages": {
+     "Graduate Market Analysis": "https://public.tableau.com/views/GraduateMarketAnalysis_17331616005410/GraduateMarketAnalysis",
+     "Breakdown by CIP and Degree Type": "https://public.tableau.com/views/GraduateMarketAnalysis_17331616005410/BreakdownbyCIPandDegreeType",
+     "Top Parishes, States, and Countries": "https://public.tableau.com/views/GraduateMarketAnalysis_17331616005410/TopParishesStatesandCountries"
+    },
+    "last_published": "2026-03-13",
+    "design_live_now": "old",
+    "to_do": "K publishes \"Graduate Market Analysis 11.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/Graduate Market Analysis.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/GraduateMarketAnalysisold/GraduateMarketAnalysis",
+    "embed_url": "https://public.tableau.com/views/GraduateMarketAnalysisold/GraduateMarketAnalysis",
+    "screenshot": "screenshots/graduate-market-analysis/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 10,
+   "tier": "Strong",
+   "slug": "enrollment-map-by-major",
+   "title": "Enrollment Map by Major",
+   "version": 11,
+   "workbook": "Enrollment Map by Major",
+   "area": "Prospects",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 4
+   },
+   "pitch": "Pick a major and see where its students come from, from Louisiana parishes to other states and countries.",
+   "what_it_shows": "Where the students in each major come from (parish, state or country), and how those totals moved fall to fall.",
+   "what_changed": [
+    "The map at three levels (parish, state, country) with a level stepper (\"◀ State level ▶\"); the map fills its tile.",
+    "Trend page: the latest fall at a glance, international students included, over lines on two axes so Louisiana and everyone else each get a readable scale.",
+    "Names on the maps larger and near-black; the title and page buttons fitted to the header."
+   ],
+   "techniques": [
+    "Dynamic zone visibility (map level)",
+    "Dual-axis lines",
+    "Steppers"
+   ],
+   "pages": [
+    "Total Enrollment by Parish",
+    "Trend of Parish Totals"
+   ],
+   "opens_on": "Total Enrollment by Parish",
+   "worksheets": 17,
+   "sample_copy": {
+    "name": "Enrollment Map by Major - Sample Data",
+    "built_from": "Enrollment Map by Major 11",
+    "twbx": "sample-copies/enrollment-map-by-major/Enrollment Map by Major - Sample Data.twbx",
+    "twb": "sample-copies/enrollment-map-by-major/Enrollment Map by Major - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/enrollment-map-by-major/data/For Distinct Counts.csv",
+      "data_source": "For Distinct Counts (Enrollment by Parishes)",
+      "rows": 6000,
+      "columns": 19
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 11,
+   "tier": "Strong",
+   "slug": "number-of-graduates-dashboard",
+   "title": "Number of Graduates",
+   "version": 25,
+   "workbook": "Number of Graduates Dashboard",
+   "area": "Retention and Graduation",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 3
+   },
+   "pitch": "Degrees awarded each year and term, by college and program, every program named in full.",
+   "what_it_shows": "Graduates by term, college, department, major and program since Summer 2015.",
+   "what_changed": [
+    "An academic-year stepper; a row of the year's figures (degrees, the shares of bachelor's, associate and graduate) over the change from the year before.",
+    "The college chart colors the selected year red and the year before light red.",
+    "The program table spans the page, every program code read with its full name."
+   ],
+   "techniques": [
+    "Key-figures band",
+    "Year stepper",
+    "Program names as aliases",
+    "Highlight table"
+   ],
+   "pages": [
+    "Degrees by Year",
+    "Degrees by Semester"
+   ],
+   "opens_on": "Degrees by Year",
+   "worksheets": 13,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/NumberofGraduatesDashboard/GraduatesbyYear",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/NumberofGraduatesDashboard/GraduatesbyYear",
+    "pages": {
+     "Degrees by Year": "https://public.tableau.com/views/NumberofGraduatesDashboard/GraduatesbyYear",
+     "Degrees by Semester": "https://public.tableau.com/views/NumberofGraduatesDashboard/GraduatesbySemester"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Number of Graduates Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/NumberofGraduatesDashboardold/DegreesbyYear",
+    "embed_url": "https://public.tableau.com/views/NumberofGraduatesDashboardold/DegreesbyYear",
+    "screenshot": "screenshots/number-of-graduates-dashboard/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Degrees by Year",
+     "file": "screenshots/number-of-graduates-dashboard/01-degrees-by-year.webp"
+    },
+    {
+     "page": "Degrees by Semester",
+     "file": "screenshots/number-of-graduates-dashboard/02-degrees-by-semester.webp"
+    }
+   ]
+  },
+  {
+   "rank": 12,
+   "tier": "Strong",
+   "slug": "first-time-freshmen-dashboard",
+   "title": "First-Time Freshmen",
+   "version": 30,
+   "workbook": "First Time Freshmen Dashboard",
+   "area": "Admissions",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 5,
+    "impact": 3
+   },
+   "pitch": "Each fall's first-time freshman class: its size, first-generation share, gender and race, against the fall before.",
+   "what_it_shows": "First-time freshmen over time by race, first-generation status, gender, department and program.",
+   "what_changed": [
+    "Key figures built like Admissions (freshmen, first-generation, first-generation share) with signed changes.",
+    "Race by fall in three stacked charts sized to the data; the race colors became the standard for every dashboard.",
+    "By Major with full program names; a fall stepper on both pages."
+   ],
+   "techniques": [
+    "Key-figures table",
+    "Stacked charts at different scales",
+    "Fall stepper",
+    "Program names as aliases"
+   ],
+   "pages": [
+    "First Time Freshmen Totals",
+    "FTF by Major"
+   ],
+   "opens_on": "First Time Freshmen Totals",
+   "worksheets": 15,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/FirstTimeFreshmenDashboard_17331609855370/FirstTimeFreshmenTotals",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FirstTimeFreshmenDashboard_17331609855370/FirstTimeFreshmenTotals",
+    "pages": {
+     "First Time Freshmen Totals": "https://public.tableau.com/views/FirstTimeFreshmenDashboard_17331609855370/FirstTimeFreshmenTotals",
+     "FTF by Major": "https://public.tableau.com/views/FirstTimeFreshmenDashboard_17331609855370/FTFbyMajor"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/First Time Freshmen Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FirstTimeFreshmenDashboardold/FirstTimeFreshmenTotals",
+    "embed_url": "https://public.tableau.com/views/FirstTimeFreshmenDashboardold/FirstTimeFreshmenTotals",
+    "screenshot": "screenshots/first-time-freshmen-dashboard/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "First Time Freshmen Totals",
+     "file": "screenshots/first-time-freshmen-dashboard/01-first-time-freshmen-totals.webp"
+    },
+    {
+     "page": "FTF by Major",
+     "file": "screenshots/first-time-freshmen-dashboard/02-ftf-by-major.webp"
+    }
+   ]
+  },
+  {
+   "rank": 13,
+   "tier": "Strong",
+   "slug": "sch-production-insight",
+   "title": "SCH Production Insight",
+   "version": 12,
+   "workbook": "SCH Production Insight",
+   "area": "Cost and Revenue",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 5,
+    "impact": 3
+   },
+   "pitch": "Salary cost beside teaching output for each instructor, with rank and discipline averages.",
+   "what_it_shows": "Faculty salaries beside teaching output (adjusted credits, credit hours, enrollment), with rank and discipline averages.",
+   "what_changed": [
+    "Page buttons fitted beside the title; the second header row removed and its height given to the charts.",
+    "Legends drawn as lists (salary types, delivery, faculty rank shapes); every chart in its own tile.",
+    "A term stepper that drives both data sources."
+   ],
+   "techniques": [
+    "Two blended sources",
+    "Scatter with reference lines",
+    "Custom shapes for rank",
+    "Term stepper"
+   ],
+   "pages": [
+    "Total Salaries",
+    "Breakdowns by Person",
+    "Rank and Discipline Averages",
+    "Adjusted Total Credits"
+   ],
+   "opens_on": "Total Salaries",
+   "worksheets": 25,
+   "sample_copy": {
+    "name": "SCH Production Insight - Sample Data",
+    "built_from": "SCH Production Insight 12",
+    "twbx": "sample-copies/sch-production-insight/SCH Production Insight - Sample Data.twbx",
+    "twb": "sample-copies/sch-production-insight/SCH Production Insight - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/sch-production-insight/data/Salaries and SCH - courses.csv",
+      "data_source": "Salaries and SCH - courses (Salaries and SCH Data)",
+      "rows": 6000,
+      "columns": 32
+     },
+     {
+      "file": "sample-copies/sch-production-insight/data/Salaries and SCH - down.csv",
+      "data_source": "Salaries and SCH - down (Salaries and SCH Data)",
+      "rows": 6000,
+      "columns": 19
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 14,
+   "tier": "Strong",
+   "slug": "college-totals",
+   "title": "College Totals",
+   "version": 11,
+   "workbook": "College Totals",
+   "area": "Enrollment",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "Louisiana's bachelor's-seeking freshmen statewide and at Nicholls, and where the region's students choose to go.",
+   "what_it_shows": "Incoming first-time freshmen statewide and at Nicholls: where ours come from, and where students from nearby parishes go.",
+   "what_changed": [
+    "Four pies became stacked bars; six pages with a second row of page buttons (Totals, Statewide %, Going To, Coming From, By System, By Institution).",
+    "An academic-year stepper; figures for the year at a glance (students, Nicholls' share, the 8-parish region).",
+    "Going To and Coming From rebuilt; school colors standardized, with the numbers on each bar white or near-black, whichever reads on its color."
+   ],
+   "techniques": [
+    "Steppers",
+    "School color standard",
+    "Small multiples that scroll"
+   ],
+   "pages": [
+    "Total Attendance",
+    "Percent of Total Attendance by Institution",
+    "Where are they going?",
+    "Where do they come from? (8-Parish)",
+    "Attendance Trend by System (8-Parish)",
+    "Attendance Trend by Institution (8-Parish)"
+   ],
+   "opens_on": "Total Attendance",
+   "worksheets": 25,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/CollegeTotals/TotalAttendance",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/CollegeTotals/TotalAttendance",
+    "pages": {
+     "Total Attendance": "https://public.tableau.com/views/CollegeTotals/TotalAttendance",
+     "Percent of Total Attendance by Institution": "https://public.tableau.com/views/CollegeTotals/PercentofTotalAttendancebyInstitution",
+     "Where are they going?": "https://public.tableau.com/views/CollegeTotals/Wherearetheygoing",
+     "Where do they come from? (8-Parish)": "https://public.tableau.com/views/CollegeTotals/Wheredotheycomefrom8-Parish",
+     "Attendance Trend by System (8-Parish)": "https://public.tableau.com/views/CollegeTotals/AttendanceTrendbySystem8-Parish",
+     "Attendance Trend by Institution (8-Parish)": "https://public.tableau.com/views/CollegeTotals/AttendanceTrendbyInstitution8-Parish"
+    },
+    "last_published": "2026-03-18",
+    "design_live_now": "old",
+    "to_do": "K publishes \"College Totals 11.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/College Totals.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/CollegeTotalsold/TotalAttendance",
+    "embed_url": "https://public.tableau.com/views/CollegeTotalsold/TotalAttendance",
+    "screenshot": "screenshots/college-totals/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 15,
+   "tier": "Strong",
+   "slug": "4-yr-graduation-rate-dashboard",
+   "title": "4-Year Graduation Rate",
+   "version": 14,
+   "workbook": "4-Yr Graduation Rate Dashboard",
+   "area": "Retention and Graduation",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "Four-year graduation rates for each entering class, overall and by race and gender.",
+   "what_it_shows": "The share of each entering class that graduates within four years, with trends by race and gender.",
+   "what_changed": [
+    "A gender stepper (All genders, Female, Male) that every chart and figure follows.",
+    "Race and gender in the standard colors; long race names shortened to fit.",
+    "The note on which students count moved into the line under the header; larger, darker numbers."
+   ],
+   "techniques": [
+    "Stepper driving the figures",
+    "Filters shared across pages",
+    "Standard category colors"
+   ],
+   "pages": [
+    "Average Completion Rates",
+    "Yearly Completion Rates by Race",
+    "Completion Rate Chart Breakdown"
+   ],
+   "opens_on": "Average Completion Rates",
+   "worksheets": 11,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/4-YrGraduationRateDashboard_17331612338270/AverageCompletionRates",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/4-YrGraduationRateDashboard_17331612338270/AverageCompletionRates",
+    "pages": {
+     "Average Completion Rates": "https://public.tableau.com/views/4-YrGraduationRateDashboard_17331612338270/AverageCompletionRates",
+     "Yearly Completion Rates by Race": "https://public.tableau.com/views/4-YrGraduationRateDashboard_17331612338270/YearlyCompletionRatesbyRace",
+     "Completion Rate Chart Breakdown": "https://public.tableau.com/views/4-YrGraduationRateDashboard_17331612338270/CompletionRateChartBreakdown"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/4-Yr Graduation Rate Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/4-YrGraduationRateDashboardold/AverageCompletionRates",
+    "embed_url": "https://public.tableau.com/views/4-YrGraduationRateDashboardold/AverageCompletionRates",
+    "screenshot": "screenshots/4-yr-graduation-rate-dashboard/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Average Completion Rates",
+     "file": "screenshots/4-yr-graduation-rate-dashboard/01-average-completion-rates.webp"
+    },
+    {
+     "page": "Yearly Completion Rates by Race",
+     "file": "screenshots/4-yr-graduation-rate-dashboard/02-yearly-completion-rates-by-race.webp"
+    },
+    {
+     "page": "Completion Rate Chart Breakdown",
+     "file": "screenshots/4-yr-graduation-rate-dashboard/03-completion-rate-chart-breakdown.webp"
+    }
+   ]
+  },
+  {
+   "rank": 16,
+   "tier": "Strong",
+   "slug": "6-yr-graduation-rate-dashboard",
+   "title": "6-Year Graduation Rate",
+   "version": 14,
+   "workbook": "6-Yr Graduation Rate Dashboard",
+   "area": "Retention and Graduation",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "Six-year graduation rates for each entering class, overall and by race and gender.",
+   "what_it_shows": "The share of each entering class that graduates within six years, with trends by race and gender.",
+   "what_changed": [
+    "Built as a twin of the 4-year dashboard: the gender stepper, the standard colors, the same layout.",
+    "The note on which students count moved into the line under the header; larger, darker numbers."
+   ],
+   "techniques": [
+    "Stepper driving the figures",
+    "Filters shared across pages",
+    "Standard category colors"
+   ],
+   "pages": [
+    "Average Completion Rates",
+    "Yearly Completion Rates by Race",
+    "Completion Rate Chart Breakdown"
+   ],
+   "opens_on": "Average Completion Rates",
+   "worksheets": 11,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/6-YrGraduationRateDashboard_17331611989870/AverageCompletionRates",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/6-YrGraduationRateDashboard_17331611989870/AverageCompletionRates",
+    "pages": {
+     "Average Completion Rates": "https://public.tableau.com/views/6-YrGraduationRateDashboard_17331611989870/AverageCompletionRates",
+     "Yearly Completion Rates by Race": "https://public.tableau.com/views/6-YrGraduationRateDashboard_17331611989870/YearlyCompletionRatesbyRace",
+     "Completion Rate Chart Breakdown": "https://public.tableau.com/views/6-YrGraduationRateDashboard_17331611989870/CompletionRateChartBreakdown"
+    },
+    "last_published": "2026-09-15",
+    "design_live_now": "old",
+    "to_do": "K publishes \"6-Yr Graduation Rate Dashboard 14.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/6-Yr Graduation Rate Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/6-YrGraduationRateDashboardold/AverageCompletionRates",
+    "embed_url": "https://public.tableau.com/views/6-YrGraduationRateDashboardold/AverageCompletionRates",
+    "screenshot": "screenshots/6-yr-graduation-rate-dashboard/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 17,
+   "tier": "Strong",
+   "slug": "first-to-second-year-retention",
+   "title": "First to Second Year Retention",
+   "version": 24,
+   "workbook": "First to Second Year Retention",
+   "area": "Retention and Graduation",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "Who comes back for a second year, by college, major, race and gender.",
+   "what_it_shows": "The share of each fall's first-time freshmen who start a second year, by major, program, gender and race.",
+   "what_changed": [
+    "Opens on By College; cohort, race and college steppers, and titles that name the cohort.",
+    "Race and Gender: an at-a-glance block (students, retained, rate, women's and men's rates) beside the trend.",
+    "The program column shows each program's full name."
+   ],
+   "techniques": [
+    "Steppers",
+    "Titles driven by the selection",
+    "Dual axis"
+   ],
+   "pages": [
+    "Retention Rates by College",
+    "Retention Rates by Race and Gender"
+   ],
+   "opens_on": "Retention Rates by College",
+   "worksheets": 17,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/FirsttoSecondYearRetention_17331622005880/RetentionRatesbyCollege",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FirsttoSecondYearRetention_17331622005880/RetentionRatesbyCollege",
+    "pages": {
+     "Retention Rates by College": "https://public.tableau.com/views/FirsttoSecondYearRetention_17331622005880/RetentionRatesbyCollege",
+     "Retention Rates by Race and Gender": "https://public.tableau.com/views/FirsttoSecondYearRetention_17331622005880/RetentionRatesbyRaceandGender"
+    },
+    "last_published": "2026-09-29",
+    "design_live_now": "old",
+    "to_do": "K publishes \"First to Second Year Retention 24.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/First to Second Year Retention.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FirsttoSecondYearRetentionold/RetentionRatesbyRaceandGender",
+    "embed_url": "https://public.tableau.com/views/FirsttoSecondYearRetentionold/RetentionRatesbyRaceandGender",
+    "screenshot": "screenshots/first-to-second-year-retention/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 18,
+   "tier": "Strong",
+   "slug": "first-to-third-year-retention",
+   "title": "First to Third Year Retention",
+   "version": 15,
+   "workbook": "First to Third Year Retention",
+   "area": "Retention and Graduation",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "Who is still here in a third year, by college, major, race and gender.",
+   "what_it_shows": "The share of each fall's first-time freshmen who start a third year, by major, program, gender and race.",
+   "what_changed": [
+    "Built as a twin of First to Second Year: By College first, cohort, race and college steppers.",
+    "Race and Gender: an at-a-glance block beside the trend; programs named in full."
+   ],
+   "techniques": [
+    "Steppers",
+    "Titles driven by the selection",
+    "Dual axis"
+   ],
+   "pages": [
+    "Retention Rates by College",
+    "Retention Rates by Race and Gender"
+   ],
+   "opens_on": "Retention Rates by College",
+   "worksheets": 17,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/FirsttoThirdYearRetention_17331621447580/RetentionRatesbyCollege",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FirsttoThirdYearRetention_17331621447580/RetentionRatesbyCollege",
+    "pages": {
+     "Retention Rates by College": "https://public.tableau.com/views/FirsttoThirdYearRetention_17331621447580/RetentionRatesbyCollege",
+     "Retention Rates by Race and Gender": "https://public.tableau.com/views/FirsttoThirdYearRetention_17331621447580/RetentionRatesbyRaceandGender"
+    },
+    "last_published": "2026-09-15",
+    "design_live_now": "old",
+    "to_do": "K publishes \"First to Third Year Retention 15.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/First to Third Year Retention.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/FirsttoThirdYearRetentionold/RetentionRatesbyRaceandGender",
+    "embed_url": "https://public.tableau.com/views/FirsttoThirdYearRetentionold/RetentionRatesbyRaceandGender",
+    "screenshot": "screenshots/first-to-third-year-retention/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 19,
+   "tier": "Strong",
+   "slug": "age-breakdown",
+   "title": "Age Breakdown",
+   "version": 11,
+   "workbook": "Age Breakdown",
+   "area": "Enrollment",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "How old our students are, fall by fall, with dual-enrollment high school students in or out.",
+   "what_it_shows": "Students' ages fall by fall, by level, college, classification, race, first-time freshman status and gender.",
+   "what_changed": [
+    "Fall and dual-enrollment steppers; figures whose bands add up to all students (16 and under, 17 to 25, 26 and older; 23- and 24-year-olds had been counted nowhere).",
+    "The age-range pie became bars with count and share; eleven near-identical pink lines became three labeled bands.",
+    "Every part in a tile; tooltips compare with the fall before."
+   ],
+   "techniques": [
+    "Steppers",
+    "Banded groupings",
+    "Year-over-year tooltips"
+   ],
+   "pages": [
+    "Age Ranges",
+    "Ages 17-25"
+   ],
+   "opens_on": "Age Ranges",
+   "worksheets": 18,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/AgeBreakdown_17331503329500/AgeRanges",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/AgeBreakdown_17331503329500/AgeRanges",
+    "pages": {
+     "Age Ranges": "https://public.tableau.com/views/AgeBreakdown_17331503329500/AgeRanges",
+     "Ages 17-25": "https://public.tableau.com/views/AgeBreakdown_17331503329500/Ages17-25"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Age Breakdown.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/AgeBreakdownold/AgeRanges",
+    "embed_url": "https://public.tableau.com/views/AgeBreakdownold/AgeRanges",
+    "screenshot": "screenshots/age-breakdown/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Age Ranges",
+     "file": "screenshots/age-breakdown/01-age-ranges.webp"
+    },
+    {
+     "page": "Ages 17-25",
+     "file": "screenshots/age-breakdown/02-ages-17-25.webp"
+    }
+   ]
+  },
+  {
+   "rank": 20,
+   "tier": "Supporting",
+   "slug": "course-offerings",
+   "title": "Course Offerings",
+   "version": 14,
+   "workbook": "Course Offerings",
+   "area": "Classes and Faculty Time",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "When classes meet across the week, and how much of the schedule falls in prime time.",
+   "what_it_shows": "When courses meet through the week, campus-wide or by subject, with prime-time figures and a comparison view.",
+   "what_changed": [
+    "Five pages: Offerings, Schedule, Subject, Compare and a redesigned Prime Time.",
+    "At-a-glance tiles (sections, courses, class meetings, average class size against a year earlier) and class meetings by day.",
+    "Prime Time: before, during and after shares, by start hour, by day and by college as labeled 100% bars.",
+    "One \"Course\" filter (\"ACCT 201\") in place of subject and number."
+   ],
+   "techniques": [
+    "Grouped start times",
+    "Term stepper",
+    "100% bars",
+    "Legend rows that highlight"
+   ],
+   "pages": [
+    "Course Offerings",
+    "Schedule",
+    "By Subject",
+    "For Comparison",
+    "Prime Time"
+   ],
+   "opens_on": "Course Offerings",
+   "worksheets": 43,
+   "sample_copy": {
+    "name": "Course Offerings - Sample Data",
+    "built_from": "Course Offerings 14",
+    "twbx": "sample-copies/course-offerings/Course Offerings - Sample Data.twbx",
+    "twb": "sample-copies/course-offerings/Course Offerings - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/course-offerings/data/Courses Crosstab with Primary Inst.csv",
+      "data_source": "Courses Crosstab with Primary Inst (Courses Crosstab for Updating)",
+      "rows": 6000,
+      "columns": 24
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 21,
+   "tier": "Supporting",
+   "slug": "doe-trends-by-parish-and-high-school",
+   "title": "DOE Trends",
+   "version": 12,
+   "workbook": "DOE Trends by Parish and High School",
+   "area": "Admissions",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "High school seniors by school system and school, and how many apply, are accepted and enroll.",
+   "what_it_shows": "Department of Education figures for Louisiana's public schools, with how many seniors apply, are accepted and enroll here.",
+   "what_changed": [
+    "A year stepper on all six pages; the year at a glance (seniors, applied, accepted, enrolled).",
+    "Pale pastels replaced: seniors grey, applied blue, accepted gold, enrolled red.",
+    "\"How the rates are figured\" laid out as a list of definitions; tables widened so every year's column reads in full."
+   ],
+   "techniques": [
+    "Year stepper",
+    "Rate definitions beside the charts",
+    "Tables that scroll sideways"
+   ],
+   "pages": [
+    "FTF We Obtained",
+    "Trend By School System",
+    "Rates by School System",
+    "Trend by School Site",
+    "Rates by School Site",
+    "How Many Students...?"
+   ],
+   "opens_on": "FTF We Obtained",
+   "worksheets": 31,
+   "sample_copy": {
+    "name": "DOE Trends by Parish and High School - Sample Data",
+    "built_from": "DOE Trends by Parish and High School 12",
+    "twbx": "sample-copies/doe-trends-by-parish-and-high-school/DOE Trends by Parish and High School - Sample Data.twbx",
+    "twb": "sample-copies/doe-trends-by-parish-and-high-school/DOE Trends by Parish and High School - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/doe-trends-by-parish-and-high-school/data/By HS With AAE.csv",
+      "data_source": "By HS With AAE (DOE Trends by Parish and HS)",
+      "rows": 6000,
+      "columns": 11
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 22,
+   "tier": "Supporting",
+   "slug": "classroom-utilization-dashboard",
+   "title": "Classroom Utilization",
+   "version": 11,
+   "workbook": "Classroom Utilization Dashboard",
+   "area": "Classes and Faculty Time",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 3
+   },
+   "pitch": "How much each classroom is actually used, by day and across the week, and which rooms sit empty.",
+   "what_it_shows": "Hours each room in selected buildings is in use, by day and week, with enrollment at each time.",
+   "what_changed": [
+    "A term stepper; figures for rooms in use, class meetings, hours booked and average use against a year earlier.",
+    "A list of the rooms with no classes on the chosen day (the old list could never show one).",
+    "Hours at the bar ends (\"3.4 h\") and the share of the 14 or 70 open hours."
+   ],
+   "techniques": [
+    "Term stepper",
+    "Reference lines",
+    "Day picker that shows every day"
+   ],
+   "pages": [
+    "Hours Occupied",
+    "Daily Hours",
+    "Weekly Hours",
+    "Start Times"
+   ],
+   "opens_on": "Hours Occupied",
+   "worksheets": 23,
+   "sample_copy": {
+    "name": "Classroom Utilization Dashboard - Sample Data",
+    "built_from": "Classroom Utilization Dashboard 11",
+    "twbx": "sample-copies/classroom-utilization-dashboard/Classroom Utilization Dashboard - Sample Data.twbx",
+    "twb": "sample-copies/classroom-utilization-dashboard/Classroom Utilization Dashboard - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/classroom-utilization-dashboard/data/Room and Course Usage.csv",
+      "data_source": "Room and Course Usage (Classroom Usage)",
+      "rows": 6000,
+      "columns": 21
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 23,
+   "tier": "Supporting",
+   "slug": "employee-dashboard",
+   "title": "Employee Dashboard",
+   "version": 12,
+   "workbook": "Employee Dashboard",
+   "area": "Employees",
+   "audience": "Public: shown on the IR office's website",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 4,
+    "impact": 2
+   },
+   "pitch": "The workforce by level, function and full- or part-time status, with each group's share.",
+   "what_it_shows": "Employees side by side by level, primary function and full-time or part-time, with shares.",
+   "what_changed": [
+    "The part-time/full-time and faculty-type pies became 100% bars with share and count.",
+    "A date stepper (\"◀ Nov 2024 ▶\") for the lower charts; reporting years labeled \"2024-25\".",
+    "Each chart and legend in a white tile; larger, darker numbers."
+   ],
+   "techniques": [
+    "Date stepper",
+    "Heat table",
+    "100% bars"
+   ],
+   "pages": [
+    "Employee Breakdown"
+   ],
+   "opens_on": "Employee Breakdown",
+   "worksheets": 10,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/EmployeeDashboard_17331602496180/EmployeeBreakdown",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/EmployeeDashboard_17331602496180/EmployeeBreakdown",
+    "pages": {
+     "Employee Breakdown": "https://public.tableau.com/views/EmployeeDashboard_17331602496180/EmployeeBreakdown"
+    },
+    "last_published": "2025-10-02",
+    "design_live_now": "old",
+    "to_do": "K publishes \"Employee Dashboard 12.twbx\" over the workbook at this address; the address stays the same and shows the new design from then on."
+   },
+   "twb": "public-workbooks/Employee Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/EmployeeDashboardold/EmployeeBreakdown",
+    "embed_url": "https://public.tableau.com/views/EmployeeDashboardold/EmployeeBreakdown",
+    "screenshot": "screenshots/employee-dashboard/previous.webp"
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 24,
+   "tier": "Supporting",
+   "slug": "transfers-dashboard",
+   "title": "Transfers Dashboard",
+   "version": 10,
+   "workbook": "Transfers Dashboard",
+   "area": "Prospects",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 3,
+    "impact": 3
+   },
+   "pitch": "Transfers into and out of Nicholls: which schools send students, and which ones they leave for.",
+   "what_it_shows": "Where our transfer students come from, and the schools that students leaving Nicholls go to.",
+   "what_changed": [
+    "Six pages under one header (In & Out, From, To, Comparison, Net Gain/Loss, Table).",
+    "In & Out keeps its three-column flow, with figures across the top.",
+    "Universities in school colors, community and technical colleges in greys; net gain or loss on a diverging scale."
+   ],
+   "techniques": [
+    "Flow diagram",
+    "Diverging color",
+    "School color standard"
+   ],
+   "pages": [
+    "Transfers In and Out",
+    "Trend FROM",
+    "Trend TO",
+    "Comparison",
+    "Net Gain or Loss",
+    "Table"
+   ],
+   "opens_on": "Transfers In and Out",
+   "worksheets": 19,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/TransfersDashboard_17331703279750/TransfersInandOut",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/TransfersDashboard_17331703279750/TransfersInandOut",
+    "pages": {
+     "Transfers In and Out": "https://public.tableau.com/views/TransfersDashboard_17331703279750/TransfersInandOut",
+     "Trend FROM": "https://public.tableau.com/views/TransfersDashboard_17331703279750/TrendFROM",
+     "Trend TO": "https://public.tableau.com/views/TransfersDashboard_17331703279750/TrendTO",
+     "Comparison": "https://public.tableau.com/views/TransfersDashboard_17331703279750/Comparison",
+     "Net Gain or Loss": "https://public.tableau.com/views/TransfersDashboard_17331703279750/NetGainorLoss",
+     "Table": "https://public.tableau.com/views/TransfersDashboard_17331703279750/Table"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Transfers Dashboard.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/TransfersDashboardold/TransfersInandOut",
+    "embed_url": "https://public.tableau.com/views/TransfersDashboardold/TransfersInandOut",
+    "screenshot": "screenshots/transfers-dashboard/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Transfers In and Out",
+     "file": "screenshots/transfers-dashboard/01-transfers-in-and-out.webp"
+    },
+    {
+     "page": "Trend FROM",
+     "file": "screenshots/transfers-dashboard/02-trend-from.webp"
+    },
+    {
+     "page": "Trend TO",
+     "file": "screenshots/transfers-dashboard/03-trend-to.webp"
+    },
+    {
+     "page": "Comparison",
+     "file": "screenshots/transfers-dashboard/04-comparison.webp"
+    },
+    {
+     "page": "Net Gain or Loss",
+     "file": "screenshots/transfers-dashboard/05-net-gain-or-loss.webp"
+    },
+    {
+     "page": "Table",
+     "file": "screenshots/transfers-dashboard/06-table.webp"
+    }
+   ]
+  },
+  {
+   "rank": 25,
+   "tier": "Supporting",
+   "slug": "college-affordability",
+   "title": "College Affordability",
+   "version": 10,
+   "workbook": "College Affordability",
+   "area": "Cost and Revenue",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 3,
+    "impact": 3
+   },
+   "pitch": "Tuition, fees and net price at Louisiana's public universities since 2011, Nicholls first.",
+   "what_it_shows": "Tuition and fees and net price at Louisiana colleges since 2011, with increases compared, by system.",
+   "what_changed": [
+    "Each university in its standard school color; the legend drawn as a sheet, Nicholls first.",
+    "Readable names (\"UL at Lafayette\") instead of abbreviations.",
+    "Info icons moved into the line under the header."
+   ],
+   "techniques": [
+    "School color standard",
+    "Legend drawn as a sheet",
+    "Labeled lines"
+   ],
+   "pages": [
+    "Tuition and Fees",
+    "Net Price"
+   ],
+   "opens_on": "Tuition and Fees",
+   "worksheets": 10,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/CollegeAffordability_17331702850380/TuitionandFees",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/CollegeAffordability_17331702850380/TuitionandFees",
+    "pages": {
+     "Tuition and Fees": "https://public.tableau.com/views/CollegeAffordability_17331702850380/TuitionandFees",
+     "Net Price": "https://public.tableau.com/views/CollegeAffordability_17331702850380/NetPrice"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/College Affordability.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/CollegeAffordabilityold/TuitionandFees",
+    "embed_url": "https://public.tableau.com/views/CollegeAffordabilityold/TuitionandFees",
+    "screenshot": "screenshots/college-affordability/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Tuition and Fees",
+     "file": "screenshots/college-affordability/01-tuition-and-fees.webp"
+    },
+    {
+     "page": "Net Price",
+     "file": "screenshots/college-affordability/02-net-price.webp"
+    }
+   ]
+  },
+  {
+   "rank": 26,
+   "tier": "Supporting",
+   "slug": "enrollment-map",
+   "title": "Enrollment Map",
+   "version": 12,
+   "workbook": "Enrollment Map",
+   "area": "Prospects",
+   "audience": "Public: Nicholls' Tableau Public profile",
+   "show_as": "live embed",
+   "scores": {
+    "polish": 3,
+    "impact": 3
+   },
+   "pitch": "Which parishes our students come from, on a map and in a ranked list.",
+   "what_it_shows": "Each parish's share of our enrollment, and the parishes that send us the most students.",
+   "what_changed": [
+    "Map and Trend pages; fall and student-type steppers (\"All falls\" shows the whole history).",
+    "The parish list and the trend table readable at 12 pt, falls oldest to newest."
+   ],
+   "techniques": [
+    "Filled map",
+    "Steppers",
+    "Ranked list with running percent"
+   ],
+   "pages": [
+    "Total Enrollment by Parish",
+    "Trend of Parish Totals"
+   ],
+   "opens_on": "Total Enrollment by Parish",
+   "worksheets": 9,
+   "live": {
+    "embed_url": "https://public.tableau.com/views/EnrollmentMap_17331620139950/TotalEnrollmentbyParish",
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/EnrollmentMap_17331620139950/TotalEnrollmentbyParish",
+    "pages": {
+     "Total Enrollment by Parish": "https://public.tableau.com/views/EnrollmentMap_17331620139950/TotalEnrollmentbyParish",
+     "Trend of Parish Totals": "https://public.tableau.com/views/EnrollmentMap_17331620139950/TrendofParishTotals"
+    },
+    "last_published": "2026-10-12",
+    "design_live_now": "new"
+   },
+   "twb": "public-workbooks/Enrollment Map.twb",
+   "previous": {
+    "profile_url": "https://public.tableau.com/app/profile/nichollsir/viz/EnrollmentMapold/TotalEnrollmentbyParish",
+    "embed_url": "https://public.tableau.com/views/EnrollmentMapold/TotalEnrollmentbyParish",
+    "screenshot": "screenshots/enrollment-map/previous.webp"
+   },
+   "screenshots": [
+    {
+     "page": "Total Enrollment by Parish",
+     "file": "screenshots/enrollment-map/01-total-enrollment-by-parish.webp"
+    },
+    {
+     "page": "Trend of Parish Totals",
+     "file": "screenshots/enrollment-map/02-trend-of-parish-totals.webp"
+    }
+   ]
+  },
+  {
+   "rank": 27,
+   "tier": "Supporting",
+   "slug": "parish-population-census-to-nicholls",
+   "title": "Parish Population",
+   "version": 11,
+   "workbook": "Parish Population - Census to Nicholls",
+   "area": "Prospects",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 2
+   },
+   "pitch": "Census population, high school seniors and college-goers in each parish, and how many choose us.",
+   "what_it_shows": "How we do in each parish: its population and high school seniors, the share going to college, and how many come to Nicholls.",
+   "what_changed": [
+    "A year stepper replaces the map's slider; the 8-parish region light red, other parishes light grey.",
+    "Definitions in a tile of their own; the school's share of each parish's college-going freshmen drawn as bars."
+   ],
+   "techniques": [
+    "Filled map",
+    "Year stepper",
+    "Dual axis"
+   ],
+   "pages": [
+    "Population Breakdown",
+    "Population Map",
+    "Percent of Population"
+   ],
+   "opens_on": "Population Breakdown",
+   "worksheets": 17,
+   "sample_copy": {
+    "name": "Parish Population - Census to Placeholder - Sample Data",
+    "built_from": "Parish Population - Census to Nicholls 11",
+    "twbx": "sample-copies/parish-population-census-to-nicholls/Parish Population - Census to Placeholder - Sample Data.twbx",
+    "twb": "sample-copies/parish-population-census-to-nicholls/Parish Population - Census to Placeholder - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/parish-population-census-to-nicholls/data/Data for Tableau.csv",
+      "data_source": "Data for Tableau (Census Population Estimates (co-est2019-annres-22))",
+      "rows": 6000,
+      "columns": 8
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 28,
+   "tier": "Supporting",
+   "slug": "course-sections-and-enrollment-by-level",
+   "title": "Course Sections and Enrollment by Level",
+   "version": 11,
+   "workbook": "Course Sections and Enrollment by Level",
+   "area": "Classes and Faculty Time",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 4,
+    "impact": 2
+   },
+   "pitch": "Sections and enrollment by course level and college, fall to fall.",
+   "what_it_shows": "Sections and enrollment by college and course level, fall to fall.",
+   "what_changed": [
+    "A new overview: sections, enrollments, average per section and courses offered, against the fall before and the first fall.",
+    "Who enrolls at each course level, and the change since the first fall as labeled lines.",
+    "A table with one column per fall, so new falls appear on their own."
+   ],
+   "techniques": [
+    "Fall stepper",
+    "Labeled lines",
+    "Highlight table"
+   ],
+   "pages": [
+    "Sections and Enrollment",
+    "Sections and Enrollment Table"
+   ],
+   "opens_on": "Sections and Enrollment",
+   "worksheets": 15,
+   "sample_copy": {
+    "name": "Course Sections and Enrollment by Level - Sample Data",
+    "built_from": "Course Sections and Enrollment by Level 11",
+    "twbx": "sample-copies/course-sections-and-enrollment-by-level/Course Sections and Enrollment by Level - Sample Data.twbx",
+    "twb": "sample-copies/course-sections-and-enrollment-by-level/Course Sections and Enrollment by Level - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/course-sections-and-enrollment-by-level/data/Sheet1.csv",
+      "data_source": "Sheet1 (Fall 2020-2024 Courses by Level)",
+      "rows": 6000,
+      "columns": 15
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 29,
+   "tier": "Supporting",
+   "slug": "revenue-vs-cost-of-faculty",
+   "title": "Revenue vs. Cost of Faculty",
+   "version": 8,
+   "workbook": "Revenue vs Cost of Faculty",
+   "area": "Cost and Revenue",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 3,
+    "impact": 3
+   },
+   "pitch": "Tuition revenue against faculty cost, by department, instructor and course.",
+   "what_it_shows": "Which departments bring in more than they cost, who contributes most to those margins, and each course's revenue and cost.",
+   "what_changed": [
+    "Six pages, each with ten filters and cost inputs in one Filters box; a switch swaps the filters for the cost assumptions (tuition, benefits).",
+    "Revenue green and cost red; a key for revenue above or below base pay plus benefits."
+   ],
+   "techniques": [
+    "What-if parameters",
+    "Blended sources",
+    "Dual axes"
+   ],
+   "pages": [
+    "Faculty",
+    "Faculty by Year",
+    "Faculty Supp Opr",
+    "Course",
+    "Course by Year",
+    "Course Supp Opr"
+   ],
+   "opens_on": "Faculty",
+   "worksheets": 19,
+   "sample_copy": {
+    "name": "Revenue vs Cost of Faculty - Sample Data",
+    "built_from": "Revenue vs Cost of Faculty 8",
+    "twbx": "sample-copies/revenue-vs-cost-of-faculty/Revenue vs Cost of Faculty - Sample Data.twbx",
+    "twb": "sample-copies/revenue-vs-cost-of-faculty/Revenue vs Cost of Faculty - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/revenue-vs-cost-of-faculty/data/Pivot and Benefits.csv",
+      "data_source": "Pivot and Benefits (Revenue vs Cost - SCH vs Salaries)",
+      "rows": 6000,
+      "columns": 13
+     },
+     {
+      "file": "sample-copies/revenue-vs-cost-of-faculty/data/Salaries and SCH - intern incld.csv",
+      "data_source": "Salaries and SCH - intern incld (Revenue vs Cost - SCH vs Salaries)",
+      "rows": 6000,
+      "columns": 13
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  },
+  {
+   "rank": 30,
+   "tier": "Supporting",
+   "slug": "culinary-enrollment-map",
+   "title": "Culinary Enrollment Map",
+   "version": 11,
+   "workbook": "Culinary Enrollment Map",
+   "area": "Prospects",
+   "audience": "Internal office dashboard: shown here with invented sample data",
+   "show_as": "sample copy",
+   "scores": {
+    "polish": 3,
+    "impact": 2
+   },
+   "pitch": "Where the culinary institute's students come from, by parish and state.",
+   "what_it_shows": "Where the culinary institute's students come from, by parish and state, and how those totals moved fall to fall.",
+   "what_changed": [
+    "Enrollment Map by Major's design: a level stepper, the map filling its tile, and the trend as lines on two axes."
+   ],
+   "techniques": [
+    "Filled map",
+    "Dual-axis lines",
+    "Level stepper"
+   ],
+   "pages": [
+    "Total Enrollment by Parish",
+    "Trend of Parish Totals"
+   ],
+   "opens_on": "Total Enrollment by Parish",
+   "worksheets": 14,
+   "sample_copy": {
+    "name": "Culinary Enrollment Map - Sample Data",
+    "built_from": "Culinary Enrollment Map 11",
+    "twbx": "sample-copies/culinary-enrollment-map/Culinary Enrollment Map - Sample Data.twbx",
+    "twb": "sample-copies/culinary-enrollment-map/Culinary Enrollment Map - Sample Data.twb",
+    "data": [
+     {
+      "file": "sample-copies/culinary-enrollment-map/data/For Distinct Counts.csv",
+      "data_source": "For Distinct Counts (Enrollment by Parishes)",
+      "rows": 6000,
+      "columns": 19
+     }
+    ],
+    "on_tableau_public": false,
+    "about": "Invented data only (no real record), PLACEHOLDER UNIVERSITY in place of the school, a SAMPLE DATA watermark on every page. Not published anywhere. The .twbx opens in Tableau as it is; the .twb is the same workbook as plain XML (pages, sheets, fields, calculations, layout); data/ holds its extracts as CSV. The site decides how to show it, and asks K if it wants one hosted on his own Tableau Public profile."
+   },
+   "screenshots": []
+  }
+ ]
+}

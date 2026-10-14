@@ -499,6 +499,33 @@ a:hover { color: var(--accent-ink); }
 }
 .pager a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: none; }
 
+/* ---------- Dashboards catalog: thirty cards by tier; a thumb, a plain tile or an internal tile ---------- */
+.catalog { margin: 48px 0 0; }
+.catalog h2 { margin: 0 0 12px; font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 3.6vw, 44px); line-height: 1.05; }
+.catalog__lede { margin: 0 0 28px; max-width: 64ch; font-size: 17px; line-height: 1.5; color: var(--ink-2); }
+.catalog__tier { margin: 0 0 32px; }
+.catalog__tier-h { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; padding-top: 10px; border-top: 1px solid var(--ink); font-family: var(--mono); font-weight: 400; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.catalog__tier-h small { font-size: 12px; color: var(--ink-3); }
+.catalog__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card--catalog { height: auto; min-height: 340px; gap: 6px; }
+.card--catalog:hover { transform: none; box-shadow: none; }
+.card--catalog:hover .card__title { color: inherit; }
+.card--catalog .card__title { margin: 0; font-size: 19px; }
+.card--catalog .card__tools { margin-top: 4px; }
+.card--catalog .card__note { -webkit-line-clamp: 4; }
+.catalog__thumb, .catalog__shot { display: block; width: 100%; height: auto; aspect-ratio: 14 / 9; flex: none; object-fit: cover; border-radius: var(--r-2); border: 1px solid var(--line); background: var(--paper-2); }
+.catalog__tile {
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; box-sizing: border-box; aspect-ratio: 14 / 9; padding: 14px;
+  border-radius: var(--r-2); border: 1px dashed var(--line-2); background: var(--soft-fill); color: var(--ink-2);
+}
+.catalog__tile-area { font-family: var(--serif); font-size: 24px; line-height: 1.05; color: var(--ink); }
+.catalog__tile-note { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--ink-3); }
+.catalog__tile--internal { background: repeating-linear-gradient(-45deg, var(--soft-fill) 0 10px, var(--paper-2) 10px 20px); }
+.catalog__link { margin-top: auto; padding-top: 6px; align-self: flex-start; font-size: 14px; color: var(--accent-ink); text-decoration: none; }
+.catalog__link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .catalog__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .catalog__grid { grid-template-columns: 1fr; } .card--catalog { min-height: 0; } }
+
 /* ---------- Project showcase (browser + phone frames) ---------- */
 .showcase { margin: 8px 0 0; }
 .showcase__stage { position: relative; padding: 0 0 48px; }
