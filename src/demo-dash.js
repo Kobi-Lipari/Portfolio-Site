@@ -6,10 +6,10 @@ import {
   BAR, FONT, FRAME, GRAY, H, INK, L, MUTED, R, RACE_AFTER, RACE_SHORT, RED, T, TAB10, W, change, dot, esc, filterBar, fmt, footer, niceMax, path, pct, ratio, short, signedPct, signedPts, ticks, tile,
   header as kitHeader,
 } from './dash-kit.js';
+import { motion } from './motion.js';
 
 const root = document.querySelector('[data-demo="dash"]');
 const BASE = root.dataset.base || '/';
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // On the homepage the demo is the hero: Admissions only, no tabs or tour, one seam sweep.
 const HERO = root.dataset.mode === 'hero';
 
@@ -404,284 +404,329 @@ const DASHES = {
 
 const state = { dash: 'admissions', fall: null, group: 'all', split: 50, filtersOpen: false, data: {} };
 
-root.innerHTML = `${HERO ? '' : `
-  <div class="demo__head">
-    <div>
-      <p class="demo__eyebrow">BEFORE ⇄ AFTER · DATA AS PUBLISHED</p>
-      <h2 class="demo__title">Same numbers, <i>redesigned.</i></h2>
-      <p class="demo__lede">Two of the dashboards I redesigned for Nicholls State's Office of Institutional Research, rebuilt here from their published figures. Drag the seam to compare the original with the redesign; the filters drive both sides.</p>
-    </div>
-    <button type="button" class="demo__go" data-tour-toggle aria-pressed="false">Play the tour</button>
-  </div>`}
-  ${HERO ? '' : `<div class="dash-bar">
-    <div class="dash-tabs" role="tablist" aria-label="Dashboard">
-      ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
-    </div>
-    <label class="dash-field">Fall term <select data-fall></select></label>
-    <label class="dash-field" data-group-wrap>Students <select data-group></select></label>
-  </div>`}
-  ${HERO ? `<div class="dash-frame">
-  <div class="dash-chrome">
-    <span class="dash-chrome__dots" aria-hidden="true"><i></i><i></i><i></i></span>
-    <div class="dash-chrome__tabs" role="tablist" aria-label="Dashboard">
-      ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
-    </div>
-    <span class="dash-live"><span class="dash-live__dot" aria-hidden="true"></span>LIVE</span>
-  </div>` : ''}
-  <div class="dash-stage" data-dash-stage>
-    <svg class="dash-svg dash-svg--before" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Original dashboard"></svg>
-    <svg class="dash-svg dash-svg--after" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Redesigned dashboard"></svg>
-    <span class="dash-tag dash-tag--before">BEFORE · original</span>
-    <span class="dash-tag dash-tag--after">AFTER · redesign</span>
-    <div class="dash-seam" aria-hidden="true"></div>
-    <div class="dash-handle" role="slider" tabindex="0" aria-label="Compare the original with the redesign" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l-6 6 6 6"/><path d="M15 6l6 6-6 6"/></svg>
-    </div>
-    <div class="dash-tip" hidden></div>
-  </div>${HERO ? `
-  </div>
-  <div class="dash-under">
-    <label class="dash-field">Fall term <select data-fall></select></label>
-    <span data-group-wrap hidden><select data-group aria-label="Students"></select></span>` : ''}
-  <div class="snaps dash-snaps" role="group" aria-label="Jump to a view">
-    <button type="button" data-split="100" aria-pressed="false">Original</button>
-    <button type="button" class="dash-snaps__half" data-split="50" aria-pressed="true">Half and half</button>
-    <button type="button" data-split="0" aria-pressed="false">Redesign</button>
-  </div>${HERO ? `
-  </div>` : ''}
-  <p class="dash-note" data-note${HERO ? ' hidden' : ''}></p>
-  ${HERO ? `<p class="dash-credit">One of the dashboards I redesigned for Nicholls State's Office of Institutional Research, drawn from its published figures · <a href="${BASE}work/tableau-dashboards/">See the full before and after, and six more →</a></p>` : `<p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>`}
-  <div class="dash-cursor" aria-hidden="true" hidden><svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2l14 9-6 1.5 3.5 7-3 1.5-3.5-7L4 18z" fill="#15171C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
-
-const $ = (s) => root.querySelector(s);
-const stage = $('[data-dash-stage]');
-const svgBefore = $('.dash-svg--before'), svgAfter = $('.dash-svg--after');
-const handle = $('.dash-handle'), tipEl = $('.dash-tip'), note = $('[data-note]');
-const fallSel = $('[data-fall]'), groupSel = $('[data-group]'), groupWrap = $('[data-group-wrap]');
-
-// Numbers in the view model ease from the old values to the new ones.
-const lerp = (a, b, t) => {
-  if (typeof b === 'number' && typeof a === 'number') return a + (b - a) * t;
-  if (Array.isArray(b)) return b.map((v, i) => lerp(Array.isArray(a) ? a[i] : undefined, v, t));
-  return b;
-};
-let shown = null, anim = 0;
-function draw(model) {
-  const d = DASHES[state.dash];
-  svgBefore.innerHTML = d.before(model);
-  svgAfter.innerHTML = d.after(model);
-}
-function render({ animate = true } = {}) {
-  const d = DASHES[state.dash], D = state.data[state.dash];
-  if (!D) return;
-  const target = d.model(D, state);
-  const from = shown && shown.__dash === state.dash ? shown : null;
-  cancelAnimationFrame(anim);
-  if (!from || !animate || reduceMotion) { shown = Object.assign(target, { __dash: state.dash }); draw(target); return; }
-  const keys = ['cur', 'before', 'acc', 'yld', 'accPrev', 'yldPrev', 'total', 'totalPrev', 'fg', 'fgPrev', 'gender'];
-  const t0 = performance.now();
-  const step = (now) => {
-    const t = Math.min(1, (now - t0) / 450), e = 1 - Math.pow(1 - t, 3);
-    const mid = { ...target };
-    for (const k of keys) if (k in target) mid[k] = lerp(from[k], target[k], e);
-    for (const k of ['cur', 'before', 'fg', 'fgPrev', 'gender']) if (mid[k]) mid[k] = mid[k].map((v, i) => (target[k][i] == null ? null : Math.round(v)));
-    if (typeof mid.total === 'number') mid.total = Math.round(mid.total);
-    draw(mid);
-    if (t < 1) anim = requestAnimationFrame(step); else shown = Object.assign(target, { __dash: state.dash });
-  };
-  anim = requestAnimationFrame(step);
-}
-
-function fillControls() {
-  const D = state.data[state.dash];
-  fallSel.innerHTML = D.falls.slice().reverse().map((f) => `<option value="${f.code}">${f.label}</option>`).join('');
-  if (!D.falls.some((f) => f.code === state.fall)) state.fall = D.falls[D.falls.length - 1].code;
-  fallSel.value = state.fall;
-  groupWrap.hidden = HERO || state.dash !== 'admissions';
-  if (D.groups) groupSel.innerHTML = D.groups.map((g) => `<option value="${g.key}">${g.label}</option>`).join('');
-  groupSel.value = state.group;
-  root.querySelectorAll('[data-dash]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.dash === state.dash)));
-  updateNote();
-}
-function updateNote() {
-  const d = DASHES[state.dash];
-  note.textContent = state.split >= 60 ? d.beforeNote : state.split <= 40 ? d.afterNote : `${d.beforeNote.split(':')[0]} on the left, after on the right. Drag the seam.`;
-}
-
-function setSplit(v, { animate = false } = {}) {
-  state.split = Math.max(0, Math.min(100, v));
-  stage.classList.toggle('is-animating', animate && !reduceMotion);
-  stage.style.setProperty('--split', state.split);
-  stage.style.setProperty('--before-tag', state.split > 12 ? 1 : 0);
-  stage.style.setProperty('--after-tag', state.split < 88 ? 1 : 0);
-  handle.setAttribute('aria-valuenow', String(Math.round(state.split)));
-  handle.setAttribute('aria-valuetext', state.split >= 100 ? 'All original' : state.split <= 0 ? 'All redesign' : `${Math.round(state.split)}% original`);
-  root.querySelectorAll('[data-split]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.split) === Math.round(state.split))));
-  updateNote();
-}
-
 async function load(key) {
   if (!state.data[key]) state.data[key] = await (await fetch(`${BASE}data/dashboards/${DASHES[key].file}`)).json();
 }
-async function switchTo(key) {
-  state.dash = key;
-  await load(key);
-  shown = null;
-  fillControls();
-  render({ animate: false });
-}
 
-// Seam: drag the handle or the line; keyboard on the handle.
-let dragging = false;
-const fromPointer = (e) => { const r = stage.getBoundingClientRect(); setSplit(((e.clientX - r.left) / r.width) * 100); };
-[handle, $('.dash-seam')].forEach((el) => el.addEventListener('pointerdown', (e) => { dragging = true; el.setPointerCapture(e.pointerId); fromPointer(e); }));
-stage.addEventListener('pointermove', (e) => { if (dragging) fromPointer(e); });
-['pointerup', 'pointercancel'].forEach((ev) => stage.addEventListener(ev, () => { dragging = false; }));
-handle.addEventListener('keydown', (e) => {
-  const steps = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5, PageDown: -20, PageUp: 20 };
-  if (e.key in steps) { e.preventDefault(); setSplit(state.split + steps[e.key]); }
-  else if (e.key === 'Home') { e.preventDefault(); setSplit(0); }
-  else if (e.key === 'End') { e.preventDefault(); setSplit(100); }
-});
-root.querySelectorAll('[data-split]').forEach((b) => b.addEventListener('click', () => setSplit(Number(b.dataset.split), { animate: true })));
-root.querySelectorAll('[data-dash]').forEach((b) => b.addEventListener('click', () => switchTo(b.dataset.dash)));
-fallSel.addEventListener('change', () => { state.fall = Number(fallSel.value); render(); });
-groupSel.addEventListener('change', () => { state.group = groupSel.value; render(); });
-// The redesign's own controls: the fall stepper arrows and the Filters button.
-svgAfter.addEventListener('click', (e) => {
-  const act = e.target.closest && e.target.closest('[data-act]');
-  if (!act || state.dash !== 'admissions') return;
-  const falls = state.data.admissions.falls.map((f) => f.code), i = falls.indexOf(state.fall);
-  if (act.dataset.act === 'filters') { state.filtersOpen = !state.filtersOpen; render({ animate: false }); return; }
-  const j = act.dataset.act === 'prev' ? i - 1 : i + 1;
-  if (j < 0 || j >= falls.length) return;
-  state.fall = falls[j]; fallSel.value = String(state.fall); render();
-});
-
-// Hover text for marks (whichever side of the seam is showing).
-function showTip(text, clientX, clientY) {
-  const r = stage.getBoundingClientRect();
-  tipEl.textContent = '';
-  text.split('\n').forEach((line, i) => { const s = document.createElement('span'); s.textContent = line; if (!i) s.className = 'dash-tip__head'; tipEl.append(s); });
-  tipEl.hidden = false;
-  const x = Math.min(clientX - r.left + 14, r.width - tipEl.offsetWidth - 6), y = clientY - r.top + 14;
-  tipEl.style.left = `${Math.max(6, x)}px`;
-  tipEl.style.top = `${y + tipEl.offsetHeight > r.height ? clientY - r.top - tipEl.offsetHeight - 10 : y}px`;
+// Phones get a still poster instead of the live hero: the redesigned Admissions dashboard for the
+// latest fall, drawn once into the poster's <svg>. No seam, no sweep, no tabs, and nothing of the
+// demo mounts, so the page runs no animation. The CSS swaps the poster and the live demo on every
+// resize, so each side is drawn the first time its width is reached (a phone turned sideways, a
+// window dragged narrower) and left alone after that.
+const wide = matchMedia('(min-width: 601px)');
+let mounted = false, postered = false;
+async function drawPoster() {
+  if (postered) return;
+  const poster = document.querySelector('[data-poster] svg');
+  if (!poster) return;
+  postered = true;
+  await load('admissions');
+  const D = state.data.admissions;
+  const sel = { ...state, fall: D.falls[D.falls.length - 1].code, group: 'all' };
+  poster.setAttribute('font-family', FONT.slice(FONT.indexOf('"') + 1, -1));
+  poster.innerHTML = DASHES.admissions.after(DASHES.admissions.model(D, sel));
 }
-stage.addEventListener('pointermove', (e) => {
-  if (dragging) return;
-  const t = e.target.closest && e.target.closest('[data-tip]');
-  if (t) showTip(t.dataset.tip, e.clientX, e.clientY); else tipEl.hidden = true;
-});
-stage.addEventListener('pointerleave', () => { tipEl.hidden = true; });
-
-// ── Tour: a scripted cursor that uses the real controls ─────────────
-const cursor = $('.dash-cursor'), tourBtn = $('[data-tour-toggle]');
-let touring = false, tourRun = 0;
-const wait = (ms) => new Promise((res) => setTimeout(res, ms));
-function cursorTo(el, { dx = 0.5, dy = 0.5 } = {}) {
-  const rr = root.getBoundingClientRect(), r = el.getBoundingClientRect();
-  const x = r.left - rr.left + r.width * dx, y = r.top - rr.top + r.height * dy;
-  cursor.style.transform = `translate(${x}px, ${y}px)`;
-  return { x: r.left + r.width * dx, y: r.top + r.height * dy };
+async function mountOnce() {
+  if (mounted) return;
+  mounted = true;
+  await mount();
 }
-async function click() { cursor.classList.add('is-click'); await wait(220); cursor.classList.remove('is-click'); }
-async function dragSeam(to, run, ms = 1400) {
-  cursorTo(handle);
-  await wait(500);
-  const from = state.split, t0 = performance.now();
-  stage.classList.remove('is-animating');
-  while (run === tourRun) {
-    const t = Math.min(1, (performance.now() - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-    setSplit(from + (to - from) * e);
-    cursorTo(handle);
-    if (t >= 1) break;
-    await new Promise((res) => requestAnimationFrame(res));
-  }
-}
-async function pick(select, value, run) {
-  cursorTo(select); await wait(650); if (run !== tourRun) return;
-  await click(); select.value = String(value); select.dispatchEvent(new Event('change')); await wait(900);
-}
-async function hover(selector, run) {
-  const el = (svgAfter.querySelector(selector) || svgBefore.querySelector(selector));
-  if (!el || run !== tourRun) return;
-  const p = cursorTo(el, { dx: 0.5, dy: 0.45 });
-  await wait(600);
-  if (run === tourRun) showTip(el.dataset.tip, p.x, p.y);
-  await wait(1800); tipEl.hidden = true;
-}
-async function tour() {
-  const run = ++tourRun;
-  const ok = () => run === tourRun;
-  cursor.hidden = false;
-  root.classList.add('is-touring');
-  while (ok()) {
-    if (state.dash !== 'admissions') { cursorTo(root.querySelector('[data-dash="admissions"]')); await wait(600); await click(); await switchTo('admissions'); }
-    state.group = 'all'; groupSel.value = 'all';
-    await dragSeam(96, run); if (!ok()) break; await wait(1600);
-    await dragSeam(4, run, 1800); if (!ok()) break; await wait(1600);
-    await dragSeam(30, run, 700); if (!ok()) break;
-    const D = state.data.admissions, last = D.falls[D.falls.length - 1].code, prev = D.falls[D.falls.length - 2].code;
-    await pick(fallSel, prev, run); if (!ok()) break;
-    await pick(fallSel, last, run); if (!ok()) break;
-    await hover('[data-tour="adm-funnel-2"]', run); if (!ok()) break;
-    await pick(groupSel, 'N', run); if (!ok()) break;
-    await pick(groupSel, 'all', run); if (!ok()) break;
-    cursorTo(root.querySelector('[data-dash="ftf"]')); await wait(700); if (!ok()) break;
-    await click(); await switchTo('ftf'); setSplit(30);
-    await dragSeam(96, run, 1200); if (!ok()) break; await wait(1600);
-    await dragSeam(4, run, 1600); if (!ok()) break; await wait(1400);
-    await dragSeam(35, run, 600); if (!ok()) break;
-    await hover('[data-tour="ftf-race-black"]', run); if (!ok()) break;
-    await hover('[data-tour="ftf-total-sel"]', run); if (!ok()) break;
-    await wait(800);
-  }
-}
-function stopTour() {
-  if (!touring) return;
-  touring = false; tourRun++;
-  cursor.hidden = true; tipEl.hidden = true;
-  root.classList.remove('is-touring');
-  tourBtn.textContent = 'Play the tour'; tourBtn.setAttribute('aria-pressed', 'false');
-}
-function startTour() {
-  touring = true;
-  tourBtn.textContent = 'Stop the tour'; tourBtn.setAttribute('aria-pressed', 'true');
-  tour();
-}
-tourBtn?.addEventListener('click', () => (touring ? stopTour() : startTour()));
-// Any real interaction hands control back to the visitor.
-['pointerdown', 'keydown', 'wheel'].forEach((ev) => root.addEventListener(ev, (e) => {
-  if (e.isTrusted && touring && !tourBtn.contains(e.target)) stopTour();
-}, { passive: true }));
-
-// Start: load Admissions; play the tour once it scrolls into view (unless reduced motion).
-await switchTo('admissions');
-setSplit(50);
 if (HERO) {
-  // The seam keeps sweeping while the demo is on screen, so it reads as live; any
-  // interaction stops it for good. Reduced motion: no sweep.
-  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((ev) => root.addEventListener(ev, (e) => {
-    if (e.isTrusted) { tourRun++; root.classList.add('is-touched'); }
-  }, { passive: true }));
-  let onScreen = false;
-  new IntersectionObserver((entries) => { onScreen = entries.some((en) => en.isIntersecting); }, { threshold: 0.3 }).observe(stage);
-  if (!reduceMotion) {
-    const run = ++tourRun;
-    await wait(900);
-    sweep: while (run === tourRun) {
-      for (const [to, ms, pause] of [[88, 1400, 1600], [12, 2000, 1600], [50, 1000, 2600]]) {
-        while (!onScreen && run === tourRun) await wait(400);
-        if (run !== tourRun) break sweep;
-        await dragSeam(to, run, ms);
-        await wait(pause);
-      }
+  wide.addEventListener('change', (e) => { if (e.matches) mountOnce(); else drawPoster(); });
+  if (wide.matches) await mountOnce(); else await drawPoster();
+} else {
+  await mount();
+}
+
+// The live demo: the stage with both drawings, the seam, the controls and the tour.
+async function mount() {
+  root.innerHTML = `${HERO ? '' : `
+    <div class="demo__head">
+      <div>
+        <p class="demo__eyebrow">BEFORE ⇄ AFTER · DATA AS PUBLISHED</p>
+        <h2 class="demo__title">Same numbers, <i>redesigned.</i></h2>
+        <p class="demo__lede">Two of the dashboards I redesigned for Nicholls State's Office of Institutional Research, rebuilt here from their published figures. Drag the seam to compare the original with the redesign; the filters drive both sides.</p>
+      </div>
+      <button type="button" class="demo__go" data-tour-toggle aria-pressed="false">Play the tour</button>
+    </div>`}
+    ${HERO ? '' : `<div class="dash-bar">
+      <div class="dash-tabs" role="tablist" aria-label="Dashboard">
+        ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
+      </div>
+      <label class="dash-field">Fall term <select data-fall></select></label>
+      <label class="dash-field" data-group-wrap>Students <select data-group></select></label>
+    </div>`}
+    ${HERO ? `<div class="dash-frame">
+    <div class="dash-chrome">
+      <span class="dash-chrome__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <div class="dash-chrome__tabs" role="tablist" aria-label="Dashboard">
+        ${Object.entries(DASHES).map(([k, d]) => `<button type="button" role="tab" data-dash="${k}" aria-selected="${k === state.dash}">${d.label}</button>`).join('')}
+      </div>
+      <span class="dash-live">INTERACTIVE · published figures</span>
+    </div>` : ''}
+    <div class="dash-stage" data-dash-stage>
+      <svg class="dash-svg dash-svg--before" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Original dashboard"></svg>
+      <svg class="dash-svg dash-svg--after" viewBox="0 0 ${W} ${H}" ${FONT} role="img" aria-label="Redesigned dashboard"></svg>
+      <span class="dash-tag dash-tag--before">BEFORE · original</span>
+      <span class="dash-tag dash-tag--after">AFTER · redesign</span>
+      <div class="dash-seam" aria-hidden="true"></div>
+      <div class="dash-handle" role="slider" tabindex="0" aria-label="Compare the original with the redesign" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l-6 6 6 6"/><path d="M15 6l6 6-6 6"/></svg>
+      </div>
+      <div class="dash-tip" hidden></div>
+    </div>${HERO ? `
+    </div>
+    <div class="dash-under">
+      <label class="dash-field">Fall term <select data-fall></select></label>
+      <span data-group-wrap hidden><select data-group aria-label="Students"></select></span>` : ''}
+    <div class="snaps dash-snaps" role="group" aria-label="Jump to a view">
+      <button type="button" data-split="100" aria-pressed="false">Original</button>
+      <button type="button" class="dash-snaps__half" data-split="50" aria-pressed="true">Half and half</button>
+      <button type="button" data-split="0" aria-pressed="false">Redesign</button>
+    </div>${HERO ? `
+    </div>` : ''}
+    <p class="dash-note" data-note${HERO ? ' hidden' : ''}></p>
+    ${HERO ? `<p class="dash-credit">One of the dashboards I redesigned for Nicholls State's Office of Institutional Research, drawn from its published figures · <a href="${BASE}work/tableau-dashboards/">See the full before and after →</a></p>` : `<p class="dash-credit">Recreated from dashboards I redesigned for Nicholls State's Office of Institutional Research · data as published · counts under 10 show as &lt;10 · <a href="https://www.nicholls.edu/irep/dashboards/" target="_blank" rel="noopener">Open the originals ↗</a></p>`}
+    <div class="dash-cursor" aria-hidden="true" hidden><svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2l14 9-6 1.5 3.5 7-3 1.5-3.5-7L4 18z" fill="#15171C" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
+
+  const $ = (s) => root.querySelector(s);
+  const stage = $('[data-dash-stage]');
+  const svgBefore = $('.dash-svg--before'), svgAfter = $('.dash-svg--after');
+  const handle = $('.dash-handle'), tipEl = $('.dash-tip'), note = $('[data-note]');
+  const fallSel = $('[data-fall]'), groupSel = $('[data-group]'), groupWrap = $('[data-group-wrap]');
+
+  // Numbers in the view model ease from the old values to the new ones.
+  const lerp = (a, b, t) => {
+    if (typeof b === 'number' && typeof a === 'number') return a + (b - a) * t;
+    if (Array.isArray(b)) return b.map((v, i) => lerp(Array.isArray(a) ? a[i] : undefined, v, t));
+    return b;
+  };
+  let shown = null, anim = 0;
+  function draw(model) {
+    const d = DASHES[state.dash];
+    svgBefore.innerHTML = d.before(model);
+    svgAfter.innerHTML = d.after(model);
+  }
+  function render({ animate = true } = {}) {
+    const d = DASHES[state.dash], D = state.data[state.dash];
+    if (!D) return;
+    const target = d.model(D, state);
+    const from = shown && shown.__dash === state.dash ? shown : null;
+    cancelAnimationFrame(anim);
+    if (!from || !animate || motion.reduce) { shown = Object.assign(target, { __dash: state.dash }); draw(target); return; }
+    const keys = ['cur', 'before', 'acc', 'yld', 'accPrev', 'yldPrev', 'total', 'totalPrev', 'fg', 'fgPrev', 'gender'];
+    const t0 = performance.now(), dur = motion.ms('--dur-slow') || 1;
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
+      const mid = { ...target };
+      for (const k of keys) if (k in target) mid[k] = lerp(from[k], target[k], e);
+      for (const k of ['cur', 'before', 'fg', 'fgPrev', 'gender']) if (mid[k]) mid[k] = mid[k].map((v, i) => (target[k][i] == null ? null : Math.round(v)));
+      if (typeof mid.total === 'number') mid.total = Math.round(mid.total);
+      draw(mid);
+      if (t < 1) anim = requestAnimationFrame(step); else shown = Object.assign(target, { __dash: state.dash });
+    };
+    anim = requestAnimationFrame(step);
+  }
+
+  function fillControls() {
+    const D = state.data[state.dash];
+    fallSel.innerHTML = D.falls.slice().reverse().map((f) => `<option value="${f.code}">${f.label}</option>`).join('');
+    if (!D.falls.some((f) => f.code === state.fall)) state.fall = D.falls[D.falls.length - 1].code;
+    fallSel.value = state.fall;
+    groupWrap.hidden = HERO || state.dash !== 'admissions';
+    if (D.groups) groupSel.innerHTML = D.groups.map((g) => `<option value="${g.key}">${g.label}</option>`).join('');
+    groupSel.value = state.group;
+    root.querySelectorAll('[data-dash]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.dash === state.dash)));
+    updateNote();
+  }
+  function updateNote() {
+    const d = DASHES[state.dash];
+    note.textContent = state.split >= 60 ? d.beforeNote : state.split <= 40 ? d.afterNote : `${d.beforeNote.split(':')[0]} on the left, after on the right. Drag the seam.`;
+  }
+
+  function setSplit(v, { animate = false } = {}) {
+    state.split = Math.max(0, Math.min(100, v));
+    stage.classList.toggle('is-animating', animate && !motion.reduce);
+    stage.style.setProperty('--split', state.split);
+    stage.style.setProperty('--before-tag', state.split > 12 ? 1 : 0);
+    stage.style.setProperty('--after-tag', state.split < 88 ? 1 : 0);
+    handle.setAttribute('aria-valuenow', String(Math.round(state.split)));
+    handle.setAttribute('aria-valuetext', state.split >= 100 ? 'All original' : state.split <= 0 ? 'All redesign' : `${Math.round(state.split)}% original`);
+    root.querySelectorAll('[data-split]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.split) === Math.round(state.split))));
+    updateNote();
+  }
+
+  async function switchTo(key) {
+    state.dash = key;
+    await load(key);
+    shown = null;
+    fillControls();
+    render({ animate: false });
+  }
+
+  // Seam: drag the handle or the line; keyboard on the handle.
+  let dragging = false;
+  const fromPointer = (e) => { const r = stage.getBoundingClientRect(); setSplit(((e.clientX - r.left) / r.width) * 100); };
+  [handle, $('.dash-seam')].forEach((el) => el.addEventListener('pointerdown', (e) => { dragging = true; el.setPointerCapture(e.pointerId); fromPointer(e); }));
+  stage.addEventListener('pointermove', (e) => { if (dragging) fromPointer(e); });
+  ['pointerup', 'pointercancel'].forEach((ev) => stage.addEventListener(ev, () => { dragging = false; }));
+  handle.addEventListener('keydown', (e) => {
+    const steps = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5, PageDown: -20, PageUp: 20 };
+    if (e.key in steps) { e.preventDefault(); setSplit(state.split + steps[e.key]); }
+    else if (e.key === 'Home') { e.preventDefault(); setSplit(0); }
+    else if (e.key === 'End') { e.preventDefault(); setSplit(100); }
+  });
+  root.querySelectorAll('[data-split]').forEach((b) => b.addEventListener('click', () => setSplit(Number(b.dataset.split), { animate: true })));
+  root.querySelectorAll('[data-dash]').forEach((b) => b.addEventListener('click', () => switchTo(b.dataset.dash)));
+  fallSel.addEventListener('change', () => { state.fall = Number(fallSel.value); render(); });
+  groupSel.addEventListener('change', () => { state.group = groupSel.value; render(); });
+  // The redesign's own controls: the fall stepper arrows and the Filters button.
+  svgAfter.addEventListener('click', (e) => {
+    const act = e.target.closest && e.target.closest('[data-act]');
+    if (!act || state.dash !== 'admissions') return;
+    const falls = state.data.admissions.falls.map((f) => f.code), i = falls.indexOf(state.fall);
+    if (act.dataset.act === 'filters') { state.filtersOpen = !state.filtersOpen; render({ animate: false }); return; }
+    const j = act.dataset.act === 'prev' ? i - 1 : i + 1;
+    if (j < 0 || j >= falls.length) return;
+    state.fall = falls[j]; fallSel.value = String(state.fall); render();
+  });
+
+  // Hover text for marks (whichever side of the seam is showing).
+  function showTip(text, clientX, clientY) {
+    const r = stage.getBoundingClientRect();
+    tipEl.textContent = '';
+    text.split('\n').forEach((line, i) => { const s = document.createElement('span'); s.textContent = line; if (!i) s.className = 'dash-tip__head'; tipEl.append(s); });
+    tipEl.hidden = false;
+    const x = Math.min(clientX - r.left + 14, r.width - tipEl.offsetWidth - 6), y = clientY - r.top + 14;
+    tipEl.style.left = `${Math.max(6, x)}px`;
+    tipEl.style.top = `${y + tipEl.offsetHeight > r.height ? clientY - r.top - tipEl.offsetHeight - 10 : y}px`;
+  }
+  stage.addEventListener('pointermove', (e) => {
+    if (dragging) return;
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (t) showTip(t.dataset.tip, e.clientX, e.clientY); else tipEl.hidden = true;
+  });
+  stage.addEventListener('pointerleave', () => { tipEl.hidden = true; });
+
+  // ── Tour: a scripted cursor that uses the real controls ─────────────
+  const cursor = $('.dash-cursor'), tourBtn = $('[data-tour-toggle]');
+  let touring = false, tourRun = 0;
+  const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+  function cursorTo(el, { dx = 0.5, dy = 0.5 } = {}) {
+    const rr = root.getBoundingClientRect(), r = el.getBoundingClientRect();
+    const x = r.left - rr.left + r.width * dx, y = r.top - rr.top + r.height * dy;
+    cursor.style.transform = `translate(${x}px, ${y}px)`;
+    return { x: r.left + r.width * dx, y: r.top + r.height * dy };
+  }
+  async function click() { cursor.classList.add('is-click'); await wait(220); cursor.classList.remove('is-click'); }
+  async function dragSeam(to, run, ms = 1400) {
+    cursorTo(handle);
+    await wait(500);
+    const from = state.split, t0 = performance.now();
+    stage.classList.remove('is-animating');
+    while (run === tourRun) {
+      if (motion.reduce) { setSplit(to); break; }
+      const t = Math.min(1, (performance.now() - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      setSplit(from + (to - from) * e);
+      cursorTo(handle);
+      if (t >= 1) break;
+      await new Promise((res) => requestAnimationFrame(res));
     }
   }
-} else if (!reduceMotion) {
-  const io = new IntersectionObserver((entries) => {
-    if (entries.some((en) => en.isIntersecting)) { io.disconnect(); if (!touring) startTour(); }
-  }, { threshold: 0.5 });
-  io.observe(stage);
+  async function pick(select, value, run) {
+    cursorTo(select); await wait(650); if (run !== tourRun) return;
+    await click(); select.value = String(value); select.dispatchEvent(new Event('change')); await wait(900);
+  }
+  async function hover(selector, run) {
+    const el = (svgAfter.querySelector(selector) || svgBefore.querySelector(selector));
+    if (!el || run !== tourRun) return;
+    const p = cursorTo(el, { dx: 0.5, dy: 0.45 });
+    await wait(600);
+    if (run === tourRun) showTip(el.dataset.tip, p.x, p.y);
+    await wait(1800); tipEl.hidden = true;
+  }
+  async function tour() {
+    const run = ++tourRun;
+    const ok = () => run === tourRun;
+    cursor.hidden = false;
+    root.classList.add('is-touring');
+    while (ok()) {
+      if (state.dash !== 'admissions') { cursorTo(root.querySelector('[data-dash="admissions"]')); await wait(600); await click(); await switchTo('admissions'); }
+      state.group = 'all'; groupSel.value = 'all';
+      await dragSeam(96, run); if (!ok()) break; await wait(1600);
+      await dragSeam(4, run, 1800); if (!ok()) break; await wait(1600);
+      await dragSeam(30, run, 700); if (!ok()) break;
+      const D = state.data.admissions, last = D.falls[D.falls.length - 1].code, prev = D.falls[D.falls.length - 2].code;
+      await pick(fallSel, prev, run); if (!ok()) break;
+      await pick(fallSel, last, run); if (!ok()) break;
+      await hover('[data-tour="adm-funnel-2"]', run); if (!ok()) break;
+      await pick(groupSel, 'N', run); if (!ok()) break;
+      await pick(groupSel, 'all', run); if (!ok()) break;
+      cursorTo(root.querySelector('[data-dash="ftf"]')); await wait(700); if (!ok()) break;
+      await click(); await switchTo('ftf'); setSplit(30);
+      await dragSeam(96, run, 1200); if (!ok()) break; await wait(1600);
+      await dragSeam(4, run, 1600); if (!ok()) break; await wait(1400);
+      await dragSeam(35, run, 600); if (!ok()) break;
+      await hover('[data-tour="ftf-race-black"]', run); if (!ok()) break;
+      await hover('[data-tour="ftf-total-sel"]', run); if (!ok()) break;
+      await wait(800);
+    }
+  }
+  function stopTour() {
+    if (!touring) return;
+    touring = false; tourRun++;
+    cursor.hidden = true; tipEl.hidden = true;
+    root.classList.remove('is-touring');
+    tourBtn.textContent = 'Play the tour'; tourBtn.setAttribute('aria-pressed', 'false');
+  }
+  function startTour() {
+    touring = true;
+    tourBtn.textContent = 'Stop the tour'; tourBtn.setAttribute('aria-pressed', 'true');
+    tour();
+  }
+  tourBtn?.addEventListener('click', () => (touring ? stopTour() : startTour()));
+  // Any real interaction hands control back to the visitor.
+  ['pointerdown', 'keydown', 'wheel'].forEach((ev) => root.addEventListener(ev, (e) => {
+    if (e.isTrusted && touring && !tourBtn.contains(e.target)) stopTour();
+  }, { passive: true }));
+
+  // Start: load Admissions; play the tour once it scrolls into view (unless reduced motion).
+  await switchTo('admissions');
+  setSplit(50);
+  if (HERO) {
+    // The seam sweeps three cycles while the demo is on screen, then rests at half and half; it
+    // sweeps once more each time the demo scrolls away and back. Any interaction stops it for
+    // good. Reduced motion: no sweep.
+    ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((ev) => root.addEventListener(ev, (e) => {
+      if (e.isTrusted) { tourRun++; root.classList.add('is-touched'); }
+    }, { passive: true }));
+    let onScreen = false, armed = true;
+    new IntersectionObserver((entries) => {
+      const now = entries.some((en) => en.isIntersecting);
+      if (!now && onScreen) armed = true;
+      onScreen = now;
+    }, { threshold: 0.3 }).observe(stage);
+    if (!motion.reduce) {
+      const run = ++tourRun;
+      await wait(900);
+      sweep: while (run === tourRun) {
+        while ((!onScreen || !armed) && run === tourRun) await wait(400);
+        if (run !== tourRun) break;
+        armed = false;
+        for (let cycle = 0; cycle < 3; cycle++) {
+          for (const [to, ms, pause] of [[88, 1400, 1600], [12, 2000, 1600], [50, 1000, 2600]]) {
+            while (!onScreen && run === tourRun) await wait(400);
+            if (run !== tourRun || motion.reduce) break sweep;
+            await dragSeam(to, run, ms);
+            await wait(pause);
+          }
+        }
+      }
+    }
+  } else if (!motion.reduce) {
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((en) => en.isIntersecting)) { io.disconnect(); if (!touring) startTour(); }
+    }, { threshold: 0.5 });
+    io.observe(stage);
+  }
 }

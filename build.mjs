@@ -1,11 +1,46 @@
 // Builds the static site into ./dist using only Node's standard library.
 // Run: node build.mjs
-import { mkdir, writeFile, copyFile, rm, cp } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile, rm, cp, readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { projects } from './src/projects.mjs';
+import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
 const PREVIEW = process.env.PREVIEW === '1';
+// NOINDEX=1 asks search engines to leave the site out: a noindex tag on every page and a
+// robots.txt that turns crawlers away. Without it the site is indexable and has a sitemap.
+const NOINDEX = process.env.NOINDEX === '1';
+
+// A project whose data files are stand-ins (made to design the page before the
+// real analysis ran) is never published. A production build stops with an error,
+// so the live site keeps its last good version. HOLD_BACK=1 builds the rest of
+// the site without the project instead. PREVIEW=1 builds show it, under a banner.
+const isStandin = async (dataset) => {
+  const dir = `src/data/${dataset}`;
+  if (!existsSync(dir)) return true;
+  for (const f of (await readdir(dir)).filter((n) => n.endsWith('.json'))) {
+    if (JSON.parse(await readFile(`${dir}/${f}`, 'utf8')).standin) return true;
+  }
+  return false;
+};
+const projects = [];
+const heldBack = [];
+for (const p of allProjects) {
+  // A project marked hidden is left out of every build: no page, no card, no palette entry,
+  // no sitemap line, and its data files are not copied. Its files stay in the repo for reuse.
+  if (p.hidden) { if (p.data) heldBack.push(p.data); continue; }
+  if (p.data && !PREVIEW && (await isStandin(p.data))) {
+    if (process.env.HOLD_BACK !== '1') {
+      console.error(`Not built: the data for "${p.title}" in src/data/${p.data} is stand-in or missing, and stand-in numbers must not be published.\nBring in the real files (node tools/sync-ewarn.mjs), or run HOLD_BACK=1 node build.mjs to build the site without this project.`);
+      process.exit(1);
+    }
+    console.warn(`Skipping "${p.title}": its data in src/data/${p.data} is still stand-in. It shows in PREVIEW=1 builds only.`);
+    heldBack.push(p.data);
+    continue;
+  }
+  // Links into a repo that is still private are left out everywhere (rail, palette) until
+  // the project's repoIsPublic switch in src/projects.mjs is set to true.
+  projects.push(p.repoIsPublic === false ? { ...p, links: p.links.filter((l) => !l.repo) } : p);
+}
 const u = (depth, target = '') => {
   if (!PREVIEW) return '/' + target;
   const [path, hash] = target.split('#');
@@ -16,7 +51,7 @@ const u = (depth, target = '') => {
 const SITE = {
   name: 'Kobi Lipari',
   url: 'https://kobilipari.com',
-  description: 'Kobi Lipari — data analyst and web developer. Real insights, made beautiful.',
+  description: 'I\'m a data analyst and web developer in New Orleans. I build the pipelines and models a university research office runs on, and the websites people use every day.',
   email: 'KobiLipari@gmail.com',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/kobi-lipari-2a8b24327/' },
@@ -27,6 +62,7 @@ const SITE = {
   resume: existsSync('src/resume.pdf') ? 'resume.pdf' : 'resume/',
   headshot: existsSync('src/img/headshot.webp') ? 'headshot' : null,
 };
+for (const l of SITE.links) if (l.href === '#') console.warn(`No URL yet for ${l.label}: its link is left out until SITE.links has one.`);
 
 // Escape text. [Placeholders] are left out of the live site; DRAFT=1 shows them highlighted
 // so they're easy to find and replace.
@@ -37,36 +73,71 @@ const txt = (s = '') => DRAFT
   ? esc(s).replace(/\[[^\]]+\]/g, (m) => `<span class="todo">${m}</span>`)
   : esc(String(s).replace(/\s*\[[^\]]+\]/g, '').trim());
 
-const head = ({ title, description, path, depth = 0, fonts = '' }) => `<!doctype html>
-<html lang="en">
+// The picture link previews show (Open Graph, Twitter card), the touch icon and favicon.ico
+// are made by tools/share-image.mjs. The picture shows the homepage headline, so that is its alt text.
+const SHARE_IMAGE = { src: 'img/og.png', w: 1200, h: 630 };
+
+// Who the site is about, for search engines (schema.org Person). The job, employer and degree
+// repeat the About block on the homepage: change them together.
+const personLd = () => `<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  url: `${SITE.url}/`,
+  ...(SITE.headshot ? { image: `${SITE.url}/img/headshot.webp` } : {}),
+  description: SITE.description,
+  jobTitle: 'Data Analyst',
+  worksFor: { '@type': 'CollegeOrUniversity', name: 'Nicholls State University' },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of Louisiana at Lafayette' },
+  email: `mailto:${SITE.email}`,
+  sameAs: SITE.links.filter((l) => l.href !== '#').map((l) => l.href),
+}).replace(/</g, '\\u003c')}</script>`;
+
+// Font files every page shows above the fold, fetched early so the first paint already has
+// them. A page can add more with `fonts`. The files and their @font-face rules: src/vendor/fonts, src/styles.css.
+const FONT_PRELOAD = ['geist-latin-wght-normal', 'instrument-serif-latin-400-normal'];
+// `noindex` is for a page that should never be listed (the 404 page); it also has no canonical URL.
+const head = ({ title, description, path, depth = 0, fonts = [], noindex = false, extra = '', lens = null }) => `<!doctype html>
+<html lang="en"${lens && lens.key !== 'root' ? ` data-lens="${lens.key}"` : ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${SITE.url}${path}">
+<meta name="description" content="${esc(description)}">${noindex || NOINDEX ? '\n<meta name="robots" content="noindex, nofollow">' : ''}${noindex ? '' : `
+<link rel="canonical" href="${SITE.url}${path}">`}
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="${SITE.url}${path}">
+<meta property="og:site_name" content="${SITE.name}">${noindex ? '' : `
+<meta property="og:url" content="${SITE.url}${path}">`}
+<meta property="og:image" content="${SITE.url}/${SHARE_IMAGE.src}">
+<meta property="og:image:width" content="${SHARE_IMAGE.w}">
+<meta property="og:image:height" content="${SHARE_IMAGE.h}">
+<meta property="og:image:alt" content="${esc(LENSES.root.h1.join(' '))}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(description)}">
+<meta name="twitter:image" content="${SITE.url}/${SHARE_IMAGE.src}">
 <meta name="theme-color" content="#F3EEE6">
 <script>(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light'})()</script>
+<link rel="icon" href="${u(depth, 'favicon.ico')}" sizes="32x32">
+<link rel="apple-touch-icon" href="${u(depth, 'img/apple-touch-icon.png')}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='16' height='32' fill='%230E2438'/%3E%3Crect x='16' width='16' height='32' fill='%23F3EEE6'/%3E%3Crect x='15' width='2' height='32' fill='%23C8553A'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1${fonts}&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="${u(depth, 'styles.css')}">
+${[...FONT_PRELOAD, ...fonts].map((f) => `<link rel="preload" href="${u(depth, `vendor/fonts/${f}.woff2`)}" as="font" type="font/woff2" crossorigin>`).join('\n')}
+<link rel="stylesheet" href="${u(depth, 'styles.css')}">${extra ? `\n${extra}` : ''}
 </head>
-<body>
+<body${lens && lens.key !== 'root' ? ` data-lens="${lens.key}"` : ''}>
 <a class="skip" href="#main">Skip to content</a>`;
 
-const nav = (depth = 0) => `
+// `home` is where the name and the Work / About / Contact links go: the site root, or on a lens
+// page the lens itself, so its anchors stay on that page.
+const nav = (depth = 0, home = u(depth), resume = SITE.resume) => `
 <header class="nav">
-  <a class="nav__name" href="${u(depth)}">${SITE.name}</a>
+  <a class="nav__name" href="${home}">${SITE.name}</a>
   <nav class="nav__links" aria-label="Main">
-    <a class="hide-sm" href="${u(depth, '#work')}">Work</a>
-    <a class="hide-sm" href="${u(depth, '#about')}">About</a>
-    <a class="hide-sm" href="${u(depth, '#contact')}">Contact</a>
+    <a href="${home}#work">Work</a>
+    <a href="${home}#about">About</a>
+    <a href="${home}#contact">Contact</a>
     <span class="nav__tools">
       <button type="button" class="icon-btn icon-btn--wide hide-sm" data-palette-open aria-label="Jump to a page or action" title="Jump to (Ctrl/⌘ K)">
         ${ICON.search}<kbd><span data-shortcut-mod>⌘</span>K</kbd>
@@ -74,7 +145,7 @@ const nav = (depth = 0) => `
       <button type="button" class="icon-btn" data-bp-toggle aria-pressed="false" aria-label="Blueprint mode" title="Blueprint mode (B)">${ICON.ruler}</button>
       <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme" title="Theme">${ICON.moon}${ICON.sun}</button>
     </span>
-    <a class="pill" href="${u(depth, SITE.resume)}">Résumé</a>
+    <a class="pill" href="${u(depth, resume)}">Résumé</a>
   </nav>
 </header>`;
 
@@ -87,6 +158,9 @@ const siteIndex = (depth) => {
     { group: 'On this site', title: 'All work', keywords: 'projects list engineering design', href: u(depth, 'work/') },
     { group: 'On this site', title: 'About Kobi', keywords: 'bio experience', href: u(depth, '#about') },
     { group: 'On this site', title: 'Résumé', keywords: 'cv pdf', href: u(depth, SITE.resume) },
+    { group: 'View as', title: 'Everyone', keywords: 'home root', href: u(depth) },
+    { group: 'View as', title: 'If you\'re hiring an analyst', keywords: 'analyst bi tableau lens', href: u(depth, 'analyst/') },
+    { group: 'View as', title: 'If you\'re hiring a developer', keywords: 'developer full-stack react lens', href: u(depth, 'dev/') },
     ...projects.flatMap((p) => p.links.filter((l) => l.href.startsWith('http')).map((l) => ({
       group: 'Live work', title: `${p.title}: ${l.label}`, hint: '↗', keywords: 'live site open', href: l.href, external: true,
     }))),
@@ -107,16 +181,16 @@ const ICON = {
   sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 'class="i-sun"'),
 };
 
-const footer = (depth = 0) => `
+const footer = (depth = 0, lens = LENSES.root) => `
 <footer class="footer" id="contact">
   <div>
     <p class="footer__cta">Let's <i>talk.</i></p>
-    <p class="footer__sub">Open to data analyst and full-stack roles · New Orleans or relocating</p>
+    <p class="footer__sub">${esc(lens.openTo)}</p>
   </div>
   <div class="footer__links">
     <a class="footer__mail" href="mailto:${SITE.email}">${esc(SITE.email)}</a>
     ${SITE.links.filter((l) => l.href !== '#').map((l) => `<a class="footer__link" href="${l.href}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ')}
-    <a class="footer__link" href="${u(depth, SITE.resume)}">Résumé</a>
+    <a class="footer__link" href="${u(depth, lens.resume)}">Résumé</a>
   </div>
 </footer>
 ${siteIndex(depth)}
@@ -130,21 +204,122 @@ const ph = (label, hint = '', cls = '') =>
 
 // Project picture for cards and rows: its own thumbnail, else its first screenshot.
 const pic = (p) => p.thumb || (p.gallery?.desktop?.[0]?.src ? p.gallery.desktop[0] : null);
-const picImg = (depth, p, cls) => {
+const picImg = (depth, p, cls, eager = false) => {
   const im = pic(p);
   return im
-    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}" loading="lazy" decoding="async">`
+    ? `<img class="${cls}" src="${u(depth, `img/${im.src}-sm.webp`)}" alt="" width="${im.w / 2}" height="${im.h / 2}"${eager ? '' : ' loading="lazy"'} decoding="async">`
     : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
-// Featured order on the homepage; the rest go in "More work". All of them are on /work/.
-const FEATURED = ['tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
-const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug));
-const others = projects.filter((p) => !FEATURED.includes(p.slug));
+// A link into a project page, resolved at build: the page's URL (with `hash`) when the project is
+// published, else `fallback`. Chips keep working while the page they point at is still hidden.
+const linkTo = (depth, slug, hash = '', fallback = null) => projects.some((p) => p.slug === slug) ? u(depth, `work/${slug}/${hash}`) : fallback;
+// One of SITE.links by label, or null while it still has no URL.
+const linkUrl = (label) => { const { href } = SITE.links.find((l) => l.label === label); return href === '#' ? null : href; };
 
-const card = (depth, p) => `
+// A lens's own résumé PDF, when it has been added; until then the lens shares the site's one.
+const lensResume = (file) => {
+  if (existsSync(`src/${file}`)) return file;
+  console.warn(`No src/${file} yet; the lens Résumé link falls back to ${SITE.resume}.`);
+  return SITE.resume;
+};
+
+// A lens is one version of the homepage: every string the hero, chips, featured order, About
+// and footer read comes from here. `featured` lists slugs in order; the first three that are
+// published are the cards, the rest go in "More work". All of them are on /work/. A lens
+// reorders and reframes; it never changes a fact. TOOLS is one set, reordered per lens; the
+// dev lens also names TypeScript and React, the stack its title promises.
+const LENSES = {
+  root: {
+    key: 'root', path: '/', depth: 0, dir: null,
+    title: `${SITE.name} — data analyst and web developer`,
+    description: SITE.description,
+    role: 'Data analyst · Web developer',
+    h1: ['I understand the data', 'and the person reading it.'],
+    pitch: 'By day I turn a university\'s scattered data into pipelines, models and dashboards its advisers act on. By night I build websites for a chess association and a telehealth clinic.',
+    recruiter: 'Data, BI and full-stack work · New Orleans',
+    chips: (d) => [
+      { n: '30+', label: 'dashboards I keep running', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources feeding one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { n: '112', label: 'tests behind a site that takes payments', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '3', label: 'sites in daily use', href: u(d, 'work/') },
+      { n: '4,424', label: 'students in a study I planned before I looked', href: linkTo(d, 'dropout-early-warning', '#plan') },
+    ],
+    doors: true,
+    featured: [
+      'withdrawal-early-warning', // B11 retires this entry.
+      'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner',
+    ],
+    tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare',
+    openTo: 'Data analyst, BI and full-stack roles · New Orleans, or anywhere the work is a step up',
+    resume: SITE.resume, banner: null,
+  },
+  analyst: {
+    key: 'analyst', path: '/analyst/', depth: 1, dir: 'analyst',
+    title: 'Kobi Lipari — data analyst and BI developer',
+    description: 'I keep thirty Tableau dashboards on one written spec, run a retention model a university\'s advisers use each week, and did one analysis in the open, plan first.',
+    role: 'Data analyst · BI developer',
+    h1: ['I make the numbers', 'explain themselves.'],
+    pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from each week, and did one analysis in the open, plan committed before I saw the data.',
+    recruiter: 'Data and BI work · New Orleans',
+    // The third and fourth chips have no fallback: they wait for their own pages.
+    chips: (d) => [
+      { n: '30+', label: 'dashboards on one written spec', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources feeding one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { label: 'the retention model, checked year over year', href: linkTo(d, 'predictive-retention', '#s-validation') },
+      { n: '4,424', label: 'students in a study I planned before I looked', href: linkTo(d, 'dropout-early-warning', '#plan') },
+      { link: true, label: 'Tableau Public ↗', href: linkUrl('Tableau Public') },
+    ],
+    doors: false,
+    featured: ['predictive-retention', 'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'],
+    tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · Git · JavaScript · HTML/CSS · Cloudflare',
+    openTo: 'Data analyst and BI roles · New Orleans, or anywhere the work is a step up',
+    resume: lensResume('resume-analyst.pdf'),
+    banner: { who: 'someone hiring an analyst', others: [['developers', 'dev/'], ['everyone else', '']] },
+  },
+  dev: {
+    key: 'dev', path: '/dev/', depth: 1, dir: 'dev',
+    title: 'Kobi Lipari — full-stack developer',
+    description: 'I build React and TypeScript sites on Cloudflare, with the tests to match: a chess association\'s platform with payments, a scoresheet scanner, and the data work behind them.',
+    role: 'Full-stack developer · TypeScript/React',
+    h1: ['I design the front,', 'and understand the back.'],
+    pitch: 'I build in React and TypeScript on Cloudflare, write the tests before I trust a deploy, and do the SQL and modelling behind the numbers those sites show.',
+    recruiter: 'Full-stack and front-end work · New Orleans',
+    chips: (d) => [
+      { n: '112', label: 'tests behind a site that takes payments', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '3', label: 'sites in daily use', href: u(d, 'work/') },
+      { n: '8–16×', label: 'faster decoder, after profiling', href: linkTo(d, 'scoresheet-scanner', '#s-approach') },
+      { label: 'and this site: one build file, no dependencies', href: 'https://github.com/Kobi-Lipari/Portfolio-Site' }, // The repo is public.
+      { link: true, label: 'GitHub ↗', href: linkUrl('GitHub') },
+    ],
+    doors: false,
+    featured: ['lca-website', 'scoresheet-scanner', 'tableau-dashboards', 'dropout-early-warning'],
+    tools: 'TypeScript · React · Cloudflare · JavaScript · HTML/CSS · Git · SQL · Python · pandas · R · Tableau · Power BI · Access · Excel',
+    openTo: 'Full-stack and front-end roles · New Orleans, or anywhere the work is a step up',
+    resume: lensResume('resume-dev.pdf'),
+    banner: { who: 'someone hiring a developer', others: [['analysts', 'analyst/'], ['everyone else', '']] },
+  },
+};
+const featuredFor = (lens) => lens.featured.map((s) => projects.find((p) => p.slug === s)).filter(Boolean).slice(0, 3);
+const othersFor = (lens) => { const f = featuredFor(lens); return projects.filter((p) => !f.includes(p)); };
+
+// The proof chips, each a link. A chip whose page is not on the site yet is dropped, and one link
+// chip closes the row: Tableau Public once SITE.links has its URL, GitHub until then, never both.
+const chipsFor = (lens, d) => {
+  const chips = lens.chips(d);
+  if (chips.every((c) => c.href)) return chips;
+  const tableau = SITE.links.find((l) => l.label === 'Tableau Public'), github = SITE.links.find((l) => l.label === 'GitHub');
+  const link = tableau.href !== '#' ? { link: true, label: 'Tableau Public ↗', href: tableau.href } : { link: true, label: 'GitHub ↗', href: github.href };
+  return [...chips.filter((c) => c.href && !(c.link && c.label === link.label)), link];
+};
+const chip = (c) => c.link
+  ? `<li class="proof__link"><a href="${c.href}" target="_blank" rel="noopener">${esc(c.label)}</a></li>`
+  : `<li${c.n ? '' : ' class="proof__text"'}><a href="${c.href}"${c.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${c.n ? `<b>${esc(c.n)}</b>` : ''}<span>${esc(c.label)}</span></a></li>`;
+
+// `eager` is for cards at the top of a page: their pictures load with the page, not on scroll.
+const card = (depth, p, eager = false) => `
       <li><a class="card" href="${u(depth, `work/${p.slug}/`)}">
-        ${picImg(depth, p, 'card__img')}
+        ${picImg(depth, p, 'card__img', eager)}
         <span class="card__tools">${esc(p.tools)}</span>
         <span class="card__title">${esc(p.title)}</span>
         <span class="card__note">${txt(p.note)}</span>
@@ -158,68 +333,80 @@ const row = (depth, p) => `
         <span class="row__go" aria-hidden="true">→</span>
       </a></li>`;
 
-const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/' })}
-${nav()}
-<main id="main">
+// The homepage for one lens. `.only-sm` / `.not-sm` swap the phone first screen in (a recruiter
+// line, Email me, a still poster of the redesigned dashboard) for the desktop one (the pitch, See
+// the work, the live before-and-after). tools/share-image.mjs scrapes .hero__name, .hero__role
+// and the <h1>, so those keep their shape.
+const home = (lens = LENSES.root) => {
+  const d = lens.depth;
+  return `${head({ title: lens.title, description: lens.description, path: lens.path, depth: d, fonts: ['instrument-serif-latin-400-italic'], extra: personLd(), lens })}
+${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens.resume)}
+<main id="main">${lens.banner ? `
+<div class="lens-banner" role="note" data-lens-banner><p><span class="not-sm">I wrote this version for ${esc(lens.banner.who)}. There is also one for ${lens.banner.others.map(([l, t]) => `<a href="${u(d, t)}">${esc(l)}</a>`).join(' · ')}.</span><span class="only-sm">Written for ${esc(lens.banner.who)} · <a href="${u(d, lens.banner.others[0][1])}">switch</a></span></p><button type="button" class="lens-banner__close" aria-label="Hide this note">×</button></div>` : ''}
 <section class="hero" aria-label="Introduction">
   <div class="hero__intro">
     <div class="hero__me">
-      ${SITE.headshot ? `<img class="hero__photo" src="${u(0, 'img/headshot-sm.webp')}" alt="Kobi Lipari" width="329" height="376" decoding="async">` : ''}
-      <div><p class="hero__name">${SITE.name}</p><p class="hero__role">Data analyst · Web developer</p></div>
+      ${SITE.headshot ? `<img class="hero__photo" src="${u(d, 'img/headshot-sm.webp')}" alt="Kobi Lipari" width="329" height="376" decoding="async">` : ''}
+      <div><p class="hero__name">${SITE.name}</p><p class="hero__role">${esc(lens.role)}</p></div>
     </div>
-    <h1>Real insights,<br> <i>made beautiful.</i></h1>
-    <p class="hero__pitch">I'm looking for my next challenge: a data analyst or full-stack role with real scale and real stakes. Based in New Orleans, open to relocating.</p>
-    <div class="hero__actions"><a class="btn" href="#work">See the work</a><a class="pill" href="${u(0, SITE.resume)}">Résumé</a></div>
+    <h1>${esc(lens.h1[0])}<br> <i>${esc(lens.h1[1])}</i></h1>
+    <p class="hero__pitch">${esc(lens.pitch)}</p>
+    <p class="hero__recruiter only-sm">${txt(lens.recruiter)}</p>
+    <div class="hero__actions"><a class="btn not-sm" href="#work">See the work</a><a class="btn only-sm" href="mailto:${SITE.email}?subject=Your%20portfolio">Email me</a><a class="pill" href="${u(d, lens.resume)}">Résumé</a></div>
   </div>
   <div class="hero__demo">
-    <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(0)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(0, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
+    <figure class="hero__poster only-sm" data-poster aria-label="The redesigned Admissions dashboard"><svg viewBox="0 0 1400 900"></svg></figure>
+    <p class="hero__poster-link only-sm"><a href="${u(d, 'work/tableau-dashboards/')}">See the full comparison →</a></p>
+    <section class="demo dash dash--hero not-sm" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
   </div>
 </section>
-<ul class="proof" aria-label="In numbers">
-  <li>30+ Tableau dashboards</li><li>15+ data sources in one retention model</li><li>112 automated tests</li><li>3 live sites</li><li>SQL · Python · Tableau · React</li>
-</ul>
+<ul class="proof${lens.key === 'analyst' ? ' proof--ledger' : ''}" aria-label="In numbers">
+  ${chipsFor(lens, d).map(chip).join('\n  ')}
+</ul>${lens.doors ? `
+<nav class="doors" aria-label="Views for hiring managers"><span>If you're hiring an analyst, <a href="${u(d, 'analyst/')}">start here →</a></span><span>If you're hiring a developer, <a href="${u(d, 'dev/')}">start here →</a></span></nav>` : ''}
 
 <section class="featured" id="work" aria-labelledby="featured-h">
-  <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(0, 'work/')}">All work →</a></div>
-  <ul class="cards">${featured.map((p) => card(0, p)).join('')}
+  <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(d, 'work/')}">All work →</a></div>
+  <ul class="cards">${featuredFor(lens).map((p) => card(d, p)).join('')}
   </ul>
 </section>
 
 <section class="more" aria-labelledby="more-h">
-  <div class="sec-head"><h2 id="more-h">More work</h2><a href="${u(0, 'work/')}">See all ${projects.length} →</a></div>
-  <ul class="rows">${others.slice(0, 3).map((p) => row(0, p)).join('')}
+  <div class="sec-head"><h2 id="more-h">More work</h2><a href="${u(d, 'work/')}">See all ${projects.length} →</a></div>
+  <ul class="rows">${othersFor(lens).slice(0, 3).map((p) => row(d, p)).join('')}
   </ul>
 </section>
 
 <section class="about" id="about" aria-labelledby="about-h">
   <div class="about__card">
     ${SITE.headshot
-      ? `<img class="about__photo" src="${u(0, 'img/headshot.webp')}" alt="Kobi Lipari" width="657" height="751" loading="lazy" decoding="async">`
+      ? `<img class="about__photo" src="${u(d, 'img/headshot.webp')}" alt="Kobi Lipari" width="657" height="751" loading="lazy" decoding="async">`
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
     <div>
       <h2 id="about-h">About</h2>
       <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. Part time, I build full-stack web platforms that members and patients use every day.</p>
-      <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk.</p>
+      <p>${txt('Two things from this year I would tell you about over coffee. A payment webhook on a volunteer-run site [the chess association\'s] accepted unsigned calls until I noticed; I fixed it before launch and wrote the test that fails if anyone removes the check. And the retention model at Nicholls, the first its advisers have worked from, which I validated year over year before anyone saw a score.')}</p>
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
-        <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer and IT Support, Healingly</dd>
-        <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette</dd>
-        <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
+        <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer &amp; IT Support, Healingly</dd>
+        <dt>DEGREE</dt><dd>BS Computer Science, University of Louisiana at Lafayette, 2024</dd>
+        <dt>TOOLS</dt><dd>${esc(lens.tools)}</dd>
       </dl>
     </div>
   </div>
 </section>
 </main>
-<script type="module" src="${u(0, 'demo-dash.js')}"></script>
-${footer()}`;
+<script type="module" src="${u(d, 'demo-dash.js')}"></script>
+${footer(d, lens)}`;
+};
 
 // Every project, as cards.
-const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: SITE.description, path: '/work/', depth: 1 })}
+const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: `All ${projects.length} projects by ${SITE.name}, data analyst and web developer: ${projects.map((p) => p.title).join('; ')}.`, path: '/work/', depth: 1 })}
 ${nav(1)}
 <main id="main" class="work-all">
   <a class="back" href="${u(1)}">← Home</a>
   <h1>All work</h1>
-  <ul class="cards">${projects.map((p) => card(1, p)).join('')}
+  <ul class="cards">${projects.map((p, k) => card(1, p, k < 3)).join('')}
   </ul>
 </main>
 ${footer(1)}`;
@@ -232,12 +419,20 @@ const DEMOS = {
   sql: (depth) => `<section class="demo sqlpad" data-demo="sql" data-base="${siteRoot(depth)}" aria-label="SQL playground"><p class="demo__noscript">The SQL playground needs JavaScript.</p></section>`,
   dash: (depth) => `<section class="demo dash" data-demo="dash" data-base="${siteRoot(depth)}" aria-label="Dashboards before and after"><p class="demo__noscript">The before-and-after comparison needs JavaScript.</p></section>${CATALOG ? `
   <section class="demo cat" data-demo="catalog" data-base="${siteRoot(depth)}" aria-label="More redesigned dashboards"><p class="demo__noscript">The slideshow needs JavaScript.</p></section>` : ''}`,
+  // Five pieces for the withdrawal project, each filled from its own JSON file in data/ewarn/.
+  ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/"${allProjects.some((p) => p.demo === 'ewarn' && p.repoIsPublic) ? ' data-repo-links="on"' : ''}>
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="replay" id="replay" aria-label="Replay a term"><p class="demo__noscript">The term replay needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
+  </div>`,
 };
 // The dashboards slideshow appears once all six of its data files are in src/data/dashboards
 // (written by scripts/export_catalog.py in the dashboards repo).
 const CATALOG = ['enrollment', 'graduates', 'retention12', 'retention13', 'grad4', 'grad6']
   .every((k) => existsSync(`src/data/dashboards/${k}.json`));
-const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])] };
+const DEMO_SCRIPTS = { scanner: ['demo-scanner.js'], sql: ['demo-sql.js'], dash: ['demo-dash.js', ...(CATALOG ? ['demo-catalog.js'] : [])], ewarn: ['demo-ewarn.js'] };
 
 const SECTION_ORDER = [
   ['problem', 'The problem'], ['data', 'The data'], ['approach', 'Approach'],
@@ -271,7 +466,7 @@ const showcase = (p, depth) => {
           ${g.desktop.map((img, k) => `<div class="browser__pane" data-view="${k}"${k ? ' hidden' : ''}>${view(depth, img, k === 0)}</div>`).join('\n          ')}
         </div>
       </figure>
-      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
+      ${g.mobile ? `<figure class="phone-frame">${g.mobile.src ? shot(depth, g.mobile, { eager: true, sizes: '(max-width: 700px) 40vw, 220px' }) : ph(g.mobile.label, g.mobile.hint, 'ph--phone')}</figure>` : ''}
     </div>
     <p class="showcase__caption" data-caption>${txt(first.caption)}</p>
     ${g.desktop.length > 1 ? `<div class="thumbs" role="group" aria-label="Choose a view">
@@ -300,16 +495,19 @@ const processSteps = (p) => `
       </ol>
     </section>`;
 
+// A gallery only shows once at least one desktop screenshot is in src/img; until then the
+// page has no Screens block (no placeholder frames on the live site).
+const hasShots = (p) => !!p.gallery?.desktop?.some((v) => v.src);
 const projectPage = (p, i) => {
   const prev = projects[(i - 1 + projects.length) % projects.length];
   const next = projects[(i + 1) % projects.length];
   const sections = SECTION_ORDER.filter(([k]) => p.sections && txt(p.sections[k]));
   const toc = [
-    ...(p.demo || p.gallery ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
+    ...(p.demo || hasShots(p) ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
     ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
   ];
   const links = p.links.filter((l) => l.href !== '#');
-  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2, fonts: p.demo === 'scanner' ? '&family=Caveat:wght@500;600' : '' })}
+  return `${head({ title: `${p.title} — ${SITE.name}`, description: p.outcome.replace(/\[[^\]]+\]/g, '').trim(), path: `/work/${p.slug}/`, depth: 2 })}
 ${nav(2)}
 <main id="main" class="proj">
   <div class="proj__grid">
@@ -332,10 +530,10 @@ ${nav(2)}
     </details>
   </aside>
   <div class="proj__body">
-    ${p.demo || p.gallery ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${p.gallery ? showcase(p, 2) : ''}</div>` : ''}
+    ${p.demo || hasShots(p) ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${hasShots(p) ? showcase(p, 2) : ''}</div>` : ''}
     ${p.process ? processSteps(p) : `<section class="pipeline" id="how" aria-label="How it's built">
       <h2>HOW IT'S BUILT</h2>
-      <ol class="steps">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
+      <ol class="steps" style="--steps: ${p.pipeline.length}; --steps-half: ${Math.ceil(p.pipeline.length / 2)}">${p.pipeline.map((step, k) => `<li><span class="steps__n">${String(k + 1).padStart(2, '0')}</span><span class="steps__label">${esc(step)}</span></li>`).join('')}</ol>
     </section>
     <div class="sections">
       ${sections.map(([k, label]) => `<section class="section" id="s-${k}"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n      ')}
@@ -347,14 +545,18 @@ ${nav(2)}
   </div>
   </div>
 </main>
-${p.gallery ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
+${hasShots(p) ? `<script src="${u(2, 'gallery.js')}" defer></script>` : ''}
 ${p.demo ? DEMO_SCRIPTS[p.demo].map((f) => `<script type="module" src="${u(2, f)}"></script>`).join('\n') : ''}
 ${footer(2)}`;
 };
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
-await writeFile('dist/index.html', home());
+await writeFile('dist/index.html', home(LENSES.root));
+for (const lens of [LENSES.analyst, LENSES.dev]) {
+  await mkdir(`dist/${lens.dir}`, { recursive: true });
+  await writeFile(`dist/${lens.dir}/index.html`, home(lens));
+}
 await mkdir('dist/work', { recursive: true });
 await writeFile('dist/work/index.html', workIndex());
 for (const [i, p] of projects.entries()) {
@@ -370,9 +572,14 @@ await copyFile('src/demo-sql.js', 'dist/demo-sql.js');
 await copyFile('src/demo-dash.js', 'dist/demo-dash.js');
 await copyFile('src/demo-catalog.js', 'dist/demo-catalog.js');
 await copyFile('src/dash-kit.js', 'dist/dash-kit.js');
-if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true });
+await copyFile('src/demo-ewarn.js', 'dist/demo-ewarn.js');
+await copyFile('src/ewarn-read.js', 'dist/ewarn-read.js');
+await copyFile('src/motion.js', 'dist/motion.js');
+await copyFile('src/dom.js', 'dist/dom.js');
+if (existsSync('src/data')) await cp('src/data', 'dist/data', { recursive: true, filter: (src) => !heldBack.some((d) => src === `src/data/${d}` || src.startsWith(`src/data/${d}/`)) });
 await cp('src/vendor', 'dist/vendor', { recursive: true });
 await cp('src/img', 'dist/img', { recursive: true });
+for (const file of ['resume-analyst.pdf', 'resume-dev.pdf']) if (existsSync(`src/${file}`)) await copyFile(`src/${file}`, `dist/${file}`);
 if (SITE.resume === 'resume.pdf') {
   await copyFile('src/resume.pdf', 'dist/resume.pdf');
 } else {
@@ -387,8 +594,20 @@ ${nav(1)}
 </main>
 ${footer(1)}`);
 }
-await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: SITE.description, path: '/404' })}
+await writeFile('dist/404.html', `${head({ title: `Not found — ${SITE.name}`, description: 'Nothing lives at this address on my site.', path: '/404', noindex: true })}
 ${nav()}
 <main id="main" class="proj"><h1 style="margin-top:48px">Nothing here.</h1><p class="proj__outcome"><a href="${u(0)}">Back to the homepage</a></p></main>
 ${footer()}`);
-console.log(`Built ${projects.length} project pages + homepage into dist/`);
+if (existsSync('src/favicon.ico')) await copyFile('src/favicon.ico', 'dist/favicon.ico');
+// For search engines: every page in a sitemap and an open robots.txt, or with NOINDEX=1 a
+// robots.txt that turns all crawlers away (and no sitemap).
+if (!NOINDEX) {
+  const pages = ['/', '/analyst/', '/dev/', '/work/', ...projects.map((p) => `/work/${p.slug}/`)];
+  await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pages.map((p) => `  <url><loc>${SITE.url}${p}</loc></url>`).join('\n')}
+</urlset>
+`);
+}
+await writeFile('dist/robots.txt', NOINDEX ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${SITE.url}/sitemap.xml\n`);
+console.log(`Built ${projects.length} project pages + homepage + 2 lens pages (/analyst/, /dev/) into dist/${NOINDEX ? ' (NOINDEX: search engines are asked to stay out)' : ''}`);

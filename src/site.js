@@ -6,7 +6,7 @@
 //   - Theme toggle: light / dark, remembered per browser.
 (() => {
   const root = document.documentElement;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  root.classList.add('js');
   const index = JSON.parse(document.getElementById('site-index')?.textContent || '{"items":[]}');
 
   const isTyping = (el) =>
@@ -14,10 +14,13 @@
 
   // Local storage can throw (private windows, blocked site data); the site
   // works the same without it, it just won't remember the choice.
-  const store = {
-    get(key) { try { return localStorage.getItem(key); } catch { return null; } },
-    set(key, value) { try { localStorage.setItem(key, value); } catch { /* not remembered */ } },
-  };
+  const storage = (which) => ({
+    get(key) { try { return window[which].getItem(key); } catch { return null; } },
+    set(key, value) { try { window[which].setItem(key, value); } catch { /* not remembered */ } },
+    remove(key) { try { window[which].removeItem(key); } catch { /* nothing to forget */ } },
+  });
+  const store = storage('localStorage');
+  const session = storage('sessionStorage');
 
   // ── Theme ─────────────────────────────────────────────────────────
   // The initial theme is set by a one-line script in <head> before the
@@ -37,6 +40,26 @@
   themeButton?.addEventListener('click', toggleTheme);
   if (themeButton) setTheme(currentTheme());
 
+  // ── Lens memory ───────────────────────────────────────────────────
+  // A lens page (/analyst/, /dev/) is remembered for this visit, so the name in the nav on a
+  // project page goes back to it; the root homepage (the "everyone" view) forgets it again.
+  // Its audience note can be hidden once, for every lens page, and that one is kept for good.
+  const lensName = document.body.dataset.lens;
+  if (lensName) session.set('lens', lensName);
+  else if (document.querySelector('.doors')) session.remove('lens');
+  const banner = document.querySelector('[data-lens-banner]');
+  if (banner) {
+    if (store.get('lensBannerHidden') === '1') banner.hidden = true;
+    banner.querySelector('button').addEventListener('click', () => {
+      store.set('lensBannerHidden', '1');
+      banner.classList.add('is-closing');
+      setTimeout(() => { banner.hidden = true; }, parseFloat(getComputedStyle(root).getPropertyValue('--dur-base')) || 0);
+    });
+  }
+  const stored = session.get('lens');
+  const nameLink = document.querySelector('.nav__name');
+  if (!lensName && stored && nameLink && document.querySelector('main.proj, main.work-all') && nameLink.getAttribute('href') === '/') nameLink.setAttribute('href', `/${stored}/`);
+
   // ── Blueprint mode ────────────────────────────────────────────────
   const bpButton = document.querySelector('[data-bp-toggle]');
   let overlay = null;
@@ -47,7 +70,7 @@
 
   // What gets a permanent label. Hover-inspect covers everything else.
   const LABELLED = [
-    '.nav', '.hero h1', '.hero__pitch', '.hero__photo', '.dash-frame', '.proof', '.cards', '.rows',
+    '.nav', '.hero h1', '.hero__pitch', '.hero__recruiter', '.hero__photo', '.hero__poster', '.doors', '.lens-banner', '.dash-frame', '.proof', '.cards', '.rows',
     '.card', '.about h2', '.about__photo', '.about dl', '.footer__cta', '.rail', '.process__list',
     '.proj h1', '.proj__outcome', '.meta', '.showcase .browser', '.phone-frame', '.demo', '.sqlpad',
     '.pipeline', '.sections .section', '.pager',
@@ -89,6 +112,28 @@
     return { x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height };
   }
 
+  // Not on the page as far as a label is concerned: inside a closed <details>, or inside
+  // something pinned to the screen (the label would stay behind when the page scrolls).
+  function offPage(el) {
+    if (el.checkVisibility && !el.checkVisibility()) return true;
+    for (let a = el; a && a !== document.body; a = a.parentElement) if (getComputedStyle(a).position === 'fixed') return true;
+    return false;
+  }
+
+  // Where each line of text on the page sits.
+  function textLines() {
+    const out = [];
+    const range = document.createRange();
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const el = n.parentElement;
+      if (!n.textContent.trim() || !el || el.closest('.bp-overlay, .bp-toast, script, style') || offPage(el)) continue;
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) out.push({ el, x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height });
+    }
+    return out;
+  }
+
   function drawOverlay() {
     if (!overlay) return;
     overlay.replaceChildren();
@@ -113,11 +158,14 @@
     // Labels on the main blocks. First match per selector only for the
     // repeated ones, so the page stays readable.
     const seen = new Set();
+    // On a phone a label is as wide as the column, so one that lands on a line of text hides
+    // it. There, a label is kept only where it has clear space; the outline is always drawn.
+    const lines = width <= 600 ? textLines() : null;
     for (const selector of LABELLED) {
       const matches = [...document.querySelectorAll(selector)];
       const pick = selector === '.sections .section' ? matches.slice(0, 2) : matches.slice(0, 1);
       for (const el of pick) {
-        if (seen.has(el) || !el.offsetParent) continue;
+        if (seen.has(el) || !el.offsetParent || offPage(el)) continue;
         seen.add(el);
         const r = docRect(el);
         if (r.w < 40 || r.h < 16) continue;
@@ -129,7 +177,12 @@
         label.textContent = describe(el);
         label.style.left = `${r.x}px`;
         label.style.top = `${Math.max(r.y - 22, 0)}px`;
+        label.style.maxWidth = `${Math.max(width - r.x - 8, 80)}px`;
         overlay.append(box, label);
+        if (lines) {
+          const b = docRect(label);
+          if (lines.some((t) => !el.contains(t.el) && t.x < b.x + b.w - 2 && t.x + t.w > b.x + 2 && t.y < b.y + b.h - 4 && t.y + t.h > b.y + 4)) label.remove();
+        }
       }
     }
 
@@ -203,7 +256,7 @@
       toast.querySelector('button').addEventListener('click', () => setBlueprint(false));
       document.body.append(toast);
       // Wait for the colour and seam transitions before measuring.
-      setTimeout(drawOverlay, reduceMotion ? 0 : 450);
+      setTimeout(drawOverlay, parseFloat(getComputedStyle(root).getPropertyValue('--dur-slow')) + 40);
       window.addEventListener('resize', relayout);
       document.addEventListener('pointermove', onPointerMove);
     } else {
@@ -295,6 +348,11 @@
       if (!results.length) {
         const li = document.createElement('li');
         li.className = 'cmdk__empty';
+        // Still an option, so the listbox stays valid and a screen reader reads the message.
+        li.id = 'cmdk-none';
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-disabled', 'true');
+        li.setAttribute('aria-selected', 'false');
         li.textContent = 'Nothing matches. Try “scanner”, “email” or “dark”.';
         list.append(li);
       }
@@ -302,7 +360,7 @@
     }
     function paint() {
       list.querySelectorAll('.cmdk__item').forEach((li, i) => li.setAttribute('aria-selected', String(i === active)));
-      input.setAttribute('aria-activedescendant', results.length ? `cmdk-${active}` : '');
+      input.setAttribute('aria-activedescendant', results.length ? `cmdk-${active}` : 'cmdk-none');
       list.querySelector(`#cmdk-${active}`)?.scrollIntoView({ block: 'nearest' });
     }
     async function run(i) {
@@ -347,6 +405,8 @@
 
   // ── Keyboard ──────────────────────────────────────────────────────
   document.addEventListener('keydown', (e) => {
+    // The first Tab marks a keyboard visitor: panels then open without their enter animation.
+    if (e.key === 'Tab') root.classList.add('is-keyboard');
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (palette) closePalette(); else openPalette();
