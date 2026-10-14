@@ -166,6 +166,21 @@ a:hover { color: var(--accent-ink); }
 .btn:hover { background: var(--accent-ink); color: var(--on-accent); }
 .hero__demo .demo { margin: 0; padding: 0; background: none; border: 0; }
 
+/* Phones get a different first screen: the recruiter line and Email me instead of the pitch and
+   See the work, and a still poster of the redesigned dashboard instead of the live seam. The
+   headline keeps its big desktop size above 600 px. */
+@media (min-width: 601px) { .only-sm { display: none !important; } }
+@media (max-width: 600px) {
+  .not-sm { display: none !important; }
+  .hero h1 { font-size: clamp(34px, 9vw, 54px); }
+  .hero__pitch { display: none; }
+  .hero__photo { width: 56px; height: 56px; }
+  .hero__recruiter { margin: 0; font-size: 15px; color: var(--ink-2); }
+  .hero__poster { margin: 0; aspect-ratio: 358 / 160; overflow: hidden; position: relative; border: 1px solid var(--line-2); border-radius: var(--r-3); background: #fff; }
+  .hero__poster svg { display: block; width: 100%; height: auto; }
+  .hero__poster-link { margin: 8px 0 0; font-size: 14px; }
+}
+
 /* The live demo in the hero: a browser window with dashboard tabs */
 .dash-frame {
   border: 1px solid var(--line-2); border-radius: var(--r-3); overflow: hidden; background: var(--card);
@@ -201,9 +216,17 @@ a:hover { color: var(--accent-ink); }
 }
 .snaps button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
 
-/* ---------- Proof chips ---------- */
-.proof { list-style: none; margin: 0; padding: 0 var(--side); display: flex; flex-wrap: wrap; gap: 10px; }
-.proof li { font-size: 14px; padding: 7px 14px; border: 1px solid var(--line-2); border-radius: var(--r-pill); background: var(--card); }
+/* ---------- Proof chips: a ledger of linked figures ---------- */
+.proof { list-style: none; margin: clamp(28px, 4vw, 44px) 0 0; padding: 0 var(--side); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 24px; counter-reset: fact; }
+.proof li { border-top: 1px solid var(--line-2); padding: 12px 0 0; font-size: 14px; line-height: 1.3; color: var(--ink-2); }
+.proof a { display: block; color: inherit; text-decoration: none; }
+.proof a:hover { text-decoration: underline dotted; }
+.proof b { display: block; margin: 0 0 6px; font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 3.2vw, 44px); line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
+/* A chip in words sits on the same line as the other chips' labels. */
+.proof__text a { padding-top: calc(clamp(34px, 3.2vw, 44px) + 6px); }
+.proof__link a { padding-top: 6px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent-ink); }
+@media (max-width: 900px) { .proof { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 20px; } }
+@media (max-width: 600px) { .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ---------- Featured work and more work ---------- */
 .featured, .more { padding: 0 var(--side); }

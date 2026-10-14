@@ -51,7 +51,7 @@ const u = (depth, target = '') => {
 const SITE = {
   name: 'Kobi Lipari',
   url: 'https://kobilipari.com',
-  description: 'Kobi Lipari — data analyst and web developer. Real insights, made beautiful.',
+  description: 'Data analyst and web developer in New Orleans: the pipelines and models an institutional research office relies on, and the sites people use every day.',
   email: 'KobiLipari@gmail.com',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/kobi-lipari-2a8b24327/' },
@@ -74,7 +74,7 @@ const txt = (s = '') => DRAFT
   : esc(String(s).replace(/\s*\[[^\]]+\]/g, '').trim());
 
 // The picture link previews show (Open Graph, Twitter card), the touch icon and favicon.ico
-// are made by tools/share-image.mjs.
+// are made by tools/share-image.mjs. The picture shows the homepage headline, so that is its alt text.
 const SHARE_IMAGE = { src: 'img/og.png', w: 1200, h: 630 };
 
 // Who the site is about, for search engines (schema.org Person). The job, employer and degree
@@ -113,7 +113,7 @@ const head = ({ title, description, path, depth = 0, fonts = [], noindex = false
 <meta property="og:image" content="${SITE.url}/${SHARE_IMAGE.src}">
 <meta property="og:image:width" content="${SHARE_IMAGE.w}">
 <meta property="og:image:height" content="${SHARE_IMAGE.h}">
-<meta property="og:image:alt" content="${esc(SITE.description)}">
+<meta property="og:image:alt" content="${esc(LENSES.root.h1.join(' '))}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
@@ -176,16 +176,16 @@ const ICON = {
   sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 'class="i-sun"'),
 };
 
-const footer = (depth = 0) => `
+const footer = (depth = 0, lens = LENSES.root) => `
 <footer class="footer" id="contact">
   <div>
     <p class="footer__cta">Let's <i>talk.</i></p>
-    <p class="footer__sub">Open to data analyst and full-stack roles · New Orleans or relocating</p>
+    <p class="footer__sub">${esc(lens.openTo)}</p>
   </div>
   <div class="footer__links">
     <a class="footer__mail" href="mailto:${SITE.email}">${esc(SITE.email)}</a>
     ${SITE.links.filter((l) => l.href !== '#').map((l) => `<a class="footer__link" href="${l.href}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ')}
-    <a class="footer__link" href="${u(depth, SITE.resume)}">Résumé</a>
+    <a class="footer__link" href="${u(depth, lens.resume)}">Résumé</a>
   </div>
 </footer>
 ${siteIndex(depth)}
@@ -206,11 +206,54 @@ const picImg = (depth, p, cls, eager = false) => {
     : `<span class="${cls} ${cls}--ph" aria-hidden="true"></span>`;
 };
 
-// Featured order on the homepage: the first three of these that are published. The rest go in
-// "More work". All of them are on /work/.
-const FEATURED = ['withdrawal-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'];
-const featured = FEATURED.map((slug) => projects.find((p) => p.slug === slug)).filter(Boolean).slice(0, 3);
-const others = projects.filter((p) => !featured.includes(p));
+// A link into a project page, resolved at build: the page's URL (with `hash`) when the project is
+// published, else `fallback`. Chips keep working while the page they point at is still hidden.
+const linkTo = (depth, slug, hash = '', fallback = null) => projects.some((p) => p.slug === slug) ? u(depth, `work/${slug}/${hash}`) : fallback;
+
+// A lens is one version of the homepage: every string the hero, chips, featured order, About
+// and footer read comes from here. `featured` lists slugs in order; the first three that are
+// published are the cards, the rest go in "More work". All of them are on /work/.
+const LENSES = {
+  root: {
+    key: 'root', path: '/', depth: 0, dir: null,
+    title: `${SITE.name} — Data analyst & web developer`,
+    description: SITE.description,
+    role: 'Data analyst · Web developer',
+    h1: ['Fifteen data sources,', 'one call list.'],
+    pitch: 'I build the data pipelines and models an office relies on, and the sites people use every day.',
+    recruiter: 'data analyst, BI and full-stack roles · New Orleans',
+    chips: (d) => [
+      { n: '30+', label: 'Tableau dashboards', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources in one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { n: '112', label: 'automated tests', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '3', label: 'live sites', href: u(d, 'work/') },
+      { n: '4,424', label: 'students, plan committed first', href: linkTo(d, 'dropout-early-warning', '#plan') },
+    ],
+    doors: false,
+    featured: [
+      'withdrawal-early-warning', // B11 retires this entry.
+      'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner',
+    ],
+    tools: 'SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare',
+    openTo: 'Data analyst, BI and full-stack roles · New Orleans or relocating',
+    resume: SITE.resume, banner: null,
+  },
+};
+const featuredFor = (lens) => lens.featured.map((s) => projects.find((p) => p.slug === s)).filter(Boolean).slice(0, 3);
+const othersFor = (lens) => { const f = featuredFor(lens); return projects.filter((p) => !f.includes(p)); };
+
+// The proof chips, each a link. A chip whose page is not on the site yet is dropped, and one link
+// chip closes the row: Tableau Public once SITE.links has its URL, GitHub until then, never both.
+const chipsFor = (lens, d) => {
+  const chips = lens.chips(d);
+  if (chips.every((c) => c.href)) return chips;
+  const tableau = SITE.links.find((l) => l.label === 'Tableau Public'), github = SITE.links.find((l) => l.label === 'GitHub');
+  const link = tableau.href !== '#' ? { link: true, label: 'Tableau Public ↗', href: tableau.href } : { link: true, label: 'GitHub ↗', href: github.href };
+  return [...chips.filter((c) => c.href && !(c.link && c.label === link.label)), link];
+};
+const chip = (c) => c.link
+  ? `<li class="proof__link"><a href="${c.href}" target="_blank" rel="noopener">${esc(c.label)}</a></li>`
+  : `<li${c.n ? '' : ' class="proof__text"'}><a href="${c.href}"${c.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${c.n ? `<b>${esc(c.n)}</b>` : ''}<span>${esc(c.label)}</span></a></li>`;
 
 // `eager` is for cards at the top of a page: their pictures load with the page, not on scroll.
 const card = (depth, p, eager = false) => `
@@ -229,60 +272,70 @@ const row = (depth, p) => `
         <span class="row__go" aria-hidden="true">→</span>
       </a></li>`;
 
-const home = () => `${head({ title: `${SITE.name} — Data analyst & web developer`, description: SITE.description, path: '/', fonts: ['instrument-serif-latin-400-italic'], extra: personLd() })}
-${nav()}
+// The homepage for one lens. `.only-sm` / `.not-sm` swap the phone first screen in (a recruiter
+// line, Email me, a still poster of the redesigned dashboard) for the desktop one (the pitch, See
+// the work, the live before-and-after). tools/share-image.mjs scrapes .hero__name, .hero__role
+// and the <h1>, so those keep their shape.
+const home = (lens = LENSES.root) => {
+  const d = lens.depth;
+  return `${head({ title: lens.title, description: lens.description, path: lens.path, depth: d, fonts: ['instrument-serif-latin-400-italic'], extra: personLd() })}
+${nav(d)}
 <main id="main">
 <section class="hero" aria-label="Introduction">
   <div class="hero__intro">
     <div class="hero__me">
-      ${SITE.headshot ? `<img class="hero__photo" src="${u(0, 'img/headshot-sm.webp')}" alt="Kobi Lipari" width="329" height="376" decoding="async">` : ''}
-      <div><p class="hero__name">${SITE.name}</p><p class="hero__role">Data analyst · Web developer</p></div>
+      ${SITE.headshot ? `<img class="hero__photo" src="${u(d, 'img/headshot-sm.webp')}" alt="Kobi Lipari" width="329" height="376" decoding="async">` : ''}
+      <div><p class="hero__name">${SITE.name}</p><p class="hero__role">${esc(lens.role)}</p></div>
     </div>
-    <h1>Real insights,<br> <i>made beautiful.</i></h1>
-    <p class="hero__pitch">I'm looking for my next challenge: a data analyst or full-stack role with real scale and real stakes. Based in New Orleans, open to relocating.</p>
-    <div class="hero__actions"><a class="btn" href="#work">See the work</a><a class="pill" href="${u(0, SITE.resume)}">Résumé</a></div>
+    <h1>${esc(lens.h1[0])}<br> <i>${esc(lens.h1[1])}</i></h1>
+    <p class="hero__pitch">${esc(lens.pitch)}</p>
+    <p class="hero__recruiter only-sm">${txt(lens.recruiter)}</p>
+    <div class="hero__actions"><a class="btn not-sm" href="#work">See the work</a><a class="btn only-sm" href="mailto:${SITE.email}?subject=Your%20portfolio">Email me</a><a class="pill" href="${u(d, lens.resume)}">Résumé</a></div>
   </div>
   <div class="hero__demo">
-    <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(0)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(0, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
+    <figure class="hero__poster only-sm" data-poster aria-label="The redesigned Admissions dashboard"><svg viewBox="0 0 1400 900"></svg></figure>
+    <p class="hero__poster-link only-sm"><a href="${u(d, 'work/tableau-dashboards/')}">See the full comparison →</a></p>
+    <section class="demo dash dash--hero not-sm" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
   </div>
 </section>
 <ul class="proof" aria-label="In numbers">
-  <li>30+ Tableau dashboards</li><li>15+ data sources in one retention model</li><li>112 automated tests</li><li>3 live sites</li><li>SQL · Python · Tableau · React</li>
+  ${chipsFor(lens, d).map(chip).join('\n  ')}
 </ul>
 
 <section class="featured" id="work" aria-labelledby="featured-h">
-  <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(0, 'work/')}">All work →</a></div>
-  <ul class="cards">${featured.map((p) => card(0, p)).join('')}
+  <div class="sec-head"><h2 id="featured-h">Featured work</h2><a href="${u(d, 'work/')}">All work →</a></div>
+  <ul class="cards">${featuredFor(lens).map((p) => card(d, p)).join('')}
   </ul>
 </section>
 
 <section class="more" aria-labelledby="more-h">
-  <div class="sec-head"><h2 id="more-h">More work</h2><a href="${u(0, 'work/')}">See all ${projects.length} →</a></div>
-  <ul class="rows">${others.slice(0, 3).map((p) => row(0, p)).join('')}
+  <div class="sec-head"><h2 id="more-h">More work</h2><a href="${u(d, 'work/')}">See all ${projects.length} →</a></div>
+  <ul class="rows">${othersFor(lens).slice(0, 3).map((p) => row(d, p)).join('')}
   </ul>
 </section>
 
 <section class="about" id="about" aria-labelledby="about-h">
   <div class="about__card">
     ${SITE.headshot
-      ? `<img class="about__photo" src="${u(0, 'img/headshot.webp')}" alt="Kobi Lipari" width="657" height="751" loading="lazy" decoding="async">`
+      ? `<img class="about__photo" src="${u(d, 'img/headshot.webp')}" alt="Kobi Lipari" width="657" height="751" loading="lazy" decoding="async">`
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
     <div>
       <h2 id="about-h">About</h2>
       <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. Part time, I build full-stack web platforms that members and patients use every day.</p>
-      <p>I learn fast, I care about getting it right, and I finish what I start. If your team needs someone who can work across both the data and the product, let's talk.</p>
+      <p>${txt('Two things I am proudest of this year: finding that a Stripe webhook [name the chess association here?] accepted unsigned calls and fixing it before launch, with a test that fails if the check is ever removed; and building the first predictive model advisers at Nicholls have used, validated year over year before anyone saw a score.')}</p>
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
         <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer &amp; IT Support, Healingly</dd>
         <dt>DEGREE</dt><dd>${txt('BS Computer Science, University of Louisiana at Lafayette [, degree year]')}</dd>
-        <dt>TOOLS</dt><dd>SQL · Tableau · Python · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare</dd>
+        <dt>TOOLS</dt><dd>${esc(lens.tools)}</dd>
       </dl>
     </div>
   </div>
 </section>
 </main>
-<script type="module" src="${u(0, 'demo-dash.js')}"></script>
-${footer()}`;
+<script type="module" src="${u(d, 'demo-dash.js')}"></script>
+${footer(d, lens)}`;
+};
 
 // Every project, as cards.
 const workIndex = () => `${head({ title: `Work — ${SITE.name}`, description: `All ${projects.length} projects by ${SITE.name}, data analyst and web developer: ${projects.map((p) => p.title).join('; ')}.`, path: '/work/', depth: 1 })}
@@ -436,7 +489,7 @@ ${footer(2)}`;
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
-await writeFile('dist/index.html', home());
+await writeFile('dist/index.html', home(LENSES.root));
 await mkdir('dist/work', { recursive: true });
 await writeFile('dist/work/index.html', workIndex());
 for (const [i, p] of projects.entries()) {

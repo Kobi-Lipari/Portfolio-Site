@@ -47,7 +47,7 @@
 
   // What gets a permanent label. Hover-inspect covers everything else.
   const LABELLED = [
-    '.nav', '.hero h1', '.hero__pitch', '.hero__photo', '.dash-frame', '.proof', '.cards', '.rows',
+    '.nav', '.hero h1', '.hero__pitch', '.hero__recruiter', '.hero__photo', '.hero__poster', '.doors', '.lens-banner', '.dash-frame', '.proof', '.cards', '.rows',
     '.card', '.about h2', '.about__photo', '.about dl', '.footer__cta', '.rail', '.process__list',
     '.proj h1', '.proj__outcome', '.meta', '.showcase .browser', '.phone-frame', '.demo', '.sqlpad',
     '.pipeline', '.sections .section', '.pager',
