@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { launch, serve } from './browser.mjs';
 
-const SELECTORS = ['.nav', '.hero', '.hero h1', '.hero__demo', '.proof', '.featured', '.about', '.footer', '.demo[data-demo="dash"]', '.demo[data-demo="scanner"]', '.sqlpad', '.dash-stage'];
+const SELECTORS = ['.nav', '.hero', '.hero h1', '.hero__demo', '.proof', '.featured', '.about', '.footer', '.demo[data-demo="dash"]', '.demo[data-demo="scanner"]', '.sqlpad', '.sqlpad__editor', '.sqlpad__out', '.dash-stage'];
 const [distArg = 'dist', pagePath = '/', widthArg = '1440'] = process.argv.slice(2);
 const DIST = path.resolve(distArg);
 if (!existsSync(path.join(DIST, 'index.html'))) {

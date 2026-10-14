@@ -196,19 +196,27 @@ function drawChart(host, tip, columns, rows, spec) {
   // Drawn at the space it actually has, so text stays at its real size
   // instead of shrinking with a scaled-down drawing.
   const W = Math.max(300, host.clientWidth - 24);
+  // Under 480 the tile is narrow (a phone, or the output column beside the
+  // editor): fewer ticks, value-only end labels, names in the legend, category
+  // names above their bars.
+  const phone = W < 480;
   const values = rows.flatMap((r) => spec.series.map((j) => r[j])).filter((v) => v !== null);
   const maxV = spec.isPct ? 100 : Math.max(...values) * 1.1 || 1;
   const minV = spec.isPct && spec.kind === 'line' ? Math.max(0, Math.floor((Math.min(...values) - 5) / 10) * 10) : 0;
   const step = spec.isPct ? (maxV - minV > 60 ? 20 : 10) : (maxV - minV) / 4;
 
-  // A title names what's drawn; the legend only appears when there's more
-  // than one series to tell apart.
+  // A figure number, then a title naming what's drawn. The legend appears when
+  // there's more than one series to tell apart, and on phones, where the
+  // series names leave the line ends for the legend.
+  const fig = document.createElement('p');
+  fig.className = 'viz__fig';
+  fig.textContent = 'Fig. 1';
   const title = document.createElement('p');
   title.className = 'viz__title';
   title.textContent = `${spec.series.length === 1 ? pretty(columns[spec.series[0]]) : spec.series.map((j) => pretty(columns[j])).join(' and ')}${spec.isPct ? ' (%)' : ''} by ${pretty(columns[0]).toLowerCase()}`;
   const legend = document.createElement('div');
   legend.className = 'viz__legend';
-  if (spec.series.length > 1) {
+  if (phone || spec.series.length > 1) {
     spec.series.forEach((j, k) => {
       const item = document.createElement('span');
       item.innerHTML = `<i class="viz__key s${k + 1}${spec.kind === 'line' ? ' viz__key--line' : ''}"></i>`;
@@ -216,21 +224,43 @@ function drawChart(host, tip, columns, rows, spec) {
       legend.append(item);
     });
   }
+  // Where the numbers come from, and the same numbers as a table (the results
+  // grid under the chart already is one, so the disclosure points at it).
+  const source = document.createElement('p');
+  source.className = 'viz__source';
+  source.textContent = 'Source: the demo tables on this page (cohorts, enrollments); illustrative figures.';
+  const table = document.createElement('details');
+  table.className = 'viz__values';
+  table.innerHTML = '<summary>Values as a table</summary>';
+  table.addEventListener('toggle', () => {
+    if (!table.open) return;
+    if (!table.querySelector('p')) {
+      const p = document.createElement('p');
+      p.textContent = 'The values are in the results table below.';
+      table.append(p);
+    }
+    host.closest('.sqlpad')?.querySelector('.sqlpad__table')?.scrollIntoView({ block: 'nearest' });
+  });
 
   if (spec.kind === 'line') {
-    const H = 260, L = 42, R = spec.series.length > 1 ? 150 : 76, T = 12, B = 28;
+    const H = 260, L = 42, R = phone ? 44 : (spec.series.length > 1 ? 150 : 76), T = 12, B = 28;
     const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, class: 'viz', role: 'img', 'aria-label': `Line chart of ${spec.series.map((j) => pretty(columns[j])).join(' and ')} by ${columns[0]}` });
     const x = (i) => L + (i * (W - L - R)) / Math.max(rows.length - 1, 1);
     const y = (v) => T + (1 - (v - minV) / (maxV - minV)) * (H - T - B);
-    for (let t = minV; t <= maxV + 0.001; t += step) {
+    // Three horizontal ticks on a narrow tile, the regular step otherwise.
+    const ystep = phone ? (maxV - minV) / 2 : step;
+    for (let t = minV; t <= maxV + 0.001; t += ystep) {
       svg.append(el('line', { x1: L, x2: W - R, y1: y(t), y2: y(t), class: 'viz__grid' }));
       svg.append(el('text', { x: L - 8, y: y(t) + 4, class: 'viz__tick', 'text-anchor': 'end' }, spec.isPct ? `${Math.round(t)}%` : String(Math.round(t))));
     }
-    const every = (W - L - R) / rows.length < 38 ? 2 : 1;
-    rows.forEach((r, i) => {
-      if (i % every === 0) svg.append(el('text', { x: x(i), y: H - 8, class: 'viz__tick', 'text-anchor': 'middle' }, String(r[0])));
-    });
     const last = rows.length - 1;
+    // Phones label the first, middle and last point; wider charts every point,
+    // or every other one when they would touch.
+    const every = (W - L - R) / rows.length < 38 ? 2 : 1;
+    const labelled = phone ? new Set([0, Math.floor(last / 2), last]) : null;
+    rows.forEach((r, i) => {
+      if (labelled ? labelled.has(i) : i % every === 0) svg.append(el('text', { x: x(i), y: H - 8, class: 'viz__tick', 'text-anchor': 'middle' }, String(r[0])));
+    });
     const endLabels = [];
     spec.series.forEach((j, k) => {
       const pts = rows.map((r, i) => (r[j] === null ? null : [x(i), y(r[j])])).filter(Boolean);
@@ -238,10 +268,11 @@ function drawChart(host, tip, columns, rows, spec) {
       if (rows[last][j] !== null) {
         svg.append(el('circle', { cx: x(last), cy: y(rows[last][j]), r: 4, class: `viz__dot s${k + 1}` }));
         // Direct label at the line's end: the value, plus the series name
-        // when there's more than one line to tell apart.
+        // when there's more than one line to tell apart. On a phone the
+        // value alone, with the names in the legend.
         endLabels.push({
           y: y(rows[last][j]) + 4,
-          text: spec.series.length > 1 ? `${pretty(columns[j])} ${fmt(rows[last][j], spec.isPct)}` : fmt(rows[last][j], spec.isPct),
+          text: spec.series.length > 1 && !phone ? `${pretty(columns[j])} ${fmt(rows[last][j], spec.isPct)}` : fmt(rows[last][j], spec.isPct),
         });
       }
     });
@@ -262,32 +293,45 @@ function drawChart(host, tip, columns, rows, spec) {
       const px = ((e.clientX - box.left) / box.width) * W;
       const i = Math.max(0, Math.min(rows.length - 1, Math.round(((px - L) / (W - L - R)) * (rows.length - 1))));
       cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
-      showTip(tip, host, e, `<b>${rows[i][0]}</b>` + spec.series.map((j, k) => `<span><i class="viz__key s${k + 1}"></i>${pretty(columns[j])} <b>${fmt(rows[i][j], spec.isPct)}</b></span>`).join(''));
+      showTip(tip, host, e, `<b>${rows[i][0]}</b>` + spec.series.map((j, k) => `<span><i class="viz__key viz__key--line s${k + 1}"></i>${pretty(columns[j])} <b>${fmt(rows[i][j], spec.isPct)}</b></span>`).join(''));
     });
     hit.addEventListener('pointerleave', () => { cross.setAttribute('opacity', 0); tip.hidden = true; });
-    host.append(title, legend, svg);
+    host.append(fig, title, legend, svg, source, table);
   } else {
-    // Horizontal bars, grouped when there are several series.
-    const band = 18 * spec.series.length + 14;
-    const L = Math.min(132, W * 0.34), R = 52, T = 8;
+    // Horizontal bars, grouped when there are several series. Category names
+    // sit in a left column, or above their bars on a phone, where the column
+    // would squeeze the bars to nothing.
+    const band = 18 * spec.series.length + (phone ? 30 : 14);
+    const L = phone ? 8 : Math.min(132, W * 0.34), R = phone ? 36 : 52, T = 8;
     const H = T + rows.length * band + 8;
     const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, class: 'viz', role: 'img', 'aria-label': `Bar chart of ${spec.series.map((j) => pretty(columns[j])).join(' and ')} by ${columns[0]}` });
+    // The second series is hatched as well as coloured, so two bars still
+    // read apart in greyscale or print.
+    const defs = el('defs');
+    const hatch = el('pattern', { id: 'viz-hatch', patternUnits: 'userSpaceOnUse', width: 6, height: 6, patternTransform: 'rotate(45)' });
+    hatch.append(el('line', { x1: 0, y1: 0, x2: 0, y2: 6, stroke: 'var(--s2)', 'stroke-width': 2 }));
+    defs.append(hatch);
+    svg.append(defs);
     const w = (v) => ((v ?? 0) / maxV) * (W - L - R);
     rows.forEach((r, i) => {
       const top = T + i * band;
-      svg.append(el('text', { x: L - 10, y: top + (band - 14) / 2 + 5, class: 'viz__cat', 'text-anchor': 'end' }, String(r[0]).slice(0, 18)));
+      if (phone) svg.append(el('text', { x: L, y: top + 10, class: 'viz__cat' }, String(r[0])));
+      else svg.append(el('text', { x: L - 10, y: top + (band - 14) / 2 + 5, class: 'viz__cat', 'text-anchor': 'end' }, String(r[0]).slice(0, 18)));
       spec.series.forEach((j, k) => {
-        const by = top + k * 18 + 2; // 2px surface gap between bars
+        const by = phone ? top + 16 + k * 18 : top + k * 18 + 2; // 2px surface gap between bars
         const bar = el('rect', { x: L, y: by, width: Math.max(w(r[j]), 1), height: 14, rx: 4, class: `viz__bar s${k + 1}` });
+        if (k === 1) bar.setAttribute('fill', 'url(#viz-hatch)');
         svg.append(bar);
-        svg.append(el('text', { x: L + w(r[j]) + 6, y: by + 11, class: 'viz__val' }, fmt(r[j], spec.isPct)));
+        // A value that would run past the right edge goes inside the bar's end.
+        if (L + w(r[j]) + 40 > W - R) svg.append(el('text', { x: L + w(r[j]) - 6, y: by + 11, 'text-anchor': 'end', class: 'viz__val viz__val--in' }, fmt(r[j], spec.isPct)));
+        else svg.append(el('text', { x: L + w(r[j]) + 6, y: by + 11, class: 'viz__val' }, fmt(r[j], spec.isPct)));
         const hit = el('rect', { x: L, y: by - 2, width: W - L - R, height: 18, fill: 'transparent' });
         hit.addEventListener('pointermove', (e) => showTip(tip, host, e, `<b>${r[0]}</b><span><i class="viz__key s${k + 1}"></i>${pretty(columns[j])} <b>${fmt(r[j], spec.isPct)}</b></span>`));
         hit.addEventListener('pointerleave', () => { tip.hidden = true; });
         svg.append(hit);
       });
     });
-    host.append(title, legend, svg);
+    host.append(fig, title, legend, svg, source, table);
   }
   host.append(tip);
 }
@@ -347,7 +391,15 @@ function init(host) {
   tip.hidden = true;
 
   let lastDraw = null;
-  new ResizeObserver(() => { if (lastDraw) drawChart(chartHost, tip, ...lastDraw); }).observe(chartHost.parentElement);
+  // Redrawn when the column changes width, not height: the chart's own lines (and the
+  // values disclosure opening) change the height, and a redraw would close it again.
+  let lastWidth = 0;
+  new ResizeObserver(([entry]) => {
+    const width = entry.contentRect.width;
+    if (width === lastWidth) return;
+    lastWidth = width;
+    if (lastDraw) drawChart(chartHost, tip, ...lastDraw);
+  }).observe(chartHost.parentElement);
 
   async function run() {
     // Writes could never stick (see loadDb); this just says so in plain words.

@@ -782,6 +782,10 @@ kbd {
   background: var(--paper-2); border: 1px solid var(--line-2);
 }
 .demo__noscript { margin: 0; color: var(--ink-3); }
+/* The scanner section is painted with its one-line notice before the module mounts the demo;
+   its mounted height is reserved where the column width is fixed (measured with tools/measure.mjs). */
+@media (min-width: 1200px) { .demo[data-demo="scanner"] { min-height: 996px; } }
+@media (max-width: 600px) { .demo[data-demo="scanner"] { min-height: 1414px; } }
 .demo__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; }
 .demo__eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--accent-ink); margin: 0 0 6px; }
 .demo__title { font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; margin: 0; }
@@ -885,6 +889,9 @@ kbd {
 .sqlpad__note { margin: 12px 0 16px; color: var(--ink-2); font-size: 15px; }
 .sqlpad__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
 @media (max-width: 900px) { .sqlpad__grid { grid-template-columns: minmax(0, 1fr); } }
+/* Reserved before the first query, so the page below holds still: an empty editor's height, measured with tools/measure.mjs (345 px at 900, 376 px at 430 to 600). */
+.sqlpad__out { min-height: 345px; }
+@media (max-width: 600px) { .sqlpad__out { min-height: 376px; } }
 .sqlpad__editor textarea {
   width: 100%; min-height: 250px; resize: vertical; padding: 14px 16px; border-radius: var(--r-2);
   font-family: var(--mono); font-size: 13px; line-height: 1.6; tab-size: 2;
@@ -921,11 +928,17 @@ kbd {
 :root[data-theme="dark"] .viz-host, :root.bp-mode .viz-host { --s1: #E8785A; --s2: #6FA3EC; --s3: #5DBE86; --s4: #A89F93; }
 .viz { display: block; width: 100%; height: auto; overflow: visible; }
 .viz__title { margin: 0 0 4px 4px; font-size: 13px; font-weight: 500; color: var(--ink); }
+.viz__fig { margin: 0 0 2px 4px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.viz__source { margin: 6px 4px 2px; font-size: 12px; color: var(--ink-3); }
+.viz__values { margin: 6px 4px 0; font-size: 14px; }
+.viz__values summary { cursor: pointer; color: var(--ink-2); min-height: 32px; display: flex; align-items: center; }
+.viz__values p { margin: 0 0 6px; color: var(--ink-2); }
 .viz__grid { stroke: var(--line); stroke-width: 1; }
 .viz__tick, .viz__cat, .viz__val, .viz__direct { font-family: var(--sans); fill: var(--ink-3); font-size: 12px; }
 .viz__cat { fill: var(--ink-2); font-size: 12px; }
 .viz__val { fill: var(--ink-2); font-variant-numeric: tabular-nums; }
 .viz__direct { fill: var(--ink); font-size: 12px; }
+.viz__val--in { fill: var(--card); }
 .viz__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .viz__line.s1, .viz__bar.s1, .viz__dot.s1 { stroke: var(--s1); }
 .viz__line.s2, .viz__dot.s2 { stroke: var(--s2); }
@@ -933,7 +946,7 @@ kbd {
 .viz__dot { stroke-width: 2; fill: var(--card); }
 .viz__bar { stroke: none !important; }
 .viz__bar.s1 { fill: var(--s1); }
-.viz__bar.s2 { fill: var(--s2); }
+.viz__bar.s2 { fill: url(#viz-hatch); } /* hatched as well as coloured: see demo-sql.js */
 .viz__bar.s3 { fill: var(--s3); }
 .viz__cross { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
 .viz__legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin: 0 0 6px 4px; }
@@ -942,8 +955,11 @@ kbd {
 .viz__key { display: inline-block; width: 10px; height: 10px; border-radius: var(--r-1); }
 .viz__key--line { height: 3px; width: 14px; border-radius: 2px; }
 .viz__key.s1 { background: var(--s1); }
-.viz__key.s2 { background: var(--s2); }
+.viz__key.s2 { background: repeating-linear-gradient(45deg, var(--s2) 0 2px, transparent 2px 5px); }
 .viz__key.s3 { background: var(--s3); }
+/* The second series reads without colour: a dashed line and a hatched bar, keys to match. */
+.viz__line.s2 { stroke-dasharray: 5 4; }
+.viz__key--line.s2 { background: repeating-linear-gradient(90deg, var(--s2) 0 5px, transparent 5px 9px); }
 .viz__tip[hidden] { display: none; }
 .viz__tip {
   position: absolute; z-index: 5; pointer-events: none; display: flex; flex-direction: column; gap: 3px;
