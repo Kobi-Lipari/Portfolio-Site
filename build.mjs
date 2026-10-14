@@ -256,23 +256,24 @@ const LENSES = {
   },
   analyst: {
     key: 'analyst', path: '/analyst/', depth: 1, dir: 'analyst',
-    title: 'Kobi Lipari — data analyst and BI developer',
-    description: 'I keep thirty Tableau dashboards on one written spec, run a retention model a university\'s advisers use each week, and did one analysis in the open, plan first.',
-    role: 'Data analyst · BI developer',
+    title: 'Kobi Lipari — data analyst, surveys and dashboards',
+    description: 'I keep thirty Tableau dashboards on one written spec, run the retention model a university\'s advisers use each week, and run its Qualtrics surveys from the first question to the written report.',
+    role: 'Data analyst · Surveys · Dashboards',
     h1: ['I make the numbers', 'explain themselves.'],
-    pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from each week, and did one analysis in the open, plan committed before I saw the data.',
-    recruiter: 'Data and BI work · New Orleans',
+    pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from each week, and run its Qualtrics surveys end to end: design, administration, analysis and the report people actually read.',
+    recruiter: 'Data, survey and BI work · New Orleans',
     // The third and fourth chips have no fallback: they wait for their own pages.
     chips: (d) => [
       { n: '30+', label: 'dashboards on one written spec', href: linkTo(d, 'tableau-dashboards', '#see-it') },
       { n: '15+', label: 'data sources feeding one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
       { label: 'the retention model, checked year over year', href: linkTo(d, 'predictive-retention', '#s-validation') },
+      { label: 'Qualtrics surveys, from the first question to the report', href: '#about' },
       { n: '4,424', label: 'students in a study I planned before I looked', href: linkTo(d, 'dropout-early-warning', '#plan') },
       { link: true, label: 'Tableau Public ↗', href: linkUrl('Tableau Public') },
     ],
     doors: false,
     featured: ['predictive-retention', 'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'],
-    tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · Git · JavaScript · HTML/CSS · Cloudflare',
+    tools: 'SQL · Tableau · Qualtrics · Python · pandas · R · Excel · Power BI · Access · Git · JavaScript · HTML/CSS · Cloudflare',
     openTo: 'Data analyst and BI roles · New Orleans, or anywhere the work is a step up',
     resume: lensResume('resume-analyst.pdf'),
     banner: { who: 'someone hiring an analyst', others: [['developers', 'dev/'], ['everyone else', '']] },
@@ -355,9 +356,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
     <div class="hero__actions"><a class="btn not-sm" href="#work">See the work</a><a class="btn only-sm" href="mailto:${SITE.email}?subject=Your%20portfolio">Email me</a><a class="pill" href="${u(d, lens.resume)}">Résumé</a></div>
   </div>
   <div class="hero__demo">
-    <figure class="hero__poster only-sm" data-poster aria-label="The redesigned Admissions dashboard"><svg viewBox="0 0 1400 900"></svg></figure>
-    <p class="hero__poster-link only-sm"><a href="${u(d, 'work/tableau-dashboards/')}">See the full comparison →</a></p>
-    <section class="demo dash dash--hero not-sm" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
+    <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
   </div>
 </section>
 <ul class="proof${lens.key === 'analyst' ? ' proof--ledger' : ''}" aria-label="In numbers">
@@ -384,7 +383,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
     <div>
       <h2 id="about-h">About</h2>
-      <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. Part time, I build full-stack web platforms that members and patients use every day.</p>
+      <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. I also run the office's Qualtrics surveys end to end, from writing the questions to pulling the responses and writing up what they say. Part time, I build full-stack web platforms that members and patients use every day.</p>
       <p>${txt('Two things from this year I would tell you about over coffee. A payment webhook on a volunteer-run site [the chess association\'s] accepted unsigned calls until I noticed; I fixed it before launch and wrote the test that fails if anyone removes the check. And the retention model at Nicholls, the first its advisers have worked from, which I validated year over year before anyone saw a score.')}</p>
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
