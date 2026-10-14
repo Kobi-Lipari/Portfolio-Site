@@ -235,7 +235,7 @@ const LENSES = {
     title: `${SITE.name} — data analyst and web developer`,
     description: SITE.description,
     role: 'Data analyst · Web developer',
-    h1: ['Fifteen data sources,', 'one call list.'],
+    h1: ['I make data useful,', 'and software usable.'],
     pitch: 'By day I turn a university\'s scattered data into pipelines, models and dashboards its advisers act on. By night I build websites for a chess association and a telehealth clinic.',
     recruiter: 'Data, BI and full-stack work · New Orleans',
     chips: (d) => [
@@ -259,7 +259,7 @@ const LENSES = {
     title: 'Kobi Lipari — data analyst and BI developer',
     description: 'I keep thirty Tableau dashboards on one written spec, run a retention model a university\'s advisers use each week, and did one analysis in the open, plan first.',
     role: 'Data analyst · BI developer',
-    h1: ['Thirty dashboards,', 'one way to read them.'],
+    h1: ['I turn campus data', 'into clear answers.'],
     pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from each week, and did one analysis in the open, plan committed before I saw the data.',
     recruiter: 'Data and BI work · New Orleans',
     // The third and fourth chips have no fallback: they wait for their own pages.
@@ -282,7 +282,7 @@ const LENSES = {
     title: 'Kobi Lipari — full-stack developer',
     description: 'I build React and TypeScript sites on Cloudflare, with the tests to match: a chess association\'s platform with payments, a scoresheet scanner, and the data work behind them.',
     role: 'Full-stack developer · TypeScript/React',
-    h1: ['Three sites people use,', 'and the data under them.'],
+    h1: ['I build software', 'people use every day.'],
     pitch: 'I build in React and TypeScript on Cloudflare, write the tests before I trust a deploy, and do the SQL and modelling behind the numbers those sites show.',
     recruiter: 'Full-stack and front-end work · New Orleans',
     chips: (d) => [
