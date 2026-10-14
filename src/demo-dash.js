@@ -408,35 +408,10 @@ async function load(key) {
   if (!state.data[key]) state.data[key] = await (await fetch(`${BASE}data/dashboards/${DASHES[key].file}`)).json();
 }
 
-// Phones get a still poster instead of the live hero: the redesigned Admissions dashboard for the
-// latest fall, drawn once into the poster's <svg>. No seam, no sweep, no tabs, and nothing of the
-// demo mounts, so the page runs no animation. The CSS swaps the poster and the live demo on every
-// resize, so each side is drawn the first time its width is reached (a phone turned sideways, a
-// window dragged narrower) and left alone after that.
+// The live demo mounts at every width. On phones the seam rests at half and half and is dragged
+// by hand; the automatic sweep runs only on wider screens.
 const wide = matchMedia('(min-width: 601px)');
-let mounted = false, postered = false;
-async function drawPoster() {
-  if (postered) return;
-  const poster = document.querySelector('[data-poster] svg');
-  if (!poster) return;
-  postered = true;
-  await load('admissions');
-  const D = state.data.admissions;
-  const sel = { ...state, fall: D.falls[D.falls.length - 1].code, group: 'all' };
-  poster.setAttribute('font-family', FONT.slice(FONT.indexOf('"') + 1, -1));
-  poster.innerHTML = DASHES.admissions.after(DASHES.admissions.model(D, sel));
-}
-async function mountOnce() {
-  if (mounted) return;
-  mounted = true;
-  await mount();
-}
-if (HERO) {
-  wide.addEventListener('change', (e) => { if (e.matches) mountOnce(); else drawPoster(); });
-  if (wide.matches) await mountOnce(); else await drawPoster();
-} else {
-  await mount();
-}
+await mount();
 
 // The live demo: the stage with both drawings, the seam, the controls and the tour.
 async function mount() {
@@ -706,7 +681,7 @@ async function mount() {
       if (!now && onScreen) armed = true;
       onScreen = now;
     }, { threshold: 0.3 }).observe(stage);
-    if (!motion.reduce) {
+    if (!motion.reduce && wide.matches) {
       const run = ++tourRun;
       await wait(900);
       sweep: while (run === tourRun) {

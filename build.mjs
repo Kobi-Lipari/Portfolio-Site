@@ -355,9 +355,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
     <div class="hero__actions"><a class="btn not-sm" href="#work">See the work</a><a class="btn only-sm" href="mailto:${SITE.email}?subject=Your%20portfolio">Email me</a><a class="pill" href="${u(d, lens.resume)}">Résumé</a></div>
   </div>
   <div class="hero__demo">
-    <figure class="hero__poster only-sm" data-poster aria-label="The redesigned Admissions dashboard"><svg viewBox="0 0 1400 900"></svg></figure>
-    <p class="hero__poster-link only-sm"><a href="${u(d, 'work/tableau-dashboards/')}">See the full comparison →</a></p>
-    <section class="demo dash dash--hero not-sm" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
+    <section class="demo dash dash--hero" data-demo="dash" data-mode="hero" data-base="${siteRoot(d)}" aria-label="A Nicholls State dashboard, before and after my redesign"><p class="demo__noscript">The before-and-after comparison needs JavaScript. <a href="${u(d, 'work/tableau-dashboards/')}">See the dashboards project</a>.</p></section>
   </div>
 </section>
 <ul class="proof${lens.key === 'analyst' ? ' proof--ledger' : ''}" aria-label="In numbers">
