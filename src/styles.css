@@ -240,7 +240,7 @@ a:hover { color: var(--accent-ink); }
   .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* A fifth chip would sit alone in a half-width cell: the link closes the row across both columns instead. */
   .proof__link:last-child { grid-column: 1 / -1; }
-  .proof__link:last-child a { padding-top: 2px; }
+  .proof__link:last-child a, :root[data-lens="dev"] .proof__link:last-child a { padding-top: 2px; }
 }
 /* The analyst lens lays the chips out as a numbered ledger: one row per fact, numeral at the end. */
 .proof--ledger { grid-template-columns: 1fr; gap: 0; }
