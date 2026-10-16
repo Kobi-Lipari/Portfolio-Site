@@ -385,7 +385,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
     <div>
       <h2 id="about-h">About</h2>
       <p>Right now I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting, and I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. I also run the office's Qualtrics surveys end to end, from writing the questions to pulling the responses and writing up what they say. Part time, I build full-stack web platforms that members and patients use every day.</p>
-      <p>${txt('Two things from this year I would tell you about over coffee. A payment webhook on a volunteer-run site [the chess association\'s] accepted unsigned calls until I noticed; I fixed it before launch and wrote the test that fails if anyone removes the check. And the retention model at Nicholls, the first its advisers have worked from, which I validated year over year before anyone saw a score.')}</p>
+      <p>Day to day, offices and leadership bring me questions, and I find the data that answers them and turn it into a dashboard or a written report. I present the results to the university's senior leadership, its task forces and department heads: what the numbers show, what they don't, and the options they point to. Between requests I keep the dashboards current each term and the retention model's list ready for advisers every week.</p>
       <dl>
         <dt>NOW</dt><dd>Data Analyst, Nicholls State University</dd>
         <dt>ALSO</dt><dd>Webmaster, Louisiana Chess Association<br>Web Developer &amp; IT Support, Healingly</dd>
