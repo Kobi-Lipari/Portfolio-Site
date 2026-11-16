@@ -824,9 +824,11 @@ if (host) {
     });
   }
 
+  // One link per piece, in the order the page puts them.
+  const LABEL = { plan: 'The scorecard', replay: 'Replay a term', beat: 'Beat the model', advising: 'You run advising', casefiles: 'Case files' };
   host.prepend(h('nav', { class: 'ew-nav', 'aria-label': 'Interactive pieces' },
-    [['plan', 'The plan'], ['replay', 'Replay a term'], ['beat', 'Beat the model'], ['advising', 'You run advising'], ['casefiles', 'Case files']]
-      .map(([id, label]) => h('a', { href: `#${id}`, text: label, onclick: () => setTimeout(settle, 0) }))));
+    parts.filter((p) => LABEL[p.id])
+      .map((p) => h('a', { href: `#${p.id}`, text: LABEL[p.id], onclick: () => setTimeout(settle, 0) }))));
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
       for (const en of entries) if (en.isIntersecting) { io.unobserve(en.target); ensure(en.target); }

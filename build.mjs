@@ -423,11 +423,11 @@ const DEMOS = {
   <section class="demo cat" data-demo="catalog" data-base="${siteRoot(depth)}" aria-label="More redesigned dashboards"><p class="demo__noscript">The slideshow needs JavaScript.</p></section>` : ''}`,
   // Five pieces for the withdrawal project, each filled from its own JSON file in data/ewarn/.
   ewarn: (depth) => `<div class="ew" data-ewarn data-base="${siteRoot(depth)}data/ewarn/"${allProjects.some((p) => p.demo === 'ewarn' && p.repoIsPublic) ? ' data-repo-links="on"' : ''}>
-    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="replay" id="replay" aria-label="Replay a term"><p class="demo__noscript">The term replay needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
   </div>`,
 };
 // The dashboards slideshow appears once all six of its data files are in src/data/dashboards
@@ -542,6 +542,39 @@ const processSteps = (p) => `
       </ol>
     </section>`;
 
+// A project's plain-language story (projects.mjs `story`): what it is, why, what it's for, the data,
+// the approach, the findings and what's next, read before any interactive piece or technical detail.
+const storySection = (p) => {
+  const st = p.story;
+  return `
+    <section class="story" id="story" aria-labelledby="story-h">
+      <h2 id="story-h" class="story__kicker">The short version</h2>
+      <p class="story__lede">${txt(st.lede)}</p>
+      <div class="story__pair">
+        <div><h3>Why I built it</h3><p>${txt(st.why)}</p></div>
+        <div><h3>What it's for</h3><p>${txt(st.forWhat)}</p></div>
+      </div>
+      <div class="story__block">
+        <h3>The data</h3>
+        <ul class="story__facts">${st.facts.map((f) => `<li><b>${esc(f.n)}</b><span>${esc(f.label)}</span></li>`).join('')}</ul>
+        <p>${txt(st.data)}</p>
+      </div>
+      <div class="story__block">
+        <h3>How I approached it</h3>
+        <ol class="story__steps">${st.steps.map((x, k) => `<li><span class="story__n">${String(k + 1).padStart(2, '0')}</span><b>${esc(x.title)}</b><p>${txt(x.text)}</p></li>`).join('')}</ol>
+      </div>
+      <div class="story__block">
+        <h3>What I found</h3>
+        <ul class="story__findings">${st.findings.map((x) => `<li><b class="story__big">${esc(x.n)}</b><h4>${esc(x.title)}</h4><p>${txt(x.text)}</p></li>`).join('')}</ul>
+        <p class="story__meaning"><strong>What it means.</strong> ${txt(st.meaning)}</p>
+      </div>
+      <div class="story__block">
+        <h3>What's next</h3>
+        <ol class="story__next">${st.next.map((x) => `<li><b>${esc(x.title)}</b><p>${txt(x.text)}</p></li>`).join('')}</ol>
+      </div>
+    </section>`;
+};
+
 // A gallery only shows once at least one desktop screenshot is in src/img; until then the
 // page has no Screens block (no placeholder frames on the live site).
 const hasShots = (p) => !!p.gallery?.desktop?.some((v) => v.src);
@@ -549,7 +582,11 @@ const projectPage = (p, i) => {
   const prev = projects[(i - 1 + projects.length) % projects.length];
   const next = projects[(i + 1) % projects.length];
   const sections = SECTION_ORDER.filter(([k]) => p.sections && txt(p.sections[k]));
-  const toc = [
+  const toc = p.story ? [
+    ['story', 'The short version'],
+    ...(p.demo ? [['see-it', 'Explore it yourself']] : []),
+    ...(sections.length ? [['technical', 'Technical write-up']] : []),
+  ] : [
     ...(p.demo || hasShots(p) ? [['see-it', p.demo ? 'See it work' : 'Screens']] : []),
     ...(p.slug === 'tableau-dashboards' && DASH_CATALOG ? [['catalog', 'The catalog']] : []),
     ...(p.process ? [['my-work', 'My work on them']] : [['how', "How it's built"], ...sections.map(([k, label]) => [`s-${k}`, label])]),
@@ -578,7 +615,17 @@ ${nav(2)}
     </details>
   </aside>
   <div class="proj__body">
-    ${p.demo || hasShots(p) ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${hasShots(p) ? showcase(p, 2) : ''}</div>` : ''}
+    ${p.story ? `${storySection(p)}
+    ${p.demo ? `<div id="see-it" class="explore">
+      <div class="explore__head"><h2>Explore it yourself</h2><p>${txt(p.explore || '')}</p></div>
+      ${DEMOS[p.demo](2)}
+    </div>` : ''}
+    ${sections.length ? `<details class="techwrite" id="technical">
+      <summary><span class="techwrite__title">The technical write-up</span><span class="techwrite__sub">Methods, validation and every number, for analysts</span></summary>
+      <div class="sections">
+        ${sections.map(([k, label]) => `<section class="section" id="s-${k}"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n        ')}
+      </div>
+    </details>` : ''}` : `${p.demo || hasShots(p) ? `<div id="see-it">${p.demo ? DEMOS[p.demo](2) : ''}${hasShots(p) ? showcase(p, 2) : ''}</div>` : ''}
     ${p.slug === 'tableau-dashboards' ? catalogSection(2) : ''}
     ${p.process ? processSteps(p) : `<section class="pipeline" id="how" aria-label="How it's built">
       <h2>HOW IT'S BUILT</h2>
@@ -586,7 +633,7 @@ ${nav(2)}
     </section>
     <div class="sections">
       ${sections.map(([k, label]) => `<section class="section" id="s-${k}"><h2>${label}</h2><p>${txt(p.sections[k])}</p></section>`).join('\n      ')}
-    </div>`}
+    </div>`}`}
     <nav class="pager" aria-label="More projects">
       <a href="${u(2, `work/${prev.slug}/`)}">← ${esc(prev.title)}</a>
       <a href="${u(2, `work/${next.slug}/`)}">${esc(next.title)} →</a>

@@ -16,8 +16,8 @@ export const projects = [
     title: "Who's About to Withdraw?",
     kind: "Analysis · public data",
     tools: "Python · pandas · scikit-learn · statsmodels",
-    note: "The bar was set before the data was opened. The model missed it, and the page shows it.",
-    outcome: "An early-warning model for course withdrawal, built on about 32,600 real registrations and judged against a plan committed before any results were seen. Scored once on a term it never saw, it missed its own bar: an AUC of 0.616 against a declared 0.75.",
+    note: "Can four weeks of activity flag students before they withdraw? I set the pass mark first, then tested it.",
+    outcome: "Can a college tell by week four which students will withdraw from a course, and be fair to every group? I tested it on 32,593 public course records, with the pass mark set before I looked. The warning didn't pass, and this page shows why.",
     role: "Solo: analysis, modelling, write-up",
     timeline: "September – October 2026",
     // The analysis repo is private for now, so links into it would be dead for visitors.
@@ -29,6 +29,39 @@ export const projects = [
       { label: "Analysis plan", href: "https://github.com/Kobi-Lipari/withdrawal-early-warning/blob/main/ANALYSIS_PLAN.md", repo: true }
     ],
     pipeline: ["Plan committed first", "Fifteen data checks", "Week-4 features", "Train on 2013, test on 2014", "Fairness audit & model card"],
+    explore: "Five pieces built from the real results. Start with the replay: watch the warning list form at week four, then see who actually left. The last piece is the full scorecard, every promise in the plan next to what happened.",
+    // The plain-language story that opens the page, before the interactive pieces. Every
+    // figure here is from the results; the technical write-up (sections) sits below, folded.
+    story: {
+      lede: "Colleges want to reach students before they give up on a course. I tested whether four weeks of online activity is enough to spot them, using 32,593 real course registrations, and I set the pass mark before I looked. The warning didn't pass, and showing that cleanly is the point.",
+      why: "At work I built a university's first student-retention model, but its data is private and can't go on a website. So I did the same kind of work again on a public dataset, start to finish and in the open, where every step can be checked.",
+      forWhat: "An early warning is only worth using if it works on students it has never seen, if its percentages mean what they say, and if it doesn't miss some groups of students more than others. This project is a worked example of checking all three before a college leans on a risk score.",
+      facts: [
+        { n: "32,593", label: "course registrations" },
+        { n: "7", label: "courses" },
+        { n: "4", label: "terms, 2013 to 2014" },
+        { n: "10.6 million", label: "rows of online activity" },
+      ],
+      data: "The Open University is a UK distance-learning university, so nearly everything a student does happens online. Its public, anonymised dataset (Kuzilek, Hlosta and Zdrahal, 2017) records who enrolled, their daily clicks in the online classroom, the assignments they handed in, and how each course ended: passed, failed or withdrew. About one in five students still enrolled after four weeks went on to withdraw.",
+      steps: [
+        { title: "Set the rules first", text: "Before opening any results, I wrote down every test, the term the warning would be judged on, and the pass mark it had to beat." },
+        { title: "Check the data", text: "Fifteen checks for problems like duplicated records, missing dates and deadlines nobody met. Eleven of them changed how I handled the data." },
+        { title: "Build the warning on week four", text: "It sees only what a college would know by then: clicks, assignments handed in and registration details. It learned from 2013 and was tested once, on a 2014 term it had never seen." },
+        { title: "Check it's fair", text: "Gender, age, disability and neighbourhood deprivation were never inputs. I used them afterwards to see whether the warning works as well for each group." },
+      ],
+      findings: [
+        { n: "15% vs 35%", title: "The early signs are real", text: "Students who handed in their first assignment on time went on to withdraw at 15%; those who didn't, at 35%. Clicks told a much weaker story." },
+        { n: "62%", title: "But the warning didn't pass", text: "Take one student who withdrew and one who stayed: the warning ranks the right one as riskier 62% of the time. A coin flip gets 50%. The pass mark I set beforehand was 75%." },
+        { n: "1 in 4", title: "It would miss most students", text: "Four in ten of the students it flagged did withdraw, about twice the average. But its high-risk list held only a quarter of everyone who withdrew; about half came from students it rated low risk." },
+        { n: "27% vs 22%", title: "And it isn't equally good for everyone", text: "Of the men who withdrew it caught 27%; of the women, 22%. Younger students were caught more often than older ones too. And it under-rated students with a disability: on average it gave them a 21% chance, and 27% withdrew." },
+      ],
+      meaning: "Four weeks of clicks isn't enough to lean on. A score like this should only ever prompt an offer of help, and never be the only way a college looks for students at risk.",
+      next: [
+        { title: "Wait longer, or ask a different question", text: "At week eight the same approach ranks students correctly 66% of the time instead of 62%, though that leaves less time to help. Asked instead who won't pass the course at all, by withdrawing or failing, it does better still: 72%, at week four." },
+        { title: "Add what a real college knows", text: "This dataset has clicks, but not earlier grades, financial aid or advising contacts. The retention model I built at work draws on more than fifteen sources like those, and ranks students correctly about 75% of the time on students it hadn't seen." },
+        { title: "Close the fairness gaps before any use", text: "The analysis weighs the options, such as a separate cut-off for each group or adjusting the scores group by group, and what each one would cost." },
+      ],
+    },
     sections: {
       problem: "Colleges want to reach students who are about to withdraw while there's still time to help, and the usual tool is a risk score. A risk score is only worth using if it works on a term it has never seen, if its percentages mean what they say, and if it doesn't miss some groups of students far more than others. This project builds one in the open and checks all three.",
       data: "The Open University Learning Analytics Dataset: about 32,600 course registrations across seven modules and four terms in 2013 and 2014, with demographics, daily clicks in the online classroom, assessment submissions and final results. Public, anonymised, and licensed CC BY 4.0 (Kuzilek, Hlosta and Zdrahal, 2017). Fifteen data checks ran before any modelling and eleven of them changed the analysis; the case files above show what they found.",
