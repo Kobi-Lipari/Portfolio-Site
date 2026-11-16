@@ -34,7 +34,7 @@ export const projects = [
     // figure here is from the results; the technical write-up (sections) sits below, folded.
     story: {
       lede: "Colleges want to reach students before they give up on a course. I tested whether four weeks of online activity is enough to spot them, using 32,593 real course registrations, and I set the pass mark before I looked. The warning didn't pass, and showing that cleanly is the point.",
-      why: "At work I built a university's first student-retention model, but its data is private and can't go on a website. So I did the same kind of work again on a public dataset, start to finish and in the open, where every step can be checked.",
+      why: "I did this one first, as practice, before running the same kind of study on real student records at Nicholls. I wanted to learn the whole process end to end, from writing the plan before looking to testing on students the model had never seen, and to make sure I could do every step right before the stakes were real.",
       forWhat: "An early warning is only worth using if it works on students it has never seen, if its percentages mean what they say, and if it doesn't miss some groups of students more than others. This project is a worked example of checking all three before a college leans on a risk score.",
       facts: [
         { n: "32,593", label: "course registrations" },
