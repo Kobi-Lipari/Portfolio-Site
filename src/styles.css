@@ -1246,10 +1246,12 @@ kbd {
 }
 .ew-badge--met { color: var(--ew-good); }
 .ew-badge--missed { color: var(--ew-bad); }
+.ew-badge--short { color: var(--ink-2); }
 .ew-badge--pending { color: var(--ink-3); border-style: dashed; }
 .ew-badge--plan { color: var(--ink-2); border-style: dashed; font-weight: 500; }
 .ew-t-met { color: var(--ew-good); }
 .ew-t-missed { color: var(--ew-bad); }
+.ew-t-short { color: var(--ink-2); }
 .ew-t-pending { color: var(--ink-3); }
 
 /* 1. Plan vs result */
@@ -1278,15 +1280,14 @@ kbd {
 .ew-part[data-view="plan"] .ew-promise__result { display: none; }
 .ew-part[data-view="result"] .ew-promise__plan { display: none; }
 .ew-part[data-view="plan"] .ew-promise { border-style: dashed; background: transparent; }
-.ew-part[data-view="result"] .ew-promise.is-missed { border-color: color-mix(in srgb, var(--ew-bad) 45%, var(--line)); }
 @media (prefers-reduced-motion: no-preference) {
   .ew-part[data-view="result"] .ew-promise__result,
   .ew-part[data-view="result"] .ew-promise__out .ew-badge { animation: enter-up var(--dur-slow) var(--ease-out) both; animation-delay: calc(min(var(--i), 8) * 20ms); }
 }
 .ew-promise[hidden], .ew-group[hidden], .ew-filter[hidden] { display: none; }
 .ew-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 18px; }
-/* A miss is marked as strongly as a pass: badge, a bar down the side, and the result in full ink. */
-.ew-part[data-view="result"] .ew-promise.is-missed { box-shadow: inset 4px 0 0 var(--ew-bad); }
+/* A goal not reached is marked plainly: its badge, a quiet bar down the side, and the result in full ink. */
+.ew-part[data-view="result"] .ew-promise.is-missed { box-shadow: inset 3px 0 0 var(--line-2); }
 .ew-part[data-view="result"] .ew-promise.is-missed .ew-promise__result { color: var(--ink); }
 /* A numeric bar, drawn: shaded passing range, dashed limits, the estimate and its interval. */
 .ew-promise__gauge { grid-column: 1 / -1; max-width: 340px; }

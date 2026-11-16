@@ -427,7 +427,7 @@ const DEMOS = {
     <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
-    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="The plan and the result"><p class="demo__noscript">The plan-versus-result view needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="Goals and results"><p class="demo__noscript">The goals-and-results view needs JavaScript.</p></section>
   </div>`,
 };
 // The dashboards slideshow appears once all six of its data files are in src/data/dashboards

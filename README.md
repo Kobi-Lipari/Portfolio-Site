@@ -43,6 +43,8 @@ node tools/sync-ewarn.mjs ../withdrawal-early-warning
 
 The path is a checkout of the analysis repo (the files are read from `reports/showcase/` inside it); that path is also the default. The tool checks every file against the shape the page reads before it copies anything, copies nothing if one of them fails, and prints what changed. Add `--dry-run` to check without copying.
 
+One line in `promises.json` is worded here rather than in the analysis repo: the `useful` goal and its result ("ready to rely on", not "counts as useful"). Until `ewarn/showcase.py` writes the same wording, a sync brings the old line back; put it back by hand after syncing.
+
 Stand-in files (made to design the page before the analysis ran, marked `"standin": true`) are refused unless you pass `--allow-standin`. Stand-in numbers are never published: if one of the files in `src/data/ewarn/` is a stand-in, `node build.mjs` stops with an error and writes nothing, so a deploy fails and the live site keeps its last good version. To publish the rest of the site without the project (no page, no card, no palette entry, no data files), run `HOLD_BACK=1 node build.mjs`. `PREVIEW=1` builds always show the project, under a "Stand-in data" banner.
 
 The page's links into the analysis repo (code, plan, commits) are off while that repo is private: commit IDs show as plain text. Set `repoIsPublic: true` on the project in `src/projects.mjs` once it is public.
