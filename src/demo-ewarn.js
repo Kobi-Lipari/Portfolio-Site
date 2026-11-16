@@ -2,7 +2,7 @@
 // small JSON file written by the analysis (see ewarn/showcase.py in the
 // analysis repo) and is built when it scrolls near the screen.
 //
-//   promises   goals first, results second (flips with blueprint mode too)
+//   promises   standards first, results second (flips with blueprint mode too)
 //   replay     a term replayed: weekly risk scores, the day-28 warning list,
 //              then who actually left
 //   beat       guess who withdraws, then see the model's guesses and the truth
@@ -68,7 +68,7 @@ function standinBanner() {
     'Every number in these five pieces is a stand-in, drawn at random to design the page. The real results replace them when the analysis runs.'));
 }
 
-// ── 1. Goals first, results second ───────────────────────────────────
+// ── 1. Standards first, results second ───────────────────────────────────
 const longDate = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
 // A commit, by its short ID. It is a link only when the analysis repo is public
@@ -87,12 +87,12 @@ function gauge(bar, iv) {
   const hi = Math.max(...pts) + span * 0.2;
   const W = 320; const x = (v) => 10 + ((v - lo) / (hi - lo)) * (W - 20);
   const zoneL = x(bar.lo ?? lo); const zoneR = x(bar.hi ?? hi);
-  const says = `Estimate ${iv.est}, 95% interval ${iv.lo} to ${iv.hi}. The goal: ${barText(bar)}. The estimate is ${j.estimate ? 'inside' : 'outside'} the goal${j.crosses ? `, and the interval reaches ${j.estimate ? 'past' : 'inside'} it` : ''}.`;
+  const says = `Estimate ${iv.est}, 95% interval ${iv.lo} to ${iv.hi}. The standard: ${barText(bar)}. The estimate ${j.estimate ? 'meets' : 'does not meet'} it${j.crosses ? `, and the interval reaches ${j.estimate ? 'past' : 'inside'} its limit` : ''}.`;
   const svg = svgEl('svg', { viewBox: `0 0 ${W} 52`, class: 'ew-gauge', role: 'img', 'aria-label': says });
   const text = (tx, ty, anchor, str) => { const t = svgEl('text', { class: 'ew-gauge__num', x: tx, y: ty, 'text-anchor': anchor }); t.textContent = str; return t; };
   svg.append(
     svgEl('rect', { class: 'ew-gauge__zone', x: zoneL, y: 14, width: Math.max(0, zoneR - zoneL), height: 20 }),
-    text(bar.lo == null ? zoneL : bar.hi == null ? zoneR : (zoneL + zoneR) / 2, 10, bar.lo == null ? 'start' : bar.hi == null ? 'end' : 'middle', 'goal'),
+    text(bar.lo == null ? zoneL : bar.hi == null ? zoneR : (zoneL + zoneR) / 2, 10, bar.lo == null ? 'start' : bar.hi == null ? 'end' : 'middle', 'meets'),
     svgEl('line', { class: 'ew-gauge__axis', x1: 10, x2: W - 10, y1: 24, y2: 24 }));
   for (const v of [bar.lo, bar.hi]) {
     if (v == null) continue;
@@ -102,7 +102,7 @@ function gauge(bar, iv) {
     svgEl('path', { class: 'ew-gauge__ci', d: `M${x(iv.lo)},19 v10 M${x(iv.lo)},24 H${x(iv.hi)} M${x(iv.hi)},19 v10` }),
     svgEl('circle', { class: 'ew-gauge__est', cx: x(iv.est), cy: 24, r: 5 }));
   return h('div', { class: 'ew-promise__gauge' }, svg,
-    j.crosses ? h('p', { class: 'ew-cross' }, h('span', { 'aria-hidden': 'true', text: '↔ ' }), `The 95% interval reaches ${j.estimate ? 'past' : 'inside'} the goal.`) : null);
+    j.crosses ? h('p', { class: 'ew-cross' }, h('span', { 'aria-hidden': 'true', text: '↔ ' }), `The 95% interval reaches ${j.estimate ? 'past' : 'inside'} the limit.`) : null);
 }
 
 function renderPromises(sec, d) {
@@ -110,16 +110,16 @@ function renderPromises(sec, d) {
   const opened = d.testOpened && !/-00$/.test(d.testOpened.date) ? longDate(d.testOpened.date) : null;
   const counts = { met: 0, missed: 0, pending: 0 };
   d.items.forEach((it) => counts[it.status]++);
-  const WORD = { met: 'Reached', missed: 'Not reached', pending: 'Pending' };
+  const WORD = { met: 'Met', missed: 'Not met', pending: 'Pending' };
   const ICON = { met: '✓', missed: '○', pending: '…' };
 
-  const planBtn = h('button', { type: 'button', 'data-view': 'plan' }, h('span', { text: 'The goals' }), h('small', { text: planDate }));
+  const planBtn = h('button', { type: 'button', 'data-view': 'plan' }, h('span', { text: 'The standards' }), h('small', { text: planDate }));
   const resultBtn = h('button', { type: 'button', 'data-view': 'result' }, h('span', { text: 'The results' }), h('small', { text: opened || 'not yet' }));
   const summary = h('p', { class: 'ew-sum', 'aria-live': 'polite' });
 
   const filters = ['all', 'met', 'missed', 'pending'].filter((f) => f === 'all' || counts[f]);
   const filterBtns = filters.map((f) => h('button', { type: 'button', 'data-show': f }, f === 'all' ? `All ${d.items.length}` : `${WORD[f]} ${counts[f]}`));
-  const filterRow = h('div', { class: 'ew-filter' }, h('span', { class: 'ew-small', text: 'Show' }), h('div', { class: 'ew-seg', role: 'group', 'aria-label': 'Show goals by outcome' }, filterBtns));
+  const filterRow = h('div', { class: 'ew-filter' }, h('span', { class: 'ew-small', text: 'Show' }), h('div', { class: 'ew-seg', role: 'group', 'aria-label': 'Show standards by outcome' }, filterBtns));
 
   let crossedMet = 0;
   const groups = [...new Set(d.items.map((it) => it.group))];
@@ -133,7 +133,7 @@ function renderPromises(sec, d) {
       if (iv && it.status === 'met' && judge(bar, iv).crosses) crossedMet++;
       const li = h('li', { class: `ew-promise is-${it.status}`, style: `--i:${k++}` },
         h('p', { class: 'ew-promise__text', text: it.promise }),
-        h('div', { class: 'ew-promise__plan' }, h('span', { class: 'ew-badge ew-badge--plan', text: 'Goal' })),
+        h('div', { class: 'ew-promise__plan' }, h('span', { class: 'ew-badge ew-badge--plan', text: 'Standard' })),
         h('div', { class: 'ew-promise__out' },
           h('span', { class: `ew-badge ew-badge--${it.status === 'missed' ? 'short' : it.status}` }, h('span', { 'aria-hidden': 'true', text: ICON[it.status] }), WORD[it.status]),
           h('span', { class: 'ew-promise__result', text: it.result }),
@@ -168,14 +168,14 @@ function renderPromises(sec, d) {
     groupEls.forEach((g) => { g.hidden = ![...g.querySelectorAll('li')].some((li) => !li.hidden); });
     const useful = d.items.find((it) => it.id === 'useful' && it.status !== 'pending');
     summary.replaceChildren(view === 'plan'
-      ? `${d.items.length} goals, each written down before any outcome data was opened. Every one stays on the page, whether the results reached it or not.`
+      ? `${d.items.length} standards, each written down before any outcome data was opened, so the results couldn't move them. Every one stays on the page, met or not.`
       : h('span', {},
-        h('b', { class: 'ew-t-met' }, h('span', { 'aria-hidden': 'true', text: '✓ ' }), `${counts.met} reached`), ' · ',
-        h('b', { class: 'ew-t-short' }, h('span', { 'aria-hidden': 'true', text: '○ ' }), `${counts.missed} not reached`),
+        h('b', { class: 'ew-t-met' }, h('span', { 'aria-hidden': 'true', text: '✓ ' }), `${counts.met} met`), ' · ',
+        h('b', { class: 'ew-t-short' }, h('span', { 'aria-hidden': 'true', text: '○ ' }), `${counts.missed} not met`),
         counts.pending ? [' · ', h('b', { class: 'ew-t-pending', text: `${counts.pending} pending` })] : '',
-        '. ', useful ? `Ready to rely on? ${useful.result} ` : '',
-        crossedMet ? `${crossedMet === 1 ? 'One reached goal has' : `${crossedMet} reached goals have`} a 95% interval that runs past the target, and the gauge shows it. ` : '',
-        'Every goal stays on the page, reached or not: that is the point of setting them first.'));
+        '. ', useful ? `Ready to use? ${useful.result} ` : '',
+        crossedMet ? `${crossedMet === 1 ? 'One met standard has' : `${crossedMet} met standards have`} a 95% interval that runs past its limit, and the gauge shows it. ` : '',
+        'Every standard stays on the page, met or not: that is the point of setting them first.'));
   }
   const setView = (v) => { view = v; paint(); };
   planBtn.addEventListener('click', () => setView('plan'));
@@ -185,9 +185,9 @@ function renderPromises(sec, d) {
 
   sec.replaceChildren(
     head(sec, {
-      eyebrow: 'GOALS FIRST, RESULTS SECOND', standin: d.standin,
-      title: 'I set my goals before I saw the data.',
-      lede: 'Before opening any outcomes I wrote down the plan: every test, the train/test split, and the best-case targets a warning would need to hit for a college to rely on it. Flip between the goals and the results. Blueprint mode (<kbd>B</kbd>) flips it too.',
+      eyebrow: 'STANDARDS FIRST, RESULTS SECOND', standin: d.standin,
+      title: 'I set the standards before I saw the data.',
+      lede: 'Before opening any outcomes I wrote down the plan: how the study would be run, and what a warning would need to show before a college should act on it. Flip between the standards and the results. Blueprint mode (<kbd>B</kbd>) flips it too.',
     }),
     h('div', { class: 'ew-switch', role: 'group', 'aria-label': 'Show the plan or the result' }, planBtn, resultBtn),
     summary, filterRow, list, chain);
@@ -824,7 +824,7 @@ if (host) {
   }
 
   // One link per piece, in the order the page puts them.
-  const LABEL = { plan: 'Goals and results', replay: 'Replay a term', beat: 'Beat the model', advising: 'You run advising', casefiles: 'Case files' };
+  const LABEL = { plan: 'Standards and results', replay: 'Replay a term', beat: 'Beat the model', advising: 'You run advising', casefiles: 'Case files' };
   host.prepend(h('nav', { class: 'ew-nav', 'aria-label': 'Interactive pieces' },
     parts.filter((p) => LABEL[p.id])
       .map((p) => h('a', { href: `#${p.id}`, text: LABEL[p.id], onclick: () => setTimeout(settle, 0) }))));

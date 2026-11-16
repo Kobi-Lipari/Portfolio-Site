@@ -259,10 +259,10 @@ const LENSES = {
   analyst: {
     key: 'analyst', path: '/analyst/', depth: 1, dir: 'analyst',
     title: 'Kobi Lipari — data analyst, surveys and dashboards',
-    description: 'I keep thirty Tableau dashboards on one written spec, run the retention model a university\'s advisers use each week, and run its Qualtrics surveys from the first question to the written report.',
+    description: 'I keep thirty Tableau dashboards on one written spec, run the retention model a university\'s advisers work from, and run its Qualtrics surveys from the first question to the written report.',
     role: 'Data analyst · Surveys · Dashboards',
     h1: ['I make the numbers', 'explain themselves.'],
-    pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from each week, and run its Qualtrics surveys end to end: design, administration, analysis and the report people actually read.',
+    pitch: 'I keep thirty dashboards on one written spec, run the retention model advisers at my university work from, and run its Qualtrics surveys end to end: design, administration, analysis and the report people actually read.',
     recruiter: 'Data, survey and BI work · New Orleans',
     // The third and fourth chips have no fallback: they wait for their own pages.
     chips: (d) => [
@@ -427,7 +427,7 @@ const DEMOS = {
     <section class="demo ew-part" data-ew="beat" id="beat" aria-label="Beat the model"><p class="demo__noscript">The game needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="advising" id="advising" aria-label="You run advising"><p class="demo__noscript">The advising simulator needs JavaScript.</p></section>
     <section class="demo ew-part" data-ew="casefiles" id="casefiles" aria-label="Case files"><p class="demo__noscript">The case files need JavaScript.</p></section>
-    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="Goals and results"><p class="demo__noscript">The goals-and-results view needs JavaScript.</p></section>
+    <section class="demo ew-part" data-ew="promises" id="plan" aria-label="Standards and results"><p class="demo__noscript">The standards-and-results view needs JavaScript.</p></section>
   </div>`,
 };
 // The dashboards slideshow appears once all six of its data files are in src/data/dashboards

@@ -1286,7 +1286,7 @@ kbd {
 }
 .ew-promise[hidden], .ew-group[hidden], .ew-filter[hidden] { display: none; }
 .ew-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 18px; }
-/* A goal not reached is marked plainly: its badge, a quiet bar down the side, and the result in full ink. */
+/* A standard not met is marked plainly: its badge, a quiet bar down the side, and the result in full ink. */
 .ew-part[data-view="result"] .ew-promise.is-missed { box-shadow: inset 3px 0 0 var(--line-2); }
 .ew-part[data-view="result"] .ew-promise.is-missed .ew-promise__result { color: var(--ink); }
 /* A numeric bar, drawn: shaded passing range, dashed limits, the estimate and its interval. */
