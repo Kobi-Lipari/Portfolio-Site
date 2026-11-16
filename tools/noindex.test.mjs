@@ -1,5 +1,6 @@
-// The index switch: the default build can be indexed and has a sitemap; NOINDEX=1 puts a
-// noindex tag on every page and turns crawlers away in robots.txt.
+// The index switch: with HIDE_FROM_SEARCH on in build.mjs the default build is link-only;
+// NOINDEX=0 builds a findable site with a sitemap; NOINDEX=1 puts a noindex tag on every page
+// and turns crawlers away in robots.txt.
 // Each test builds a throwaway copy of the site. Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,8 +26,18 @@ async function build(env = {}) {
   return { dir, dist: path.join(dir, 'dist'), pages };
 }
 
-test('the default build is indexable: no noindex tag except on the 404 page, a sitemap, an open robots.txt', async () => {
+test('the default build is link-only while HIDE_FROM_SEARCH is on: noindex everywhere, crawlers turned away, no sitemap', async () => {
+  assert.match(await readFile(path.join(ROOT, 'build.mjs'), 'utf8'), /^const HIDE_FROM_SEARCH = true;$/m, 'this test describes the hidden default');
   const { dir, dist, pages } = await build();
+  try {
+    for (const file of pages) assert.ok((await readFile(file, 'utf8')).includes(NOINDEX_TAG), file);
+    assert.equal(await readFile(path.join(dist, 'robots.txt'), 'utf8'), 'User-agent: *\nDisallow: /\n');
+    assert.equal(existsSync(path.join(dist, 'sitemap.xml')), false);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('NOINDEX=0 builds a findable site: no noindex tag except on the 404 page, a sitemap, an open robots.txt', async () => {
+  const { dir, dist, pages } = await build({ NOINDEX: '0' });
   try {
     assert.ok(pages.length >= 3);
     for (const file of pages) {

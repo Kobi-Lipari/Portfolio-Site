@@ -8,9 +8,7 @@
 export const projects = [
   {
     slug: "withdrawal-early-warning",
-    // Hidden while the dropout early-warning study replaces it. The page's pieces
-    // (src/demo-ewarn.js, tools/sync-ewarn.mjs, the stand-in guard) are reused by that project.
-    hidden: true,
+    // Shown again: the dropout early-warning study meant to replace it was never built.
     thumb: { src: "thumb-ewarn", w: 960, h: 600, alt: "" },
     demo: "ewarn",
     data: "ewarn",

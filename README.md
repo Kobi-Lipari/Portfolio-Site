@@ -58,7 +58,7 @@ Requires Node 18 or newer (no `npm install` needed).
 ```
 node build.mjs            # writes the site into dist/
 PREVIEW=1 node build.mjs  # relative links, for opening files locally or preview hosts
-NOINDEX=1 node build.mjs  # the same site, hidden from search engines (see below)
+NOINDEX=0 node build.mjs  # the same site, findable by search engines (see below)
 ```
 
 To view locally: `npx serve dist` or `python -m http.server --directory dist`, then open http://localhost:8000. The two demos need this (browsers block their scripts on `file://` pages).
@@ -81,13 +81,9 @@ TOOLS_DIR=/path/to/folder-with-playwright node tools/share-image.mjs
 
 ### Hiding the site from search engines
 
-The default build can be indexed. When the job hunt is over, build with `NOINDEX=1`:
+The site is link-only by default: `HIDE_FROM_SEARCH = true` near the top of `build.mjs`. Anyone with the address can open it, but search engines are asked to leave it out. Set it to `false` to be findable; `NOINDEX=0 node build.mjs` or `NOINDEX=1 node build.mjs` overrides it for one build.
 
-```
-NOINDEX=1 node build.mjs
-```
-
-That adds `<meta name="robots" content="noindex, nofollow">` to every page, writes a `robots.txt` that disallows everything, and leaves out the sitemap. On Cloudflare, either change the build command to `NOINDEX=1 node build.mjs` or add a build variable `NOINDEX` with the value `1`; remove it to be findable again. Pages a search engine already has can take a few weeks to drop out. Because `robots.txt` stops crawlers from re-reading the pages, a result can linger as a bare link; Google Search Console's removal tool clears those sooner.
+Hidden mode adds `<meta name="robots" content="noindex, nofollow">` to every page, writes a `robots.txt` that disallows everything, and leaves out the sitemap. On Cloudflare a build variable `NOINDEX` (`1` or `0`) overrides the setting without a commit. Pages a search engine already has can take a few weeks to drop out. Because `robots.txt` stops crawlers from re-reading the pages, a result can linger as a bare link; Google Search Console's removal tool clears those sooner.
 
 ## Deploy on Cloudflare
 

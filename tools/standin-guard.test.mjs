@@ -1,7 +1,7 @@
 // What the build does with the withdrawal project: published with real data,
 // never with stand-in data, with no links into a private repo, and left out
-// entirely while it is marked hidden. The guard tests un-hide the project in
-// their throwaway copy so they keep checking the stand-in rules.
+// entirely while it is marked hidden. The hidden test marks the project hidden in
+// its throwaway copy; the others build it as it is published.
 // Each test builds a throwaway copy of the site. Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,9 +21,14 @@ async function siteCopy(t, { standin = false, hidden = false, edit } = {}) {
   t.after(() => rm(dir, { recursive: true, force: true }));
   await cp(path.join(ROOT, 'build.mjs'), path.join(dir, 'build.mjs'));
   await cp(path.join(ROOT, 'src'), path.join(dir, 'src'), { recursive: true });
-  if (!hidden) {
+  // The project is published on main; `hidden` marks it hidden in the copy, by its own slug,
+  // so no other project's flag is touched.
+  if (hidden) {
     const projects = path.join(dir, 'src', 'projects.mjs');
-    await writeFile(projects, (await readFile(projects, 'utf8')).replace('hidden: true,', 'hidden: false,'));
+    const text = await readFile(projects, 'utf8');
+    const marked = text.replace(`slug: "${SLUG}",`, `slug: "${SLUG}",\n    hidden: true,`);
+    if (marked === text) throw new Error(`no project ${SLUG} in projects.mjs`);
+    await writeFile(projects, marked);
   }
   if (standin) {
     const file = path.join(dir, 'src', 'data', 'ewarn', 'beat.json');
@@ -35,6 +40,7 @@ async function siteCopy(t, { standin = false, hidden = false, edit } = {}) {
 const build = (dir, env = {}) => new Promise((resolve) => {
   const clean = { ...process.env, ...env };
   for (const k of ['PREVIEW', 'DRAFT', 'HOLD_BACK']) if (!(k in env)) delete clean[k];
+  if (!('NOINDEX' in env)) clean.NOINDEX = '0'; // findable, so the sitemap the tests read exists
   execFile(process.execPath, ['build.mjs'], { cwd: dir, env: clean }, (err, stdout, stderr) => resolve({ code: err ? err.code : 0, out: stdout + stderr }));
 });
 const read = (dir, file) => readFile(path.join(dir, 'dist', file), 'utf8');
@@ -91,7 +97,7 @@ test('HOLD_BACK=1 builds the rest of the site with no trace of the project', asy
   for (const html of await pages(dir)) assert.equal(html.includes(SLUG), false, 'no page links to the project or lists it in the palette');
   const home = await read(dir, 'index.html');
   const featured = home.slice(home.indexOf('class="featured"'), home.indexOf('class="more"'));
-  assert.deepEqual([...featured.matchAll(/href="\/work\/([^/]+)\/"/g)].map((m) => m[1]), ['tableau-dashboards', 'lca-website', 'scoresheet-scanner']);
+  assert.deepEqual([...featured.matchAll(/href="\/work\/([^/]+)\/"/g)].map((m) => m[1]), ['tableau-dashboards', 'retention-analysis', 'lca-website']);
 });
 
 test('a hidden project is left out of the production build, data files included', async (t) => {

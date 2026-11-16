@@ -144,6 +144,17 @@ a:hover { color: var(--accent-ink); }
   .nav__links .pill { padding: 0 12px; min-height: 38px; font-size: 13px; }
   .icon-btn { min-width: 38px; }
 }
+/* Narrow phones (360 wide and under): tighter spacing so the bar fits without sideways scroll.
+   Under 340 the Contact link goes; the hero's Email me and the footer still reach it. */
+@media (max-width: 380px) {
+  .nav { gap: 6px; }
+  .nav__name { font-size: 15px; }
+  .nav__links { gap: 4px; }
+  .nav__links .pill { padding: 0 10px; }
+}
+@media (max-width: 340px) {
+  .nav__links a[href$="#contact"] { display: none; }
+}
 
 /* ---------- Hero ---------- */
 .hero {

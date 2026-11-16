@@ -2,7 +2,7 @@
 // root page has the two doors and the lens pages have the audience note; every proof chip is a
 // link; and once the parts a lens is allowed to change are taken out, the three pages are the
 // same page. A PREVIEW=1 build keeps the lens pages' relative paths at the right depth.
-// Each test builds a throwaway copy of the site. Run: node --test
+// Each test builds a throwaway copy of the site, findable (NOINDEX=0) so it has a sitemap. Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
@@ -19,7 +19,7 @@ async function build(env = {}) {
   const dir = await mkdtemp(path.join(tmpdir(), 'site-'));
   await cp(path.join(ROOT, 'build.mjs'), path.join(dir, 'build.mjs'));
   await cp(path.join(ROOT, 'src'), path.join(dir, 'src'), { recursive: true });
-  await new Promise((resolve, reject) => execFile(process.execPath, ['build.mjs'], { cwd: dir, env: { ...process.env, PREVIEW: '', NOINDEX: '', DRAFT: '', ...env } },
+  await new Promise((resolve, reject) => execFile(process.execPath, ['build.mjs'], { cwd: dir, env: { ...process.env, PREVIEW: '', NOINDEX: '0', DRAFT: '', ...env } },
     (err, stdout, stderr) => (err ? reject(new Error(stderr || err.message)) : resolve())));
   const pages = [];
   const walk = async (d) => { for (const e of await readdir(d, { withFileTypes: true })) { if (e.isDirectory()) await walk(path.join(d, e.name)); else if (e.name.endsWith('.html') && !d.includes(`${path.sep}vendor`)) pages.push(path.join(d, e.name)); } };

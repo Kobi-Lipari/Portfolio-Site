@@ -7,9 +7,12 @@ import { projects as allProjects } from './src/projects.mjs';
 
 // PREVIEW=1 writes relative links (with index.html) so the site works from any folder or preview host.
 const PREVIEW = process.env.PREVIEW === '1';
-// NOINDEX=1 asks search engines to leave the site out: a noindex tag on every page and a
-// robots.txt that turns crawlers away. Without it the site is indexable and has a sitemap.
-const NOINDEX = process.env.NOINDEX === '1';
+// Whether search engines may list the site. While HIDE_FROM_SEARCH is true the site is
+// link-only: a noindex tag on every page and a robots.txt that turns crawlers away, so people
+// with the address (a résumé, an application) can open it but searches don't find it.
+// Set it to false to be findable. NOINDEX=1 or NOINDEX=0 overrides it for one build.
+const HIDE_FROM_SEARCH = true;
+const NOINDEX = process.env.NOINDEX === '1' || (process.env.NOINDEX !== '0' && HIDE_FROM_SEARCH);
 
 // A project whose data files are stand-ins (made to design the page before the
 // real analysis ran) is never published. A production build stops with an error,
@@ -234,25 +237,23 @@ const LENSES = {
   root: {
     key: 'root', path: '/', depth: 0, dir: null,
     title: `${SITE.name} — data analyst and web developer`,
-    description: SITE.description,
+    description: 'Data analyst at a public university: the student-retention model its advisers work from, thirty dashboards for leadership, and its Qualtrics surveys from the first question to the report. I also build the websites a chess association and a telehealth clinic run on.',
     role: 'Data analyst · Web developer',
     h1: ['I understand the data', 'and the person reading it.'],
-    pitch: 'By day I turn a university\'s scattered data into pipelines, models and dashboards its advisers act on. By night I build websites for a chess association and a telehealth clinic.',
-    recruiter: 'Data, BI and full-stack work · New Orleans',
+    pitch: 'I build the data behind student success at a public university: the retention model its advisers work from, thirty dashboards for its leadership, and its Qualtrics surveys from first question to final report. On the side, I build websites for a chess association and a telehealth clinic.',
+    recruiter: 'Higher-ed data, assessment and BI work · New Orleans',
     chips: (d) => [
-      { n: '30+', label: 'dashboards I keep running', href: linkTo(d, 'tableau-dashboards', '#see-it') },
-      { n: '15+', label: 'data sources feeding one retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
-      { n: '112', label: 'tests behind a site that takes payments', href: linkTo(d, 'lca-website', '#s-validation') },
+      { n: '30+', label: 'dashboards on enrollment, retention and graduation', href: linkTo(d, 'tableau-dashboards', '#see-it') },
+      { n: '15+', label: 'data sources feeding one student-retention model', href: linkTo(d, 'predictive-retention', '', linkTo(d, 'tableau-dashboards', '#my-work')) },
+      { label: 'Qualtrics surveys, from the first question to the report', href: '#about' },
+      { n: '32,593', label: 'course registrations in a withdrawal study I planned before I looked', href: linkTo(d, 'withdrawal-early-warning', '#plan') },
       { n: '3', label: 'sites in daily use', href: u(d, 'work/') },
-      { n: '4,424', label: 'students in a study I planned before I looked', href: linkTo(d, 'dropout-early-warning', '#plan') },
     ],
     doors: true,
-    featured: [
-      'withdrawal-early-warning', // B11 retires this entry.
-      'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner',
-    ],
-    tools: 'SQL · Tableau · Power BI · Python · pandas · R · Access · Excel · JavaScript · HTML/CSS · Git · Cloudflare',
-    openTo: 'Data analyst, BI and full-stack roles · New Orleans, or anywhere the work is a step up',
+    // Student-success work first; the web platforms follow in "More work".
+    featured: ['withdrawal-early-warning', 'tableau-dashboards', 'retention-analysis', 'lca-website', 'scoresheet-scanner', 'healingly-website'],
+    tools: 'SQL · Tableau · Power BI · Qualtrics · Python · pandas · R · Excel · Access · Git · JavaScript · HTML/CSS · Cloudflare',
+    openTo: 'Data, assessment and BI roles in higher education and beyond · New Orleans, or anywhere the work is a step up',
     resume: SITE.resume, banner: null,
   },
   analyst: {
@@ -273,7 +274,7 @@ const LENSES = {
       { link: true, label: 'Tableau Public ↗', href: linkUrl('Tableau Public') },
     ],
     doors: false,
-    featured: ['predictive-retention', 'dropout-early-warning', 'tableau-dashboards', 'lca-website', 'scoresheet-scanner'],
+    featured: ['predictive-retention', 'dropout-early-warning', 'tableau-dashboards', 'withdrawal-early-warning', 'lca-website', 'scoresheet-scanner'],
     tools: 'SQL · Tableau · Qualtrics · Python · pandas · R · Excel · Power BI · Access · Git · JavaScript · HTML/CSS · Cloudflare',
     openTo: 'Data analyst and BI roles · New Orleans, or anywhere the work is a step up',
     resume: lensResume('resume-analyst.pdf'),
@@ -384,7 +385,7 @@ ${lens.key === 'root' ? nav(0) : nav(d, PREVIEW ? 'index.html' : lens.path, lens
       : ph('Headshot', 'Portrait, 4:5', 'about__photo')}
     <div>
       <h2 id="about-h">About</h2>
-      <p>I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting. I also run the office's Qualtrics surveys end to end, from shaping the questions and cleaning the responses to designing reports that let the data speak for itself. I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear.</p>
+      <p>I build the SQL, Access pipelines, and Tableau dashboards behind Nicholls State University's institutional reporting. I also run the office's Qualtrics surveys end to end, from shaping the questions and cleaning the responses to designing reports that let the data speak for itself. I'm the analyst faculty turn to for help with their research: finding the right data, running the analysis, and making the results clear. I also built the university's first predictive student-retention model, which brings together more than fifteen data sources and gives advisers the students to reach first.</p>
       <p>Day to day, I take on the questions and concerns of leadership, and I collaborate to find the data that serves them and turn it into a dashboard or a written report. I am often responsible for presenting results to the university's senior leadership, its task forces and department heads: what the numbers show, what they don't, and the options they point to.</p>
       <p>Part time, I build the web platforms that members of the Louisiana Chess Association and patients of Healingly use every day. I work directly with the volunteers and staff who run them, turning what they need into features people actually use.</p>
       <dl>
