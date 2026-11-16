@@ -119,18 +119,6 @@ WHERE c.cohort_year <= ${AS_OF - 6}
 GROUP BY c.college
 ORDER BY grad_6yr_pct DESC;`,
   },
-  {
-    label: 'Peek at the tables',
-    note: 'The raw rows. Every student here is made up.',
-    sql: `SELECT c.*,
-       (SELECT COUNT(*) FROM enrollments e
-         WHERE e.student_id = c.student_id) AS falls_enrolled,
-       (SELECT award_year FROM completions g
-         WHERE g.student_id = c.student_id) AS award_year
-FROM cohorts c
-ORDER BY c.student_id
-LIMIT 12;`,
-  },
 ];
 
 // ── sql.js loading ──────────────────────────────────────────────────
